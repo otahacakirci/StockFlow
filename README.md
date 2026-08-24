@@ -4,7 +4,7 @@ StockFlow; kategori, ürün, tedarikçi, müşteri, satın alma/satış sipariş
 
 ## Mevcut durum
 
-Depodaki uygulama erken aşamadadır. Şu anda .NET 10 MVC/Razor temeli, EF Core domain modeli, migration ve LocalDB kalıcılığı bulunur. Geçici JWT, yazma API'si ve bellek içi demo kullanıcı/ürün prototipi GitHub öncesi güvenlik temizliğinde kaldırılmıştır. Cookie tabanlı ASP.NET Core Identity, Service katmanı, yönetim ekranları ve xUnit kanıtları henüz uygulanmamıştır.
+Depodaki uygulama erken aşamadadır. Şu anda .NET 10 MVC/Razor temeli, EF Core domain modeli, LocalDB kalıcılığı ve cookie tabanlı ASP.NET Core Identity bulunur. Uygulama özel MVC login/logout akışı kullanır; Admin ve Employee başlangıç kullanıcıları güvenli yapılandırmadan idempotent seed edilir. Service katmanı ve yönetim ekranları henüz uygulanmamıştır. xUnit projesi Identity seed davranışını kanıtlar; kritik sipariş/stok testleri sonraki aşamadadır.
 
 Ayrıntılı mevcut-hedef farkları için [mevcut durum belgesine](docs/ai/current-state.md), normatif kapsam için [ürün spesifikasyonuna](docs/product-spec.md) bakın.
 
@@ -13,6 +13,7 @@ Ayrıntılı mevcut-hedef farkları için [mevcut durum belgesine](docs/ai/curre
 - .NET SDK 10.x
 - Microsoft SQL Server LocalDB (yerel öğrenme/geliştirme için önerilen) veya tam SQL Server örneği
 - PowerShell 5.1 veya PowerShell 7 (bağlam doğrulama betiği için)
+- HTTPS geliştirme sertifikası (`dotnet dev-certs https --trust`)
 
 ## Kurulum ve çalıştırma
 
@@ -20,15 +21,21 @@ Ayrıntılı mevcut-hedef farkları için [mevcut durum belgesine](docs/ai/curre
 dotnet restore StockFlow.slnx
 dotnet tool restore
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<yerel geliştirme bağlantı dizeniz>" --project StockFlow/StockFlow.csproj
+dotnet user-secrets set "IdentitySeed:Admin:Email" "<yerel admin e-posta adresiniz>" --project StockFlow/StockFlow.csproj
+dotnet user-secrets set "IdentitySeed:Admin:Password" "<güçlü yerel admin parolanız>" --project StockFlow/StockFlow.csproj
+dotnet user-secrets set "IdentitySeed:Employee:Email" "<yerel employee e-posta adresiniz>" --project StockFlow/StockFlow.csproj
+dotnet user-secrets set "IdentitySeed:Employee:Password" "<güçlü yerel employee parolanız>" --project StockFlow/StockFlow.csproj
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 dotnet ef database update --project StockFlow/StockFlow.csproj --startup-project StockFlow/StockFlow.csproj
 dotnet build StockFlow.slnx --no-restore
-dotnet run --project StockFlow/StockFlow.csproj
+dotnet run --project StockFlow/StockFlow.csproj --launch-profile https
 ```
 
-Varsayılan geliştirme profilleri `http://localhost:5117` ve `https://localhost:7141` adreslerini kullanır. Yerel secret değerlerini kaynak kontrollü ayar dosyalarına yazmayın; user secrets veya ortam değişkenlerini kullanın.
+Varsayılan geliştirme profili `https://localhost:7141` ve HTTPS'e yönlendirilen `http://localhost:5117` adreslerini birlikte kullanır. Kimlik cookie'si yalnız güvenli bağlantıda gönderildiği için uygulamayı `https` profiliyle başlatın. Yerel secret değerlerini kaynak kontrollü ayar dosyalarına yazmayın; User Secrets veya ortam değişkenlerini kullanın.
 
-İlk migration yedi domain tablosunu oluşturur; sekizinci çekirdek entity olan `ApplicationUser` ve Identity tabloları sonraki kimlik aşamasındadır. Bağlantı dizesi `DefaultConnection` adıyla güvenli yapılandırmada tutulur; uygulama başlangıcında otomatik migration veya `EnsureCreated` çalıştırılmaz. Şemanın ayrıntıları ve ERD için [veritabanı şeması belgesine](docs/database-schema.md) bakın.
+`InitialDomainSchema` yedi domain tablosunu, ikinci migration olan `AddIdentitySchema` ise `ApplicationUser`, yedi standart Identity tablosu ve `Orders.CreatedByUserId` foreign key'ini oluşturur. Bağlantı dizesi ve dört başlangıç kullanıcı değeri yalnız güvenli yapılandırmada tutulur. Değerlerden biri eksik veya iki kullanıcı aynı e-postayı kullanıyorsa uygulama hassas değer göstermeden başlangıçta durur. Migration uygulama başlangıcında otomatik çalıştırılmaz; önce `database update`, sonra uygulama başlatma sırası izlenmelidir.
+
+Seed işlemi her uygulama başlangıcında rolleri, kullanıcıları ve üyelikleri kontrol eder. Mevcut kayıtlar tekrar oluşturulmaz, mevcut kullanıcının parolası değiştirilmez ve hesaplar otomatik silinmez. Başlangıç e-posta yapılandırmasını değiştirmek eski hesabı kaldırmaz; bu tür hesap bakımı açık yönetim işlemi olarak yapılmalıdır.
 
 ### Yerel veritabanı seçimi
 
@@ -44,7 +51,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-agent-conte
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-hygiene.ps1
 ```
 
-Solution içinde henüz bir xUnit test projesi yoktur; `dotnet test` komutu test projesi eklendiğinde aynı giriş noktası üzerinden çalışacaktır.
+`StockFlow.Tests`, seed işleminin tekrar çalıştırıldığında kopya üretmediğini, mevcut kullanıcıya eksik rolü eklediğini ve eksik güvenli yapılandırmanın veritabanına erişmeden fail-fast olduğunu izole EF InMemory veritabanıyla doğrular. Kritik sipariş/stok testleri henüz bulunmaz.
 
 ## GitHub öncesi repo hijyeni
 

@@ -14,25 +14,27 @@ review_triggers:
 ## Son doğrulama
 
 - Tarih: 24 Ağustos 2026
-- Kapsam: GitHub öncesi güvenlik ve repository temizliği
+- Kapsam: Cookie tabanlı ASP.NET Core Identity entegrasyonu
 
 ## Son tamamlanan değişiklik
 
-Geçici JWT/yazma API prototipi, statik kullanıcı ve ürün koleksiyonları, düz metin demo parolaları, JWT ayarı ile ilişkili paketler kaldırıldı. Uygulama anonim MVC + EF temeline sadeleştirildi; LocalDB bağlantısı yalnız User Secrets içinde kaldı. Standart ignore/attribute kuralları ve staged içeriği değer sızdırmadan denetleyen repository hygiene betiği eklendi. Kanonik Markdown'ın yanında tutulan DOCX'in kişisel ve düzenleme oturumu metadata'sı içerik yapısı korunarak temizlendi. Yerel Git deposu `main` dalıyla hazırlanıp temiz kaynaklar stage edildi; commit, remote ve push yapılmadı.
+`ApplicationUser` ve Identity EF store'u mevcut `ApplicationDbContext` modeline eklendi. İkinci `AddIdentitySchema` migration'ı yedi Identity tablosunu ve `Orders.CreatedByUserId` foreign key'ini oluşturdu; migration LocalDB'ye uygulandı. Özel MVC login/logout akışı, global authenticated fallback policy, Secure cookie ve doğru `UseAuthentication` sırası kuruldu. Admin/Employee rolleri ile güvenli yapılandırmadan gelen başlangıç kullanıcılarını kopya üretmeden tamamlayan fail-fast seeder eklendi. xUnit test projesi seed idempotence, eksik rol tamamlama ve eksik yapılandırma davranışını kanıtlıyor.
 
 ## Doğrulama kanıtı
 
 - `dotnet restore StockFlow.slnx`: geçti.
-- Temiz derleme: geçti; 0 hata ve 0 uyarı.
-- Development User Secrets ile uygulama smoke testi: uygulama yerel HTTP portunda başladı ve kontrollü kapatıldı.
-- `dotnet test StockFlow.slnx --no-restore`: çıkış kodu 0; solution içinde test projesi bulunmadığından test çalıştırılmadı.
-- DOCX paket karşılaştırması: metin, tablo, ilişki ve binary parça yapısı değişmedi; creator, lastModifiedBy ve revision-session kimlikleri kalmadı. Ortamda LibreOffice bulunmadığı için sayfa render/görsel karşılaştırma yapılamadı.
-- Repository hygiene, staged whitespace ve ajan bağlam kontrolleri son staging adımında geçti.
+- `dotnet build StockFlow.slnx --no-restore`: geçti; 0 hata ve 0 uyarı.
+- `dotnet test StockFlow.slnx --no-restore`: üç Identity seed testi geçti.
+- `dotnet ef database update`: `20260824065853_AddIdentitySchema` LocalDB'ye uygulandı.
+- `dotnet ef migrations has-pending-model-changes`: model drift'i bulunmadı.
+- Geçici ve sonrasında silinen ayrı LocalDB üzerinde iki başlangıç smoke testi: ikinci çalıştırmada INSERT oluşmadı; anonim redirect, login, güvenli hata mesajı, local return URL, authenticated sayfa ve antiforgery POST logout akışları geçti.
+- `dotnet format --verify-no-changes`, whitespace, ajan bağlamı ve repository hygiene kontrolleri geçti; yeni untracked kaynaklar aynı yüksek güvenli secret kurallarıyla ayrıca tarandı.
 
 ## Açık riskler ve boşluklar
 
-- Identity ve Service tabanlı kalıcı veri akışı uygulanmamıştır.
-- Test projesi bulunmamaktadır.
+- İş ekranlarında Admin/Employee rol matrisi ve role göre navigasyon henüz uygulanmamıştır.
+- Service tabanlı kalıcı veri akışı ve kritik sipariş/stok xUnit testleri henüz uygulanmamıştır.
+- Uygulamanın çalışması için migration sonrasında dört `IdentitySeed` değerinin güvenli yapılandırmada bulunması gerekir.
 - LocalDB geliştirme ve öğrenme ortamıdır; production veya çok kullanıcılı deployment için tam SQL Server hedefi ayrıca yapılandırılmalıdır.
 
 ## Sonraki sınırlandırılmış görev
