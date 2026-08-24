@@ -1,0 +1,43 @@
+# Visual Studio and user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.lnk
+
+# .NET build output
+**/[Bb]in/
+**/[Oo]bj/
+artifacts/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage-*/
+
+# Local logs and caches
+*.log
+*.cache
+
+# Local environment and configuration overrides
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+secrets.json
+
+# Certificates, private keys, and local databases
+*.pfx
+*.p12
+*.pem
+*.key
+*.mdf
+*.ldf
+*.ndf
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

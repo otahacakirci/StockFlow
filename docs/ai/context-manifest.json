@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "entrypoint": "AGENTS.md",
+  "alwaysRead": [
+    "docs/ai/README.md",
+    "docs/ai/current-state.md",
+    "docs/ai/handoff.md"
+  ],
+  "documents": [
+    {
+      "path": "docs/product-spec.md",
+      "authority": "normative",
+      "loadWhen": ["feature", "scope", "domain", "architecture", "security", "acceptance"],
+      "reviewTriggers": ["product-scope-change", "domain-rule-change", "acceptance-criteria-change", "target-architecture-change"]
+    },
+    {
+      "path": "docs/database-schema.md",
+      "authority": "persistence-design",
+      "loadWhen": ["entity", "persistence", "migration", "database", "erd"],
+      "reviewTriggers": ["entity-change", "persistence-change", "migration-change", "relationship-change"]
+    },
+    {
+      "path": "docs/ai/README.md",
+      "authority": "index",
+      "loadWhen": ["always"],
+      "reviewTriggers": ["context-document-added", "context-routing-change", "authority-model-change"]
+    },
+    {
+      "path": "docs/ai/current-state.md",
+      "authority": "descriptive",
+      "loadWhen": ["always"],
+      "reviewTriggers": ["application-code-change", "package-change", "build-baseline-change", "authentication-change", "persistence-change"]
+    },
+    {
+      "path": "docs/ai/architecture.md",
+      "authority": "target-architecture",
+      "loadWhen": ["architecture", "controller", "service", "persistence", "authentication"],
+      "reviewTriggers": ["target-architecture-change", "layer-boundary-change", "authentication-change", "persistence-change"]
+    },
+    {
+      "path": "docs/ai/domain-rules.md",
+      "authority": "reference",
+      "loadWhen": ["domain", "order", "stock", "role", "entity", "dashboard"],
+      "reviewTriggers": ["domain-rule-change", "role-matrix-change", "entity-change", "order-lifecycle-change"]
+    },
+    {
+      "path": "docs/ai/development-workflow.md",
+      "authority": "operational",
+      "loadWhen": ["implementation", "test", "build", "delivery", "documentation"],
+      "reviewTriggers": ["validation-command-change", "delivery-process-change", "documentation-policy-change"]
+    },
+    {
+      "path": "docs/ai/handoff.md",
+      "authority": "continuity",
+      "loadWhen": ["always"],
+      "reviewTriggers": ["meaningful-task-completed", "blocker-discovered", "validation-baseline-change"]
+    },
+    {
+      "path": "docs/adr/README.md",
+      "authority": "decision-process",
+      "loadWhen": ["architecture-decision", "technology-decision", "boundary-change"],
+      "reviewTriggers": ["adr-process-change"]
+    },
+    {
+      "path": "docs/adr/0000-template.md",
+      "authority": "template",
+      "loadWhen": ["new-adr"],
+      "reviewTriggers": ["adr-template-change"]
+    },
+    {
+      "path": "docs/adr/0001-ai-context-source-of-truth.md",
+      "authority": "decision",
+      "loadWhen": ["documentation", "authority-model", "context-system"],
+      "reviewTriggers": ["authority-model-change", "canonical-source-change"]
+    }
+  ],
+  "validationCommands": [
+    "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-agent-context.ps1",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-hygiene.ps1",
+    "dotnet build StockFlow.slnx --no-restore",
+    "dotnet test StockFlow.slnx --no-restore"
+  ]
+}
