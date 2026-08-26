@@ -462,7 +462,8 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
         return new OrderService(
             dbContext,
             NullLogger<OrderService>.Instance,
-            new FixedTimeProvider());
+            new FixedTimeProvider(),
+            new OrderStockConfirmationPlanner());
     }
 
     private static OrderDraftInputModel SaleInput(

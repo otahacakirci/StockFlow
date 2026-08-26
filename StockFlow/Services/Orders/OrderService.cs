@@ -7,13 +7,35 @@ using StockFlow.ViewModels.Orders;
 
 namespace StockFlow.Services.Orders;
 
-public sealed class OrderService(
-    ApplicationDbContext dbContext,
-    ILogger<OrderService> logger,
-    TimeProvider timeProvider) : IOrderService
+/// <summary>
+/// Draft sipariş yaşam döngüsünü, sunucu fiyat güvenliğini ve atomik stok/hareket kalıcılığını yöneten uygulama Service'idir.
+/// </summary>
+internal sealed class OrderService : IOrderService
 {
     private const decimal MaximumDatabaseAmount = 9_999_999_999_999_999.99m;
+    private readonly ApplicationDbContext dbContext;
+    private readonly ILogger<OrderService> logger;
+    private readonly TimeProvider timeProvider;
+    private readonly OrderStockConfirmationPlanner stockConfirmationPlanner;
 
+    /// <summary>
+    /// Sipariş akışını veritabanı, yapılandırılmış log, UTC zaman kaynağı ve saf stok planner bağımlılıklarıyla oluşturur.
+    /// </summary>
+    public OrderService(
+        ApplicationDbContext dbContext,
+        ILogger<OrderService> logger,
+        TimeProvider timeProvider,
+        OrderStockConfirmationPlanner stockConfirmationPlanner)
+    {
+        this.dbContext = dbContext;
+        this.logger = logger;
+        this.timeProvider = timeProvider;
+        this.stockConfirmationPlanner = stockConfirmationPlanner;
+    }
+
+    /// <summary>
+    /// Doğrulanmış kullanıcı ve doğru Sale/Purchase tarafıyla, ürünlerin güncel fiyatlarını snapshot alarak Draft oluşturur. Başarıda sunucu sipariş sonucunu, beklenen giriş veya kayıt sorununda kategorili hata döndürür; stok değiştirmez.
+    /// </summary>
     public async Task<ServiceResult<OrderMutationResult>> CreateDraftAsync(
         OrderDraftInputModel input,
         string createdByUserId,
@@ -65,6 +87,9 @@ public sealed class OrderService(
         return ServiceResult<OrderMutationResult>.Success(ToMutationResult(order));
     }
 
+    /// <summary>
+    /// Yalnız Draft siparişin tarafını ve kalemlerini eşitler; kalan satırların snapshot fiyatını korur, yalnız yeni ürünlerde güncel fiyat kullanır. Eksik ya da terminal siparişte beklenen hata döndürür ve stok hareketi üretmez.
+    /// </summary>
     public async Task<ServiceResult<OrderMutationResult>> UpdateDraftAsync(
         int orderId,
         OrderDraftInputModel input,
@@ -113,6 +138,9 @@ public sealed class OrderService(
         return ServiceResult<OrderMutationResult>.Success(ToMutationResult(order));
     }
 
+    /// <summary>
+    /// Kalıcı Draft doğrulaması ve tüm Sale/Purchase stok kontrolleri tamamlandıktan sonra stokları, hareketleri ve Confirmed durumunu tek transaction ve tek kayıt çağrısıyla uygular. Beklenen ihlalde rollback ile hata sonucu döner; beklenmeyen hatada rollback ve tracker temizliğinden sonra hatayı yeniden fırlatır.
+    /// </summary>
     public async Task<ServiceResult<OrderMutationResult>> ConfirmDraftAsync(
         int orderId,
         CancellationToken cancellationToken = default)
@@ -148,16 +176,18 @@ public sealed class OrderService(
                     cancellationToken);
             }
 
-            var stockPlanResult = CreateStockConfirmationPlan(order);
-            if (!stockPlanResult.IsSuccess)
+            var stockDecision = stockConfirmationPlanner.CreatePlan(
+                order.Type,
+                order.Items.Select(ToStockConfirmationItem).ToList());
+            if (!stockDecision.IsApproved)
             {
                 return await RollbackFailureAsync(
                     transaction,
-                    ServiceResult<OrderMutationResult>.Failure(stockPlanResult.Error!),
+                    CreateStockPlanningFailure(order.Id, stockDecision.Failure!),
                     cancellationToken);
             }
 
-            var stockPlan = stockPlanResult.Value!;
+            var stockPlan = stockDecision.Plan!;
             ApplyConfirmationPlan(order, persistedValidation.Value, stockPlan);
 
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -188,6 +218,9 @@ public sealed class OrderService(
         }
     }
 
+    /// <summary>
+    /// Yalnız Draft siparişi stok veya hareket üretmeden terminal Cancelled durumuna geçirir. Eksik ya da terminal siparişte kategorili hata döndürür.
+    /// </summary>
     public async Task<ServiceResult<OrderMutationResult>> CancelDraftAsync(
         int orderId,
         CancellationToken cancellationToken = default)
@@ -213,6 +246,9 @@ public sealed class OrderService(
         return ServiceResult<OrderMutationResult>.Success(ToMutationResult(order));
     }
 
+    /// <summary>
+    /// Yalnız StockMovement geçmişi bulunmayan Draft siparişi kalemleriyle birlikte fiziksel olarak siler. Eksik, terminal veya hareket geçmişi bulunan siparişte beklenen hata döndürür.
+    /// </summary>
     public async Task<ServiceResult> DeleteDraftAsync(
         int orderId,
         CancellationToken cancellationToken = default)
@@ -289,6 +325,7 @@ public sealed class OrderService(
         order.TotalAmount = validatedDraft.TotalAmount;
     }
 
+    // Eşleşen satırların UnitPrice değerine dokunmayarak mevcut sunucu snapshot'ını korur.
     private void SynchronizeDraftItems(
         Order order,
         IReadOnlyList<ValidatedDraftItem> validatedItems)
@@ -337,74 +374,41 @@ public sealed class OrderService(
         };
     }
 
-    private ServiceResult<StockConfirmationPlan> CreateStockConfirmationPlan(Order order)
+    private static OrderStockConfirmationItem ToStockConfirmationItem(OrderItem item)
     {
-        return order.Type == OrderType.Sale
-            ? CreateSaleStockPlan(order)
-            : CreatePurchaseStockPlan(order);
+        return new OrderStockConfirmationItem(
+            item.ProductId,
+            item.Quantity,
+            item.Product.StockQuantity);
     }
 
-    private ServiceResult<StockConfirmationPlan> CreateSaleStockPlan(Order order)
+    private ServiceResult<OrderMutationResult> CreateStockPlanningFailure(
+        int orderId,
+        OrderStockConfirmationFailure failure)
     {
-        var newStockQuantities = new Dictionary<int, int>(order.Items.Count);
+        logger.LogWarning(
+            "Order {OrderId} confirmation stock planning rejected with error code {ErrorCode} for product {ProductId}: requested {RequestedQuantity}, available {AvailableQuantity}.",
+            orderId,
+            failure.ErrorCode,
+            failure.ProductId,
+            failure.RequestedQuantity,
+            failure.AvailableQuantity);
 
-        foreach (var item in order.Items)
-        {
-            if (item.Product.StockQuantity < item.Quantity)
-            {
-                logger.LogWarning(
-                    "Order {OrderId} confirmation rejected for product {ProductId}: requested {RequestedQuantity}, available {AvailableQuantity}.",
-                    order.Id,
-                    item.ProductId,
-                    item.Quantity,
-                    item.Product.StockQuantity);
+        var message = failure.ErrorCode == OrderServiceErrorCodes.InsufficientStock
+            ? "Siparişteki ürünlerden en az biri için yeterli stok bulunmuyor."
+            : "Onay işlemi ürün stok miktarını desteklenen aralığın dışına çıkarıyor.";
 
-                return StockPlanFailure(
-                    OrderServiceErrorCodes.InsufficientStock,
-                    "Siparişteki ürünlerden en az biri için yeterli stok bulunmuyor.");
-            }
-
-            newStockQuantities[item.ProductId] = item.Product.StockQuantity - item.Quantity;
-        }
-
-        return ServiceResult<StockConfirmationPlan>.Success(new StockConfirmationPlan(
-            StockMovementType.StockOut,
-            newStockQuantities));
+        return Failure(
+            ServiceErrorCategory.BusinessRule,
+            failure.ErrorCode,
+            message);
     }
 
-    private ServiceResult<StockConfirmationPlan> CreatePurchaseStockPlan(Order order)
-    {
-        var newStockQuantities = new Dictionary<int, int>(order.Items.Count);
-
-        foreach (var item in order.Items)
-        {
-            try
-            {
-                newStockQuantities[item.ProductId] = checked(
-                    item.Product.StockQuantity + item.Quantity);
-            }
-            catch (OverflowException)
-            {
-                logger.LogWarning(
-                    "Order {OrderId} confirmation would overflow stock quantity for product {ProductId}.",
-                    order.Id,
-                    item.ProductId);
-
-                return StockPlanFailure(
-                    OrderServiceErrorCodes.StockQuantityOutOfRange,
-                    "Onay işlemi ürün stok miktarını desteklenen aralığın dışına çıkarıyor.");
-            }
-        }
-
-        return ServiceResult<StockConfirmationPlan>.Success(new StockConfirmationPlan(
-            StockMovementType.StockIn,
-            newStockQuantities));
-    }
-
+    // Yalnız bütün stok satırları planlandıktan sonra tracked entity mutation'ını başlatır.
     private void ApplyConfirmationPlan(
         Order order,
         decimal totalAmount,
-        StockConfirmationPlan stockPlan)
+        OrderStockConfirmationPlan stockPlan)
     {
         var movementDate = timeProvider.GetUtcNow().UtcDateTime;
 
@@ -507,7 +511,7 @@ public sealed class OrderService(
                 "Sipariş kalemlerinden en az birine ait ürün bulunamadı.");
         }
 
-        return BuildValidatedDraft(input.Items, products, existingPrices);
+        return ValidatePricesAndBuildDraft(input.Items, products, existingPrices);
     }
 
     private static ServiceError? ValidateDraftInputShape(OrderDraftInputModel? input)
@@ -574,7 +578,8 @@ public sealed class OrderService(
             .ToDictionaryAsync(product => product.ProductId, cancellationToken);
     }
 
-    private static ServiceResult<ValidatedDraft> BuildValidatedDraft(
+    // Mevcut satırda snapshot'ı, yeni satırda güncel ürün fiyatını seçerken toplam sınırını da doğrular.
+    private static ServiceResult<ValidatedDraft> ValidatePricesAndBuildDraft(
         IReadOnlyList<OrderItemInputModel> inputItems,
         IReadOnlyDictionary<int, ProductPrice> products,
         IReadOnlyDictionary<int, decimal>? existingPrices)
@@ -906,16 +911,6 @@ public sealed class OrderService(
             message));
     }
 
-    private static ServiceResult<StockConfirmationPlan> StockPlanFailure(
-        string code,
-        string message)
-    {
-        return ServiceResult<StockConfirmationPlan>.Failure(CreateError(
-            ServiceErrorCategory.BusinessRule,
-            code,
-            message));
-    }
-
     private static ServiceError CreateError(
         ServiceErrorCategory category,
         string code,
@@ -934,6 +929,7 @@ public sealed class OrderService(
         return result;
     }
 
+    // Rollback hatasını loglar ancak asıl confirm exception'ını maskelemez.
     private async Task RollbackAfterUnexpectedFailureAsync(
         IDbContextTransaction transaction,
         int orderId)
@@ -959,7 +955,4 @@ public sealed class OrderService(
         IReadOnlyList<ValidatedDraftItem> Items,
         decimal TotalAmount);
 
-    private sealed record StockConfirmationPlan(
-        StockMovementType MovementType,
-        IReadOnlyDictionary<int, int> NewStockQuantities);
 }

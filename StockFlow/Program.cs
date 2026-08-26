@@ -44,6 +44,7 @@ builder.Services
 builder.Services.AddSingleton<IValidateOptions<IdentitySeedOptions>, IdentitySeedOptionsValidator>();
 builder.Services.AddScoped<IdentityDataSeeder>();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<OrderStockConfirmationPlanner>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services

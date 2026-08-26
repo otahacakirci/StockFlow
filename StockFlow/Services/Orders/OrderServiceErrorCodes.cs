@@ -1,5 +1,8 @@
 namespace StockFlow.Services.Orders;
 
+/// <summary>
+/// Sipariş Service işlemlerinin beklenen hataları için istemcilerce güvenle eşleştirilebilen kararlı kodları toplar.
+/// </summary>
 public static class OrderServiceErrorCodes
 {
     public const string InputRequired = "order.input_required";

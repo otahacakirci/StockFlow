@@ -42,12 +42,12 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - `Admin` ve `Employee` rol adları tek sabit kaynaktadır. Başlangıç kullanıcıları User Secrets/ortam yapılandırmasından idempotent seed edilir; eksik/geçersiz ayar uygulamayı hassas değer göstermeden durdurur.
 - `HomeController` ve varsayılan Razor şablon sayfaları dışında hedef yönetim ekranları yoktur.
 - `IOrderService`/`OrderService` ve güvenli Draft giriş modelleri eklenmiştir. Service; Sale/Purchase taraf doğrulamasını, zorunlu audit kullanıcısını, 32 karakterlik sunucu sipariş numarasını, yeni kalemlerde fiyat snapshot'ını, mevcut Draft satırlarında snapshot korumasını ve toplam hesabını yönetir.
-- `OrderService` dış sözleşmesini ve davranışını değiştirmeden kısa orchestration metotları kullanır; Draft doğrulama/satır eşitleme, confirm öncesi stok planlama ve transaction dışı kalıcılaştırma hata temizliği özel yardımcı metotlarda ayrıştırılmıştır.
+- `OrderService` dış sözleşmesini ve davranışını değiştirmeden kısa orchestration metotları kullanır; Draft doğrulama/satır eşitleme ve transaction dışı kalıcılaştırma hata temizliği özel yardımcı metotlarda ayrıştırılmıştır. Bağımlılıksız `internal` `OrderStockConfirmationPlanner`, Sale/Purchase yeni stok değerlerini entity mutation'dan önce hesaplar; planın tracked entity'lere ve hareketlere uygulanması ile transaction sınırı `OrderService` içinde kalır.
 - Draft oluşturma/düzenleme stok değiştirmez. Confirm; bütün stok kontrollerinden sonra stokları, `StockMovement` kayıtlarını ve terminal `Confirmed` durumunu açık SQL transaction ve tek `SaveChangesAsync` sınırında yazar. Cancel stok hareketi üretmeden terminaldir; yalnız hareket geçmişi olmayan Draft sipariş fiziksel silinir.
 - Beklenen Service hataları `Validation`, `NotFound` ve `BusinessRule` kategorili tipli sonuçlarla ayrılır; beklenmeyen persistence hataları yapılandırılmış loglanır, transaction geri alınır ve yeniden fırlatılır.
 - Yönetim Controller ve Razor ekranları henüz yoktur. Login formu ayrı, doğrulamalı bir ViewModel kullanır.
 - Kaynak kontrollü ayarlarda bağlantı dizesi, başlangıç e-postası veya parola yoktur. LocalDB ve Identity seed değerleri güvenli yapılandırmada kalır.
-- On sekiz xUnit testi bulunur. On `OrderService` testi Draft create/update, korunan-yeni-kaldırılan satırlarla snapshot/total, Purchase/Sale confirm, yetersiz stok atomikliği, SaveChanges sonrası rollback, cancel, Draft delete, iki terminal durum ve kategorili hata sonuçlarını kapsar.
+- Yirmi iki xUnit testi bulunur. On ilişkisel `OrderService` testi Draft create/update, korunan-yeni-kaldırılan satırlarla snapshot/total, Purchase/Sale confirm, yetersiz stok atomikliği, SaveChanges sonrası rollback, cancel, Draft delete, iki terminal durum ve kategorili hata sonuçlarını kapsar. Dört LocalDB'siz planner testi Sale/Purchase başarı kararlarını, yetersiz stok bağlamını ve Purchase taşmasını doğrular.
 - Veritabanına dokunan her test, yalnız `(localdb)\MSSQLLocalDB` üzerinde benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur, migration uygular ve test sonunda veritabanını siler. Test altyapısı uygulama yapılandırmasını veya dış bağlantı dizesini kabul etmez.
 - `.gitignore`, `.gitattributes` ve staged içeriği denetleyen repository hygiene betiği GitHub öncesi güvenlik tabanını oluşturur.
 
@@ -74,7 +74,7 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - İş ekranları bulunmadığı için Admin/Employee rol matrisi henüz controller/action ve navigasyon seviyesinde uygulanmamıştır.
 - Uygulama çalışmadan önce dört `IdentitySeed` secret değeri ve migration uygulanmış veritabanı zorunludur; uygulama otomatik migration çalıştırmaz.
 - Sipariş/stok Service katmanı hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
-- 26 Ağustos 2026 doğrulamasında `MSSQLLocalDB` otomatik örneği başlatılamadığı için ilişkisel testlerin çalışma zamanı sonucu alınamamıştır; test keşfi on sekiz testi başarıyla listeler ve çözüm 0 hata/uyarıyla derlenir.
+- 26 Ağustos 2026 doğrulamasında `MSSQLLocalDB` otomatik örneği başlatılamadığı için ilişkisel testlerin çalışma zamanı sonucu alınamamıştır; test keşfi yirmi iki testi başarıyla listeler, LocalDB gerektirmeyen dokuz test geçer ve çözüm 0 hata/uyarıyla derlenir.
 - İlişkisel test altyapısı Windows ve kurulu SQL Server LocalDB gerektirir; CI ve çapraz platform test hedefi henüz yoktur.
 - LocalDB geliştirme için uygundur fakat production veya çok kullanıcılı deployment hedefi değildir.
 
