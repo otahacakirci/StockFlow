@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using StockFlow.Data;
 
@@ -71,11 +72,11 @@ internal sealed class SqlServerTestDatabase : IAsyncDisposable
             options.UseSqlServer(_connectionString));
     }
 
-    internal ApplicationDbContext CreateDbContext()
+    internal ApplicationDbContext CreateDbContext(params IInterceptor[] interceptors)
     {
         ThrowIfDisposed();
         EnsureSafeTarget();
-        return CreateDbContextCore();
+        return CreateDbContextCore(interceptors);
     }
 
     internal async Task InitializeAsync()
@@ -175,13 +176,17 @@ internal sealed class SqlServerTestDatabase : IAsyncDisposable
         ValidateConnectionString(_connectionString);
     }
 
-    private ApplicationDbContext CreateDbContextCore()
+    private ApplicationDbContext CreateDbContextCore(params IInterceptor[] interceptors)
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(_connectionString)
-            .Options;
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlServer(_connectionString);
 
-        return new ApplicationDbContext(options);
+        if (interceptors.Length > 0)
+        {
+            optionsBuilder.AddInterceptors(interceptors);
+        }
+
+        return new ApplicationDbContext(optionsBuilder.Options);
     }
 
     private async Task DeleteDatabaseAsync()

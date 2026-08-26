@@ -2,7 +2,7 @@
 title: "StockFlow Mevcut Teknik Durum"
 status: current
 authority: descriptive
-last_reviewed: "2026-08-24"
+last_reviewed: "2026-08-26"
 review_triggers:
   - application-code-change
   - package-change
@@ -41,15 +41,18 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - Identity cookie'si HttpOnly, Secure, SameSite=Lax, sekiz saatlik kayan süre ve `.StockFlow.Auth` adıyla yapılandırılmıştır. `UseAuthentication`, routing ile authorization arasında çalışır.
 - `Admin` ve `Employee` rol adları tek sabit kaynaktadır. Başlangıç kullanıcıları User Secrets/ortam yapılandırmasından idempotent seed edilir; eksik/geçersiz ayar uygulamayı hassas değer göstermeden durdurur.
 - `HomeController` ve varsayılan Razor şablon sayfaları dışında hedef yönetim ekranları yoktur.
-- Service katmanı ve yönetim ekranlarına ait ViewModel akışları henüz yoktur. Login formu ayrı, doğrulamalı bir ViewModel kullanır.
+- `IOrderService`/`OrderService` ve güvenli Draft giriş modelleri eklenmiştir. Service; Sale/Purchase taraf doğrulamasını, zorunlu audit kullanıcısını, 32 karakterlik sunucu sipariş numarasını, yeni kalemlerde fiyat snapshot'ını, mevcut Draft satırlarında snapshot korumasını ve toplam hesabını yönetir.
+- Draft oluşturma/düzenleme stok değiştirmez. Confirm; bütün stok kontrollerinden sonra stokları, `StockMovement` kayıtlarını ve terminal `Confirmed` durumunu açık SQL transaction ve tek `SaveChangesAsync` sınırında yazar. Cancel stok hareketi üretmeden terminaldir; yalnız hareket geçmişi olmayan Draft sipariş fiziksel silinir.
+- Beklenen Service hataları `Validation`, `NotFound` ve `BusinessRule` kategorili tipli sonuçlarla ayrılır; beklenmeyen persistence hataları yapılandırılmış loglanır, transaction geri alınır ve yeniden fırlatılır.
+- Yönetim Controller ve Razor ekranları henüz yoktur. Login formu ayrı, doğrulamalı bir ViewModel kullanır.
 - Kaynak kontrollü ayarlarda bağlantı dizesi, başlangıç e-postası veya parola yoktur. LocalDB ve Identity seed değerleri güvenli yapılandırmada kalır.
-- Sekiz xUnit testi test hedefi güvenlik bariyerlerini, migration zincirini, seed tekrarının kopya üretmediğini, mevcut kullanıcıya eksik rolü eklediğini ve eksik yapılandırmanın veritabanı erişiminden önce fail-fast olduğunu doğrular.
+- On sekiz xUnit testi bulunur. On yeni `OrderService` testi Draft create/update, snapshot/total, Purchase/Sale confirm, yetersiz stok atomikliği, SaveChanges sonrası rollback, cancel, Draft delete, iki terminal durum ve kategorili hata sonuçlarını kapsar.
 - Veritabanına dokunan her test, yalnız `(localdb)\MSSQLLocalDB` üzerinde benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur, migration uygular ve test sonunda veritabanını siler. Test altyapısı uygulama yapılandırmasını veya dış bağlantı dizesini kabul etmez.
 - `.gitignore`, `.gitattributes` ve staged içeriği denetleyen repository hygiene betiği GitHub öncesi güvenlik tabanını oluşturur.
 
 ## Doğrulanmış build taban çizgisi
 
-24 Ağustos 2026 tarihinde solution derlemesi (`dotnet build StockFlow.slnx --no-restore`) sonucu:
+26 Ağustos 2026 tarihinde solution derlemesi (`dotnet build StockFlow.slnx --no-restore`) sonucu:
 
 - 0 hata
 - 0 uyarı
@@ -59,18 +62,18 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 | Alan | Mevcut | Hedef |
 | --- | --- | --- |
 | Kimlik | Cookie Identity, özel MVC login/logout, global auth fallback ve idempotent Admin/Employee seed hazır | İş ekranlarında rol matrisi ve role göre navigasyon |
-| Veri | Domain entity/mapping/migration hazır ve LocalDB'ye uygulanmış; uygulama akışı henüz veritabanını kullanmıyor | EF Core 10 + SQL Server + Service üzerinden kalıcı veri akışı |
-| Uygulama akışı | Yalnız varsayılan MVC akışı | İnce Controller, Service iş kuralları, ViewModel sınırı |
+| Veri | Domain entity/mapping/migration ve sipariş/stok Service kalıcılık akışı hazır | Diğer yönetim Service'leri ve Controller akışları |
+| Uygulama akışı | Sipariş/stok iş kuralları Service ve ViewModel sınırında hazır; varsayılan MVC ekranları Service'i çağırmıyor | İnce Controller ve yönetim ekranlarının Service'lere bağlanması |
 | Arayüz | Varsayılan Razor sayfaları | MVC yönetim ekranları; API yalnızca bonus salt-okunur kapsam |
-| Domain | ApplicationUser dahil çekirdek kalıcı entity'ler hazır | Service tabanlı iş akışlarında kullanıcı/audit bağının kullanılması |
-| Test | SQL Server üzerinde sekiz izole altyapı/Identity xUnit testi var | Kritik sipariş/stok kurallarını kanıtlayan ek izole Service testleri |
+| Domain | Sipariş yaşam döngüsü, stok hareketleri ve CreatedBy audit bağı Service akışında kullanılıyor | Kalan Category/Product/Customer/Supplier yönetim akışları |
+| Test | SQL Server hedefli sekiz altyapı/Identity ve on sipariş/stok Service testi var | LocalDB kullanılabilir ortamda yeni ilişkisel paketin tam başarılı koşusunun alınması |
 
 ## Bilinen riskler ve boşluklar
 
 - İş ekranları bulunmadığı için Admin/Employee rol matrisi henüz controller/action ve navigasyon seviyesinde uygulanmamıştır.
 - Uygulama çalışmadan önce dört `IdentitySeed` secret değeri ve migration uygulanmış veritabanı zorunludur; uygulama otomatik migration çalıştırmaz.
-- Service katmanı, güvenli ViewModel sınırı ve yönetim ekranları henüz yoktur.
-- Kritik sipariş/stok kurallarını doğrulayan testler henüz bulunmamaktadır.
+- Sipariş/stok Service katmanı hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
+- 26 Ağustos 2026 doğrulamasında `MSSQLLocalDB` otomatik örneği başlatılamadığı için ilişkisel testlerin çalışma zamanı sonucu alınamamıştır; test keşfi on sekiz testi başarıyla listeler ve çözüm 0 hata/uyarıyla derlenir.
 - İlişkisel test altyapısı Windows ve kurulu SQL Server LocalDB gerektirir; CI ve çapraz platform test hedefi henüz yoktur.
 - LocalDB geliştirme için uygundur fakat production veya çok kullanıcılı deployment hedefi değildir.
 

@@ -4,7 +4,7 @@ StockFlow; kategori, ürün, tedarikçi, müşteri, satın alma/satış sipariş
 
 ## Mevcut durum
 
-Depodaki uygulama erken aşamadadır. Şu anda .NET 10 MVC/Razor temeli, EF Core domain modeli, LocalDB kalıcılığı ve cookie tabanlı ASP.NET Core Identity bulunur. Uygulama özel MVC login/logout akışı kullanır; Admin ve Employee başlangıç kullanıcıları güvenli yapılandırmadan idempotent seed edilir. Service katmanı ve yönetim ekranları henüz uygulanmamıştır. xUnit projesi Identity seed davranışını kanıtlar; kritik sipariş/stok testleri sonraki aşamadadır.
+Depodaki uygulama erken aşamadadır. Şu anda .NET 10 MVC/Razor temeli, EF Core domain modeli, LocalDB kalıcılığı, cookie tabanlı ASP.NET Core Identity ve sipariş/stok Service katmanı bulunur. Uygulama özel MVC login/logout akışı kullanır; Admin ve Employee başlangıç kullanıcıları güvenli yapılandırmadan idempotent seed edilir. `OrderService`; Sale/Purchase Draft oluşturma ve düzenleme, sunucu fiyat snapshot'ı, toplam hesaplama, atomik confirm, cancel ve yalnız Draft silme kurallarını yönetir. Yönetim Controller ve ekranları henüz uygulanmamıştır.
 
 Ayrıntılı mevcut-hedef farkları için [mevcut durum belgesine](docs/ai/current-state.md), normatif kapsam için [ürün spesifikasyonuna](docs/product-spec.md) bakın.
 
@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-
 
 `StockFlow.Tests`, veritabanına dokunan her test için `(localdb)\MSSQLLocalDB` üzerinde `StockFlow_Tests_<guid>` adlı benzersiz bir veritabanı oluşturur, gerçek migration zincirini uygular ve test sonunda veritabanını siler. Test altyapısı uygulama ayarlarını, User Secrets değerlerini veya ortam connection string'lerini okumaz; yalnız sabit LocalDB örneğini ve güvenli test veritabanı adı biçimini kabul eder. LocalDB kullanılamıyorsa testler geliştirme veritabanına veya InMemory sağlayıcısına geri dönmeden açıklayıcı bir önkoşul hatasıyla başarısız olur.
 
-Sekiz xUnit testi; test hedefi güvenlik bariyerlerini, migration smoke davranışını, seed işleminin tekrar çalıştırıldığında kopya üretmemesini, mevcut kullanıcıya eksik rol eklenmesini ve eksik güvenli yapılandırmanın veritabanına erişmeden fail-fast olmasını doğrular. Kritik sipariş/stok testleri henüz bulunmaz. İlk test altyapısı Windows ve SQL Server LocalDB gerektirir; CI ve çapraz platform çalışması sonraki kapsamdadır.
+On sekiz xUnit testi bulunur. Mevcut altyapı ve Identity testlerine eklenen on `OrderService` testi; Sale/Purchase Draft akışlarını, fiyat snapshot'ını, toplamı, stok değişmezliğini, iki yönlü confirm hareketlerini, yetersiz stok ve kalıcılaştırma hatasında rollback'i, cancel/silme davranışını, terminal durumları ve hata kategorilerini kapsar. İlk test altyapısı Windows ve SQL Server LocalDB gerektirir; CI ve çapraz platform çalışması sonraki kapsamdadır.
 
 ## GitHub öncesi repo hijyeni
 

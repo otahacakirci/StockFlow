@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using StockFlow.Data;
 using StockFlow.Entities;
 using StockFlow.Options;
+using StockFlow.Services.Orders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,8 @@ builder.Services
     .ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<IdentitySeedOptions>, IdentitySeedOptionsValidator>();
 builder.Services.AddScoped<IdentityDataSeeder>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services
     .AddAuthorizationBuilder()

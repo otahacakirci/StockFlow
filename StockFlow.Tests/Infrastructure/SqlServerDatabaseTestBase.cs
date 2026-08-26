@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using StockFlow.Data;
 
 namespace StockFlow.Tests.Infrastructure;
@@ -14,9 +15,9 @@ public abstract class SqlServerDatabaseTestBase : IAsyncLifetime
         _testDatabase.AddDbContext(services);
     }
 
-    protected ApplicationDbContext CreateDbContext()
+    protected ApplicationDbContext CreateDbContext(params IInterceptor[] interceptors)
     {
-        return _testDatabase.CreateDbContext();
+        return _testDatabase.CreateDbContext(interceptors);
     }
 
     public Task InitializeAsync()
