@@ -73,7 +73,10 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
     public async Task UpdateDraftAsync_PreservesExistingSnapshotAndUsesCurrentPriceForNewItem()
     {
         var seed = await SeedAsync();
-        var orderId = await CreateDraftAsync(SaleInput(seed, (seed.FirstProductId, 1)));
+        var orderId = await CreateDraftAsync(SaleInput(
+            seed,
+            (seed.FirstProductId, 1),
+            (seed.SecondProductId, 1)));
 
         await using (var priceContext = CreateDbContext())
         {
@@ -91,11 +94,11 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
                 PurchaseInput(
                     seed,
                     (seed.FirstProductId, 2),
-                    (seed.SecondProductId, 3)));
+                    (seed.ThirdProductId, 3)));
 
             var updated = AssertSuccess(result);
             Assert.Equal(OrderStatus.Draft, updated.Status);
-            Assert.Equal(46.75m, updated.TotalAmount);
+            Assert.Equal(34.00m, updated.TotalAmount);
         }
 
         await using var verificationContext = CreateDbContext();
@@ -111,8 +114,9 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
             12.50m,
             order.Items.Single(item => item.ProductId == seed.FirstProductId).UnitPrice);
         Assert.Equal(
-            7.25m,
-            order.Items.Single(item => item.ProductId == seed.SecondProductId).UnitPrice);
+            3.00m,
+            order.Items.Single(item => item.ProductId == seed.ThirdProductId).UnitPrice);
+        Assert.DoesNotContain(order.Items, item => item.ProductId == seed.SecondProductId);
         Assert.Empty(await verificationContext.StockMovements.ToListAsync());
         Assert.Equal(10, await verificationContext.Products
             .Where(product => product.Id == seed.FirstProductId)
@@ -414,6 +418,15 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
             MinimumStockQuantity = 1,
             Category = category
         };
+        var thirdProduct = new Product
+        {
+            Name = "Third Product",
+            Sku = $"THIRD-{Guid.NewGuid():N}",
+            Price = 3.00m,
+            StockQuantity = 8,
+            MinimumStockQuantity = 1,
+            Category = category
+        };
         var user = new ApplicationUser
         {
             Id = CreatorUserId,
@@ -426,14 +439,15 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
             ConcurrencyStamp = Guid.NewGuid().ToString("N")
         };
 
-        dbContext.AddRange(customer, supplier, firstProduct, secondProduct, user);
+        dbContext.AddRange(customer, supplier, firstProduct, secondProduct, thirdProduct, user);
         await dbContext.SaveChangesAsync();
 
         return new SeedData(
             customer.Id,
             supplier.Id,
             firstProduct.Id,
-            secondProduct.Id);
+            secondProduct.Id,
+            thirdProduct.Id);
     }
 
     private async Task<int> CreateDraftAsync(OrderDraftInputModel input)
@@ -521,7 +535,8 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
         int CustomerId,
         int SupplierId,
         int FirstProductId,
-        int SecondProductId);
+        int SecondProductId,
+        int ThirdProductId);
 
     private sealed class FixedTimeProvider : TimeProvider
     {

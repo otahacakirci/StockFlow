@@ -14,11 +14,11 @@ review_triggers:
 ## Son doğrulama
 
 - Tarih: 26 Ağustos 2026
-- Kapsam: Sipariş/stok Service katmanı ve ilişkisel xUnit senaryoları
+- Kapsam: `OrderService` davranış-korumalı clean code refactor'ı ve ilişkisel xUnit senaryoları
 
 ## Son tamamlanan değişiklik
 
-`IOrderService`/`OrderService`, güvenli Draft giriş modelleri ve kategorili Service sonuçları eklendi. Service; Sale/Purchase taraf ayrımını, zorunlu CreatedBy audit bağını, sunucu sipariş numarasını, fiyat snapshot'ını, toplam hesabını, Draft create/update, atomik confirm, cancel ve yalnız Draft delete davranışlarını `ApplicationDbContext` üzerinden yürütüyor. Confirm bütün stokları önceden doğruluyor; stok, `StockMovement` ve durum değişikliklerini açık transaction içinde tek kalıcılaştırma çağrısıyla yazıyor, persistence hatasında rollback ve change-tracker temizliği yapıyor. On yeni ilişkisel testle birlikte çözümde on sekiz test bulunuyor.
+`OrderService`, dış sözleşmeleri, hata kodlarını, kullanıcı mesajlarını ve iş kurallarını değiştirmeden refactor edildi. Create/Update entity kurma ve Draft satır eşitleme adımlarına; giriş ve kalıcı Draft doğrulaması küçük yardımcı metotlara ayrıldı. Confirm, Sale yetersizliği veya Purchase taşması için bütün yeni stok değerlerini entity mutation başlamadan üreten özel bir `StockConfirmationPlan` kullanıyor; plan uygulandıktan sonra stok, `StockMovement` ve terminal durum açık transaction içinde tek `SaveChangesAsync` ile yazılıyor. Create/Update/Cancel/Delete akışlarının tekrarlanan persistence hata temizliği tek yardımcıda toplandı; Confirm kendi rollback sınırını koruyor. Mevcut Draft update testi, aynı akışta kalan satır snapshot'ının korunmasını, yeni satırın güncel fiyatını, kaldırılan satırın silinmesini ve toplamın yeniden hesaplanmasını doğrulayacak şekilde güçlendirildi. Test sayısı on sekiz olarak korundu.
 
 ## Doğrulama kanıtı
 

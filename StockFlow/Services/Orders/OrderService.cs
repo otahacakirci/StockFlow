@@ -51,46 +51,10 @@ public sealed class OrderService(
         }
 
         var validatedDraft = validation.Value!;
-        var order = new Order
-        {
-            OrderNumber = Guid.NewGuid().ToString("N"),
-            Type = input.Type,
-            Status = OrderStatus.Draft,
-            OrderDate = timeProvider.GetUtcNow().UtcDateTime,
-            TotalAmount = validatedDraft.TotalAmount,
-            CustomerId = input.Type == OrderType.Sale ? input.CustomerId : null,
-            SupplierId = input.Type == OrderType.Purchase ? input.SupplierId : null,
-            CreatedByUserId = createdByUserId,
-            Items = validatedDraft.Items
-                .Select(item => new OrderItem
-                {
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice
-                })
-                .ToList()
-        };
+        var order = CreateDraftOrder(input, validatedDraft, createdByUserId);
 
         dbContext.Orders.Add(order);
-
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
-                exception,
-                "Draft order creation failed for order number {OrderNumber}.",
-                order.OrderNumber);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+        await PersistChangesAsync("create", order, cancellationToken);
 
         logger.LogInformation(
             "Draft order {OrderId} created with order number {OrderNumber} and {ItemCount} items.",
@@ -138,59 +102,8 @@ public sealed class OrderService(
         }
 
         var validatedDraft = validation.Value!;
-        var requestedProductIds = validatedDraft.Items
-            .Select(item => item.ProductId)
-            .ToHashSet();
-        var removedItems = order.Items
-            .Where(item => !requestedProductIds.Contains(item.ProductId))
-            .ToList();
-
-        foreach (var removedItem in removedItems)
-        {
-            order.Items.Remove(removedItem);
-            dbContext.OrderItems.Remove(removedItem);
-        }
-
-        var existingItems = order.Items
-            .Where(item => requestedProductIds.Contains(item.ProductId))
-            .ToDictionary(item => item.ProductId);
-
-        foreach (var validatedItem in validatedDraft.Items)
-        {
-            if (existingItems.TryGetValue(validatedItem.ProductId, out var existingItem))
-            {
-                existingItem.Quantity = validatedItem.Quantity;
-                continue;
-            }
-
-            order.Items.Add(new OrderItem
-            {
-                ProductId = validatedItem.ProductId,
-                Quantity = validatedItem.Quantity,
-                UnitPrice = validatedItem.UnitPrice
-            });
-        }
-
-        order.Type = input.Type;
-        order.CustomerId = input.Type == OrderType.Sale ? input.CustomerId : null;
-        order.SupplierId = input.Type == OrderType.Purchase ? input.SupplierId : null;
-        order.TotalAmount = validatedDraft.TotalAmount;
-
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(exception, "Draft order {OrderId} update failed.", orderId);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+        ApplyDraftUpdate(order, input, validatedDraft);
+        await PersistChangesAsync("update", order, cancellationToken);
 
         logger.LogInformation(
             "Draft order {OrderId} updated with {ItemCount} items.",
@@ -235,95 +148,22 @@ public sealed class OrderService(
                     cancellationToken);
             }
 
-            var newStockQuantities = new Dictionary<int, int>();
-
-            if (order.Type == OrderType.Sale)
+            var stockPlanResult = CreateStockConfirmationPlan(order);
+            if (!stockPlanResult.IsSuccess)
             {
-                foreach (var item in order.Items)
-                {
-                    if (item.Product.StockQuantity < item.Quantity)
-                    {
-                        logger.LogWarning(
-                            "Order {OrderId} confirmation rejected for product {ProductId}: requested {RequestedQuantity}, available {AvailableQuantity}.",
-                            order.Id,
-                            item.ProductId,
-                            item.Quantity,
-                            item.Product.StockQuantity);
-
-                        return await RollbackFailureAsync(
-                            transaction,
-                            Failure(
-                                ServiceErrorCategory.BusinessRule,
-                                OrderServiceErrorCodes.InsufficientStock,
-                                "Siparişteki ürünlerden en az biri için yeterli stok bulunmuyor."),
-                            cancellationToken);
-                    }
-
-                    newStockQuantities[item.ProductId] = item.Product.StockQuantity - item.Quantity;
-                }
-            }
-            else
-            {
-                foreach (var item in order.Items)
-                {
-                    try
-                    {
-                        newStockQuantities[item.ProductId] = checked(
-                            item.Product.StockQuantity + item.Quantity);
-                    }
-                    catch (OverflowException)
-                    {
-                        logger.LogWarning(
-                            "Order {OrderId} confirmation would overflow stock quantity for product {ProductId}.",
-                            order.Id,
-                            item.ProductId);
-
-                        return await RollbackFailureAsync(
-                            transaction,
-                            Failure(
-                                ServiceErrorCategory.BusinessRule,
-                                OrderServiceErrorCodes.StockQuantityOutOfRange,
-                                "Onay işlemi ürün stok miktarını desteklenen aralığın dışına çıkarıyor."),
-                            cancellationToken);
-                    }
-                }
+                return await RollbackFailureAsync(
+                    transaction,
+                    ServiceResult<OrderMutationResult>.Failure(stockPlanResult.Error!),
+                    cancellationToken);
             }
 
-            var movementType = order.Type == OrderType.Purchase
-                ? StockMovementType.StockIn
-                : StockMovementType.StockOut;
-            var movementDate = timeProvider.GetUtcNow().UtcDateTime;
-
-            foreach (var item in order.Items)
-            {
-                item.Product.StockQuantity = newStockQuantities[item.ProductId];
-                dbContext.StockMovements.Add(new StockMovement
-                {
-                    OrderId = order.Id,
-                    ProductId = item.ProductId,
-                    Type = movementType,
-                    Quantity = item.Quantity,
-                    Description = BuildMovementDescription(order.OrderNumber, movementType),
-                    MovementDate = movementDate
-                });
-            }
-
-            order.TotalAmount = persistedValidation.Value;
-            order.Status = OrderStatus.Confirmed;
+            var stockPlan = stockPlanResult.Value!;
+            ApplyConfirmationPlan(order, persistedValidation.Value, stockPlan);
 
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            foreach (var item in order.Items)
-            {
-                logger.LogInformation(
-                    "Order {OrderId} committed stock movement {MovementType} for product {ProductId}, quantity {Quantity}, new stock {StockQuantity}.",
-                    order.Id,
-                    movementType,
-                    item.ProductId,
-                    item.Quantity,
-                    item.Product.StockQuantity);
-            }
+            LogCommittedStockMovements(order, stockPlan.MovementType);
 
             logger.LogInformation(
                 "Order {OrderId} confirmed as {OrderType} with {ItemCount} stock movements.",
@@ -367,21 +207,7 @@ public sealed class OrderService(
 
         order.Status = OrderStatus.Cancelled;
 
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(exception, "Draft order {OrderId} cancellation failed.", orderId);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+        await PersistChangesAsync("cancel", order, cancellationToken);
 
         logger.LogInformation("Draft order {OrderId} cancelled.", order.Id);
         return ServiceResult<OrderMutationResult>.Success(ToMutationResult(order));
@@ -428,6 +254,210 @@ public sealed class OrderService(
         dbContext.OrderItems.RemoveRange(order.Items);
         dbContext.Orders.Remove(order);
 
+        await PersistChangesAsync("delete", order, cancellationToken);
+
+        logger.LogInformation("Draft order {OrderId} deleted.", orderId);
+        return ServiceResult.Success();
+    }
+
+    private Order CreateDraftOrder(
+        OrderDraftInputModel input,
+        ValidatedDraft validatedDraft,
+        string createdByUserId)
+    {
+        var order = new Order
+        {
+            OrderNumber = Guid.NewGuid().ToString("N"),
+            Status = OrderStatus.Draft,
+            OrderDate = timeProvider.GetUtcNow().UtcDateTime,
+            TotalAmount = validatedDraft.TotalAmount,
+            CreatedByUserId = createdByUserId,
+            Items = validatedDraft.Items.Select(CreateOrderItem).ToList()
+        };
+
+        ApplyPartySelection(order, input);
+        return order;
+    }
+
+    private void ApplyDraftUpdate(
+        Order order,
+        OrderDraftInputModel input,
+        ValidatedDraft validatedDraft)
+    {
+        SynchronizeDraftItems(order, validatedDraft.Items);
+        ApplyPartySelection(order, input);
+        order.TotalAmount = validatedDraft.TotalAmount;
+    }
+
+    private void SynchronizeDraftItems(
+        Order order,
+        IReadOnlyList<ValidatedDraftItem> validatedItems)
+    {
+        var requestedProductIds = validatedItems
+            .Select(item => item.ProductId)
+            .ToHashSet();
+        var removedItems = order.Items
+            .Where(item => !requestedProductIds.Contains(item.ProductId))
+            .ToList();
+
+        foreach (var removedItem in removedItems)
+        {
+            order.Items.Remove(removedItem);
+            dbContext.OrderItems.Remove(removedItem);
+        }
+
+        var existingItems = order.Items.ToDictionary(item => item.ProductId);
+        foreach (var validatedItem in validatedItems)
+        {
+            if (existingItems.TryGetValue(validatedItem.ProductId, out var existingItem))
+            {
+                existingItem.Quantity = validatedItem.Quantity;
+            }
+            else
+            {
+                order.Items.Add(CreateOrderItem(validatedItem));
+            }
+        }
+    }
+
+    private static void ApplyPartySelection(Order order, OrderDraftInputModel input)
+    {
+        order.Type = input.Type;
+        order.CustomerId = input.Type == OrderType.Sale ? input.CustomerId : null;
+        order.SupplierId = input.Type == OrderType.Purchase ? input.SupplierId : null;
+    }
+
+    private static OrderItem CreateOrderItem(ValidatedDraftItem item)
+    {
+        return new OrderItem
+        {
+            ProductId = item.ProductId,
+            Quantity = item.Quantity,
+            UnitPrice = item.UnitPrice
+        };
+    }
+
+    private ServiceResult<StockConfirmationPlan> CreateStockConfirmationPlan(Order order)
+    {
+        return order.Type == OrderType.Sale
+            ? CreateSaleStockPlan(order)
+            : CreatePurchaseStockPlan(order);
+    }
+
+    private ServiceResult<StockConfirmationPlan> CreateSaleStockPlan(Order order)
+    {
+        var newStockQuantities = new Dictionary<int, int>(order.Items.Count);
+
+        foreach (var item in order.Items)
+        {
+            if (item.Product.StockQuantity < item.Quantity)
+            {
+                logger.LogWarning(
+                    "Order {OrderId} confirmation rejected for product {ProductId}: requested {RequestedQuantity}, available {AvailableQuantity}.",
+                    order.Id,
+                    item.ProductId,
+                    item.Quantity,
+                    item.Product.StockQuantity);
+
+                return StockPlanFailure(
+                    OrderServiceErrorCodes.InsufficientStock,
+                    "Siparişteki ürünlerden en az biri için yeterli stok bulunmuyor.");
+            }
+
+            newStockQuantities[item.ProductId] = item.Product.StockQuantity - item.Quantity;
+        }
+
+        return ServiceResult<StockConfirmationPlan>.Success(new StockConfirmationPlan(
+            StockMovementType.StockOut,
+            newStockQuantities));
+    }
+
+    private ServiceResult<StockConfirmationPlan> CreatePurchaseStockPlan(Order order)
+    {
+        var newStockQuantities = new Dictionary<int, int>(order.Items.Count);
+
+        foreach (var item in order.Items)
+        {
+            try
+            {
+                newStockQuantities[item.ProductId] = checked(
+                    item.Product.StockQuantity + item.Quantity);
+            }
+            catch (OverflowException)
+            {
+                logger.LogWarning(
+                    "Order {OrderId} confirmation would overflow stock quantity for product {ProductId}.",
+                    order.Id,
+                    item.ProductId);
+
+                return StockPlanFailure(
+                    OrderServiceErrorCodes.StockQuantityOutOfRange,
+                    "Onay işlemi ürün stok miktarını desteklenen aralığın dışına çıkarıyor.");
+            }
+        }
+
+        return ServiceResult<StockConfirmationPlan>.Success(new StockConfirmationPlan(
+            StockMovementType.StockIn,
+            newStockQuantities));
+    }
+
+    private void ApplyConfirmationPlan(
+        Order order,
+        decimal totalAmount,
+        StockConfirmationPlan stockPlan)
+    {
+        var movementDate = timeProvider.GetUtcNow().UtcDateTime;
+
+        foreach (var item in order.Items)
+        {
+            item.Product.StockQuantity = stockPlan.NewStockQuantities[item.ProductId];
+            dbContext.StockMovements.Add(CreateStockMovement(
+                order,
+                item,
+                stockPlan.MovementType,
+                movementDate));
+        }
+
+        order.TotalAmount = totalAmount;
+        order.Status = OrderStatus.Confirmed;
+    }
+
+    private static StockMovement CreateStockMovement(
+        Order order,
+        OrderItem item,
+        StockMovementType movementType,
+        DateTime movementDate)
+    {
+        return new StockMovement
+        {
+            OrderId = order.Id,
+            ProductId = item.ProductId,
+            Type = movementType,
+            Quantity = item.Quantity,
+            Description = BuildMovementDescription(order.OrderNumber, movementType),
+            MovementDate = movementDate
+        };
+    }
+
+    private void LogCommittedStockMovements(Order order, StockMovementType movementType)
+    {
+        foreach (var item in order.Items)
+        {
+            logger.LogInformation(
+                "Order {OrderId} committed stock movement {MovementType} for product {ProductId}, quantity {Quantity}, new stock {StockQuantity}.",
+                order.Id,
+                movementType,
+                item.ProductId,
+                item.Quantity,
+                item.Product.StockQuantity);
+        }
+    }
+
+    private async Task PersistChangesAsync(
+        string operation,
+        Order order,
+        CancellationToken cancellationToken)
+    {
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -439,13 +469,15 @@ public sealed class OrderService(
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Draft order {OrderId} deletion failed.", orderId);
+            logger.LogError(
+                exception,
+                "Order persistence operation {Operation} failed for order {OrderId} with order number {OrderNumber}.",
+                operation,
+                order.Id,
+                order.OrderNumber);
             dbContext.ChangeTracker.Clear();
             throw;
         }
-
-        logger.LogInformation("Draft order {OrderId} deleted.", orderId);
-        return ServiceResult.Success();
     }
 
     private async Task<ServiceResult<ValidatedDraft>> ValidateDraftInputAsync(
@@ -453,20 +485,10 @@ public sealed class OrderService(
         IReadOnlyDictionary<int, decimal>? existingPrices,
         CancellationToken cancellationToken)
     {
-        if (input is null)
+        var shapeError = ValidateDraftInputShape(input);
+        if (shapeError is not null)
         {
-            return DraftFailure(
-                ServiceErrorCategory.Validation,
-                OrderServiceErrorCodes.InputRequired,
-                "Sipariş bilgileri zorunludur.");
-        }
-
-        if (!Enum.IsDefined(typeof(OrderType), input.Type))
-        {
-            return DraftFailure(
-                ServiceErrorCategory.Validation,
-                OrderServiceErrorCodes.InvalidOrderType,
-                "Sipariş türü geçersizdir.");
+            return ServiceResult<ValidatedDraft>.Failure(shapeError);
         }
 
         var partyValidation = await ValidateInputPartyAsync(input, cancellationToken);
@@ -475,45 +497,8 @@ public sealed class OrderService(
             return ServiceResult<ValidatedDraft>.Failure(partyValidation);
         }
 
-        if (input.Items is null || input.Items.Count == 0)
-        {
-            return DraftFailure(
-                ServiceErrorCategory.Validation,
-                OrderServiceErrorCodes.ItemsRequired,
-                "Sipariş en az bir kalem içermelidir.");
-        }
-
-        if (input.Items.Any(item => item.ProductId <= 0))
-        {
-            return DraftFailure(
-                ServiceErrorCategory.Validation,
-                OrderServiceErrorCodes.InvalidProduct,
-                "Her sipariş kalemi geçerli bir ürün seçmelidir.");
-        }
-
-        if (input.Items.Any(item => item.Quantity <= 0))
-        {
-            return DraftFailure(
-                ServiceErrorCategory.Validation,
-                OrderServiceErrorCodes.InvalidQuantity,
-                "Sipariş kalemi miktarı sıfırdan büyük olmalıdır.");
-        }
-
         var productIds = input.Items.Select(item => item.ProductId).ToList();
-        if (productIds.Distinct().Count() != productIds.Count)
-        {
-            return DraftFailure(
-                ServiceErrorCategory.Validation,
-                OrderServiceErrorCodes.DuplicateProduct,
-                "Aynı ürün siparişte birden fazla kalem olarak yer alamaz.");
-        }
-
-        var products = await dbContext.Products
-            .AsNoTracking()
-            .Where(product => productIds.Contains(product.Id))
-            .Select(product => new ProductPrice(product.Id, product.Price))
-            .ToDictionaryAsync(product => product.ProductId, cancellationToken);
-
+        var products = await LoadProductPricesAsync(productIds, cancellationToken);
         if (products.Count != productIds.Count)
         {
             return DraftFailure(
@@ -522,10 +507,82 @@ public sealed class OrderService(
                 "Sipariş kalemlerinden en az birine ait ürün bulunamadı.");
         }
 
-        var validatedItems = new List<ValidatedDraftItem>(input.Items.Count);
+        return BuildValidatedDraft(input.Items, products, existingPrices);
+    }
+
+    private static ServiceError? ValidateDraftInputShape(OrderDraftInputModel? input)
+    {
+        if (input is null)
+        {
+            return CreateError(
+                ServiceErrorCategory.Validation,
+                OrderServiceErrorCodes.InputRequired,
+                "Sipariş bilgileri zorunludur.");
+        }
+
+        if (!Enum.IsDefined(typeof(OrderType), input.Type))
+        {
+            return CreateError(
+                ServiceErrorCategory.Validation,
+                OrderServiceErrorCodes.InvalidOrderType,
+                "Sipariş türü geçersizdir.");
+        }
+
+        if (input.Items is null || input.Items.Count == 0)
+        {
+            return CreateError(
+                ServiceErrorCategory.Validation,
+                OrderServiceErrorCodes.ItemsRequired,
+                "Sipariş en az bir kalem içermelidir.");
+        }
+
+        if (input.Items.Any(item => item.ProductId <= 0))
+        {
+            return CreateError(
+                ServiceErrorCategory.Validation,
+                OrderServiceErrorCodes.InvalidProduct,
+                "Her sipariş kalemi geçerli bir ürün seçmelidir.");
+        }
+
+        if (input.Items.Any(item => item.Quantity <= 0))
+        {
+            return CreateError(
+                ServiceErrorCategory.Validation,
+                OrderServiceErrorCodes.InvalidQuantity,
+                "Sipariş kalemi miktarı sıfırdan büyük olmalıdır.");
+        }
+
+        if (input.Items.Select(item => item.ProductId).Distinct().Count() != input.Items.Count)
+        {
+            return CreateError(
+                ServiceErrorCategory.Validation,
+                OrderServiceErrorCodes.DuplicateProduct,
+                "Aynı ürün siparişte birden fazla kalem olarak yer alamaz.");
+        }
+
+        return null;
+    }
+
+    private async Task<IReadOnlyDictionary<int, ProductPrice>> LoadProductPricesAsync(
+        IReadOnlyCollection<int> productIds,
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.Products
+            .AsNoTracking()
+            .Where(product => productIds.Contains(product.Id))
+            .Select(product => new ProductPrice(product.Id, product.Price))
+            .ToDictionaryAsync(product => product.ProductId, cancellationToken);
+    }
+
+    private static ServiceResult<ValidatedDraft> BuildValidatedDraft(
+        IReadOnlyList<OrderItemInputModel> inputItems,
+        IReadOnlyDictionary<int, ProductPrice> products,
+        IReadOnlyDictionary<int, decimal>? existingPrices)
+    {
+        var validatedItems = new List<ValidatedDraftItem>(inputItems.Count);
         decimal totalAmount = 0;
 
-        foreach (var inputItem in input.Items)
+        foreach (var inputItem in inputItems)
         {
             var currentPrice = products[inputItem.ProductId].UnitPrice;
             if (currentPrice <= 0)
@@ -625,11 +682,25 @@ public sealed class OrderService(
                 "Sipariş türü geçersiz olduğu için onaylanamaz.");
         }
 
+        var partyError = await ValidatePersistedPartyAsync(order, cancellationToken);
+        if (partyError is not null)
+        {
+            return ServiceResult<decimal>.Failure(partyError);
+        }
+
+        return CalculatePersistedDraftTotal(order.Items);
+    }
+
+    private async Task<ServiceError?> ValidatePersistedPartyAsync(
+        Order order,
+        CancellationToken cancellationToken)
+    {
         if (order.Type == OrderType.Sale)
         {
             if (order.CustomerId is null or <= 0 || order.SupplierId is not null)
             {
-                return AmountFailure(
+                return CreateError(
+                    ServiceErrorCategory.BusinessRule,
                     OrderServiceErrorCodes.InvalidParty,
                     "Satış siparişinin taraf bilgisi geçersizdir.");
             }
@@ -638,71 +709,48 @@ public sealed class OrderService(
                     customer => customer.Id == order.CustomerId.Value,
                     cancellationToken))
             {
-                return ServiceResult<decimal>.Failure(CreateError(
+                return CreateError(
                     ServiceErrorCategory.NotFound,
                     OrderServiceErrorCodes.CustomerNotFound,
-                    "Siparişe ait müşteri bulunamadı."));
-            }
-        }
-        else
-        {
-            if (order.SupplierId is null or <= 0 || order.CustomerId is not null)
-            {
-                return AmountFailure(
-                    OrderServiceErrorCodes.InvalidParty,
-                    "Satın alma siparişinin taraf bilgisi geçersizdir.");
+                    "Siparişe ait müşteri bulunamadı.");
             }
 
-            if (!await dbContext.Suppliers.AnyAsync(
-                    supplier => supplier.Id == order.SupplierId.Value,
-                    cancellationToken))
-            {
-                return ServiceResult<decimal>.Failure(CreateError(
-                    ServiceErrorCategory.NotFound,
-                    OrderServiceErrorCodes.SupplierNotFound,
-                    "Siparişe ait tedarikçi bulunamadı."));
-            }
+            return null;
         }
 
-        if (order.Items.Count == 0)
+        if (order.SupplierId is null or <= 0 || order.CustomerId is not null)
         {
-            return AmountFailure(
-                OrderServiceErrorCodes.ItemsRequired,
-                "Kalemi bulunmayan sipariş onaylanamaz.");
+            return CreateError(
+                ServiceErrorCategory.BusinessRule,
+                OrderServiceErrorCodes.InvalidParty,
+                "Satın alma siparişinin taraf bilgisi geçersizdir.");
         }
 
-        if (order.Items.Select(item => item.ProductId).Distinct().Count() != order.Items.Count)
+        if (!await dbContext.Suppliers.AnyAsync(
+                supplier => supplier.Id == order.SupplierId.Value,
+                cancellationToken))
         {
-            return AmountFailure(
-                OrderServiceErrorCodes.DuplicateProduct,
-                "Aynı ürünü birden fazla kez içeren sipariş onaylanamaz.");
+            return CreateError(
+                ServiceErrorCategory.NotFound,
+                OrderServiceErrorCodes.SupplierNotFound,
+                "Siparişe ait tedarikçi bulunamadı.");
+        }
+
+        return null;
+    }
+
+    private static ServiceResult<decimal> CalculatePersistedDraftTotal(
+        ICollection<OrderItem> items)
+    {
+        var itemError = ValidatePersistedItems(items);
+        if (itemError is not null)
+        {
+            return ServiceResult<decimal>.Failure(itemError);
         }
 
         decimal totalAmount = 0;
-        foreach (var item in order.Items)
+        foreach (var item in items)
         {
-            if (item.Product is null)
-            {
-                return ServiceResult<decimal>.Failure(CreateError(
-                    ServiceErrorCategory.NotFound,
-                    OrderServiceErrorCodes.ProductNotFound,
-                    "Sipariş kalemlerinden en az birine ait ürün bulunamadı."));
-            }
-
-            if (item.Quantity <= 0)
-            {
-                return AmountFailure(
-                    OrderServiceErrorCodes.InvalidQuantity,
-                    "Geçersiz miktarlı sipariş kalemi onaylanamaz.");
-            }
-
-            if (item.UnitPrice <= 0)
-            {
-                return AmountFailure(
-                    OrderServiceErrorCodes.InvalidProductPrice,
-                    "Geçersiz fiyat snapshot'ı bulunan sipariş onaylanamaz.");
-            }
-
             if (!TryAddLineAmount(totalAmount, item.Quantity, item.UnitPrice, out totalAmount))
             {
                 return AmountFailure(
@@ -712,6 +760,54 @@ public sealed class OrderService(
         }
 
         return ServiceResult<decimal>.Success(totalAmount);
+    }
+
+    private static ServiceError? ValidatePersistedItems(ICollection<OrderItem> items)
+    {
+        if (items.Count == 0)
+        {
+            return CreateError(
+                ServiceErrorCategory.BusinessRule,
+                OrderServiceErrorCodes.ItemsRequired,
+                "Kalemi bulunmayan sipariş onaylanamaz.");
+        }
+
+        if (items.Select(item => item.ProductId).Distinct().Count() != items.Count)
+        {
+            return CreateError(
+                ServiceErrorCategory.BusinessRule,
+                OrderServiceErrorCodes.DuplicateProduct,
+                "Aynı ürünü birden fazla kez içeren sipariş onaylanamaz.");
+        }
+
+        foreach (var item in items)
+        {
+            if (item.Product is null)
+            {
+                return CreateError(
+                    ServiceErrorCategory.NotFound,
+                    OrderServiceErrorCodes.ProductNotFound,
+                    "Sipariş kalemlerinden en az birine ait ürün bulunamadı.");
+            }
+
+            if (item.Quantity <= 0)
+            {
+                return CreateError(
+                    ServiceErrorCategory.BusinessRule,
+                    OrderServiceErrorCodes.InvalidQuantity,
+                    "Geçersiz miktarlı sipariş kalemi onaylanamaz.");
+            }
+
+            if (item.UnitPrice <= 0)
+            {
+                return CreateError(
+                    ServiceErrorCategory.BusinessRule,
+                    OrderServiceErrorCodes.InvalidProductPrice,
+                    "Geçersiz fiyat snapshot'ı bulunan sipariş onaylanamaz.");
+            }
+        }
+
+        return null;
     }
 
     private static bool TryAddLineAmount(
@@ -810,6 +906,16 @@ public sealed class OrderService(
             message));
     }
 
+    private static ServiceResult<StockConfirmationPlan> StockPlanFailure(
+        string code,
+        string message)
+    {
+        return ServiceResult<StockConfirmationPlan>.Failure(CreateError(
+            ServiceErrorCategory.BusinessRule,
+            code,
+            message));
+    }
+
     private static ServiceError CreateError(
         ServiceErrorCategory category,
         string code,
@@ -852,4 +958,8 @@ public sealed class OrderService(
     private sealed record ValidatedDraft(
         IReadOnlyList<ValidatedDraftItem> Items,
         decimal TotalAmount);
+
+    private sealed record StockConfirmationPlan(
+        StockMovementType MovementType,
+        IReadOnlyDictionary<int, int> NewStockQuantities);
 }
