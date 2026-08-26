@@ -72,6 +72,12 @@
       "authority": "decision",
       "loadWhen": ["documentation", "authority-model", "context-system"],
       "reviewTriggers": ["authority-model-change", "canonical-source-change"]
+    },
+    {
+      "path": "docs/adr/0002-isolated-localdb-test-databases.md",
+      "authority": "decision",
+      "loadWhen": ["test", "persistence", "database", "architecture-decision"],
+      "reviewTriggers": ["test-database-change", "test-execution-platform-change", "persistence-provider-change"]
     }
   ],
   "validationCommands": [

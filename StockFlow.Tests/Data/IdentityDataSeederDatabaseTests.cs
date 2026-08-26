@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using StockFlow.Data;
 using StockFlow.Entities;
 using StockFlow.Options;
 using StockFlow.Security;
+using StockFlow.Tests.Infrastructure;
 
 namespace StockFlow.Tests.Data;
 
-public sealed class IdentityDataSeederTests
+public sealed class IdentityDataSeederDatabaseTests : SqlServerDatabaseTestBase
 {
     private const string AdminEmail = "admin@stockflow.test";
     private const string EmployeeEmail = "employee@stockflow.test";
@@ -22,7 +22,6 @@ public sealed class IdentityDataSeederTests
     {
         await using var serviceProvider = CreateServiceProvider();
 
-        await EnsureDatabaseCreatedAsync(serviceProvider);
         await RunSeederAsync(serviceProvider);
         await RunSeederAsync(serviceProvider);
 
@@ -50,7 +49,6 @@ public sealed class IdentityDataSeederTests
     {
         await using var serviceProvider = CreateServiceProvider();
 
-        await EnsureDatabaseCreatedAsync(serviceProvider);
         await using (var scope = serviceProvider.CreateAsyncScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -80,35 +78,12 @@ public sealed class IdentityDataSeederTests
         Assert.False(await verificationUserManager.CheckPasswordAsync(admin, ValidTestCredential));
     }
 
-    [Fact]
-    public async Task ResolveSeeder_WhenConfigurationIsMissing_FailsBeforeDatabaseAccess()
-    {
-        await using var serviceProvider = CreateServiceProvider(configureSeedUsers: false);
-
-        var exception = await Assert.ThrowsAsync<OptionsValidationException>(async () =>
-        {
-            await using var scope = serviceProvider.CreateAsyncScope();
-            _ = scope.ServiceProvider.GetRequiredService<IdentityDataSeeder>();
-            await Task.CompletedTask;
-        });
-
-        Assert.Contains(
-            exception.Failures,
-            failure => failure.StartsWith("IdentitySeed:Admin:Email", StringComparison.Ordinal));
-        Assert.Contains(
-            exception.Failures,
-            failure => failure.StartsWith("IdentitySeed:Employee:Password", StringComparison.Ordinal));
-    }
-
-    private static ServiceProvider CreateServiceProvider(bool configureSeedUsers = true)
+    private ServiceProvider CreateServiceProvider()
     {
         var services = new ServiceCollection();
-        var databaseRoot = new InMemoryDatabaseRoot();
-        var databaseName = Guid.NewGuid().ToString();
 
         services.AddLogging();
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseInMemoryDatabase(databaseName, databaseRoot));
+        AddTestDbContext(services);
         services
             .AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -118,32 +93,21 @@ public sealed class IdentityDataSeederTests
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-        var optionsBuilder = services
+        services
             .AddOptions<IdentitySeedOptions>()
-            .ValidateOnStart();
-
-        if (configureSeedUsers)
-        {
-            optionsBuilder.Configure(options =>
+            .Configure(options =>
             {
                 options.Admin.Email = AdminEmail;
                 options.Admin.Password = ValidTestCredential;
                 options.Employee.Email = EmployeeEmail;
                 options.Employee.Password = ValidTestCredential;
-            });
-        }
+            })
+            .ValidateOnStart();
 
         services.AddSingleton<IValidateOptions<IdentitySeedOptions>, IdentitySeedOptionsValidator>();
         services.AddScoped<IdentityDataSeeder>();
 
         return services.BuildServiceProvider();
-    }
-
-    private static async Task EnsureDatabaseCreatedAsync(ServiceProvider serviceProvider)
-    {
-        await using var scope = serviceProvider.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await dbContext.Database.EnsureCreatedAsync();
     }
 
     private static async Task RunSeederAsync(ServiceProvider serviceProvider)

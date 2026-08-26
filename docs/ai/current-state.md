@@ -17,11 +17,11 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 
 ## Çözüm envanteri
 
-- `StockFlow.slnx` tek bir `StockFlow/StockFlow.csproj` projesi içerir.
+- `StockFlow.slnx`, uygulama için `StockFlow/StockFlow.csproj` ve testler için `StockFlow.Tests/StockFlow.Tests.csproj` projelerini içerir.
 - Proje `net10.0`, nullable reference types ve implicit usings kullanır.
 - Uygulama ASP.NET Core MVC/Razor ile EF Core altyapısını aynı host içinde barındırır.
 - Paket envanterinde EF Core 10 SQL Server provider/design-time paketleri ve ASP.NET Core Identity EF store paketi bulunur; geçici JWT, IdentityModel ve Swagger paketleri yoktur.
-- Yerel araç manifesti `dotnet-ef` 10.0.11 sürümünü sabitler. `StockFlow.Tests` projesi xUnit 2.9.3 ve EF Core InMemory 10.0.11 kullanır.
+- Yerel araç manifesti `dotnet-ef` 10.0.11 sürümünü sabitler. `StockFlow.Tests` projesi xUnit 2.9.3 ve EF Core SQL Server provider 10.0.11 kullanır.
 
 ## Kalıcılık temeli
 
@@ -43,7 +43,8 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - `HomeController` ve varsayılan Razor şablon sayfaları dışında hedef yönetim ekranları yoktur.
 - Service katmanı ve yönetim ekranlarına ait ViewModel akışları henüz yoktur. Login formu ayrı, doğrulamalı bir ViewModel kullanır.
 - Kaynak kontrollü ayarlarda bağlantı dizesi, başlangıç e-postası veya parola yoktur. LocalDB ve Identity seed değerleri güvenli yapılandırmada kalır.
-- Üç izole xUnit testi seed tekrarının kopya üretmediğini, mevcut kullanıcıya eksik rolü eklediğini ve eksik yapılandırmanın veritabanı erişiminden önce fail-fast olduğunu doğrular.
+- Sekiz xUnit testi test hedefi güvenlik bariyerlerini, migration zincirini, seed tekrarının kopya üretmediğini, mevcut kullanıcıya eksik rolü eklediğini ve eksik yapılandırmanın veritabanı erişiminden önce fail-fast olduğunu doğrular.
+- Veritabanına dokunan her test, yalnız `(localdb)\MSSQLLocalDB` üzerinde benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur, migration uygular ve test sonunda veritabanını siler. Test altyapısı uygulama yapılandırmasını veya dış bağlantı dizesini kabul etmez.
 - `.gitignore`, `.gitattributes` ve staged içeriği denetleyen repository hygiene betiği GitHub öncesi güvenlik tabanını oluşturur.
 
 ## Doğrulanmış build taban çizgisi
@@ -62,7 +63,7 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 | Uygulama akışı | Yalnız varsayılan MVC akışı | İnce Controller, Service iş kuralları, ViewModel sınırı |
 | Arayüz | Varsayılan Razor sayfaları | MVC yönetim ekranları; API yalnızca bonus salt-okunur kapsam |
 | Domain | ApplicationUser dahil çekirdek kalıcı entity'ler hazır | Service tabanlı iş akışlarında kullanıcı/audit bağının kullanılması |
-| Test | Identity seed için üç izole xUnit testi var | Kritik sipariş/stok kurallarını kanıtlayan ek izole xUnit testleri |
+| Test | SQL Server üzerinde sekiz izole altyapı/Identity xUnit testi var | Kritik sipariş/stok kurallarını kanıtlayan ek izole Service testleri |
 
 ## Bilinen riskler ve boşluklar
 
@@ -70,6 +71,7 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - Uygulama çalışmadan önce dört `IdentitySeed` secret değeri ve migration uygulanmış veritabanı zorunludur; uygulama otomatik migration çalıştırmaz.
 - Service katmanı, güvenli ViewModel sınırı ve yönetim ekranları henüz yoktur.
 - Kritik sipariş/stok kurallarını doğrulayan testler henüz bulunmamaktadır.
+- İlişkisel test altyapısı Windows ve kurulu SQL Server LocalDB gerektirir; CI ve çapraz platform test hedefi henüz yoktur.
 - LocalDB geliştirme için uygundur fakat production veya çok kullanıcılı deployment hedefi değildir.
 
 Hassas değerleri belgelere veya yanıtlara kopyalamayın. Repository hygiene denetimi GitHub'a gönderim öncesinde çalıştırılmalıdır.

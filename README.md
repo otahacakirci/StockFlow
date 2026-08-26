@@ -51,7 +51,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-agent-conte
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-hygiene.ps1
 ```
 
-`StockFlow.Tests`, seed işleminin tekrar çalıştırıldığında kopya üretmediğini, mevcut kullanıcıya eksik rolü eklediğini ve eksik güvenli yapılandırmanın veritabanına erişmeden fail-fast olduğunu izole EF InMemory veritabanıyla doğrular. Kritik sipariş/stok testleri henüz bulunmaz.
+`StockFlow.Tests`, veritabanına dokunan her test için `(localdb)\MSSQLLocalDB` üzerinde `StockFlow_Tests_<guid>` adlı benzersiz bir veritabanı oluşturur, gerçek migration zincirini uygular ve test sonunda veritabanını siler. Test altyapısı uygulama ayarlarını, User Secrets değerlerini veya ortam connection string'lerini okumaz; yalnız sabit LocalDB örneğini ve güvenli test veritabanı adı biçimini kabul eder. LocalDB kullanılamıyorsa testler geliştirme veritabanına veya InMemory sağlayıcısına geri dönmeden açıklayıcı bir önkoşul hatasıyla başarısız olur.
+
+Sekiz xUnit testi; test hedefi güvenlik bariyerlerini, migration smoke davranışını, seed işleminin tekrar çalıştırıldığında kopya üretmemesini, mevcut kullanıcıya eksik rol eklenmesini ve eksik güvenli yapılandırmanın veritabanına erişmeden fail-fast olmasını doğrular. Kritik sipariş/stok testleri henüz bulunmaz. İlk test altyapısı Windows ve SQL Server LocalDB gerektirir; CI ve çapraz platform çalışması sonraki kapsamdadır.
 
 ## GitHub öncesi repo hijyeni
 

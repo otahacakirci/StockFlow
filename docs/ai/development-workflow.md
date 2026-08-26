@@ -23,6 +23,8 @@ review_triggers:
 
 - Controller, Service, ViewModel, Entity ve DbContext sınırlarını [hedef mimariye](architecture.md) göre koru.
 - Domain kuralını mümkün olan en dar Service testiyle kanıtla.
+- Veritabanına dokunan xUnit testlerinde test başına benzersiz LocalDB veritabanı oluşturan `SqlServerDatabaseTestBase` altyapısını kullan; uygulama bağlantı ayarlarını test sürecine yükleme.
+- Veritabanı gerektirmeyen saf doğrulama testlerinde LocalDB veritabanı oluşturma.
 - Entity veya form sözleşmesini değiştirirken doğrulama, mapping, persistence ve UI etkilerini birlikte ele al.
 - Hata mesajlarını güvenli; log alanlarını yapılandırılmış ve sorgulanabilir tut.
 - Secret veya gerçek başlangıç parolasını örnek dosyalara ekleme.

@@ -32,3 +32,4 @@ Başka durum değeri kullanılmaz.
 | ADR | Durum | Karar |
 | --- | --- | --- |
 | [0001](0001-ai-context-source-of-truth.md) | Accepted | Ajan bağlamının Markdown kanonik kaynak ve modüler belgelerle yönetilmesi |
+| [0002](0002-isolated-localdb-test-databases.md) | Accepted | Veritabanına dokunan xUnit testlerinin test başına benzersiz ve güvenlik kontrollü LocalDB veritabanı kullanması |
