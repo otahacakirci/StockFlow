@@ -2,7 +2,7 @@
 title: "StockFlow Proje Tanıtımı ve Özellik Spesifikasyonu"
 status: active
 authority: normative
-last_reviewed: "2026-08-18"
+last_reviewed: "2026-08-30"
 review_triggers:
   - product-scope-change
   - domain-rule-change
@@ -199,6 +199,8 @@ FR-PROD-04 [ZORUNLU] Price sıfırdan büyük; StockQuantity ve MinimumStockQuan
 FR-PROD-05 [ZORUNLU] Product listesinde Category bilgisi görünmelidir.
 
 FR-PROD-06 [ZORUNLU] Ürünü bulunan Category ile OrderItem veya StockMovement geçmişi bulunan Product fiziksel olarak silinmemelidir.
+
+FR-PROD-07 [ZORUNLU] Yeni Product sıfır veya pozitif başlangıç `StockQuantity` değeriyle oluşturulabilir; bu ilk durum `StockMovement` üretmez. Standart Product düzenleme akışı `StockQuantity` değerini değiştirmemeli; oluşturma sonrasındaki stok değişiklikleri zorunlu MVP'de sipariş onayıyla, bonus kapısı açılırsa audit kayıtlı manual adjustment ile yapılmalıdır.
 
 ### 5.3 Supplier ve Customer yönetimi
 

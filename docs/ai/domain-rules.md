@@ -2,7 +2,7 @@
 title: "StockFlow Yüksek Frekanslı Domain Kuralları"
 status: active
 authority: reference
-last_reviewed: "2026-08-18"
+last_reviewed: "2026-08-30"
 review_triggers:
   - domain-rule-change
   - role-matrix-change
@@ -35,6 +35,7 @@ Bu dosya uygulama sırasında sık gereken kuralların kısa indeksidir. Eksiksi
 - `Product.Sku` benzersizdir.
 - `Product.Price > 0`.
 - `StockQuantity >= 0` ve `MinimumStockQuantity >= 0`.
+- Product oluşturulurken nonnegative başlangıç stoğu kabul edilir ve ilk durum hareket üretmez; standart Product düzenlemesi mevcut `StockQuantity` değerini korur. Sonraki doğrudan stok düzeltmesi, `Adjustment` audit davranışıyla birlikte bonus kapsamıdır.
 - `OrderItem.Quantity > 0`.
 - `StockMovement.Quantity > 0`; yön `StockIn` veya `StockOut` türüyle belirlenir.
 - `Order.TotalAmount`, sunucuda hesaplanan `Quantity × UnitPrice` toplamıdır.

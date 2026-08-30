@@ -7,6 +7,7 @@ using StockFlow.Entities;
 using StockFlow.Options;
 using StockFlow.Services.Categories;
 using StockFlow.Services.Orders;
+using StockFlow.Services.Products;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<OrderStockConfirmationPlanner>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services
     .AddAuthorizationBuilder()
