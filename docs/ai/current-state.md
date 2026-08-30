@@ -2,7 +2,7 @@
 title: "StockFlow Mevcut Teknik Durum"
 status: current
 authority: descriptive
-last_reviewed: "2026-08-26"
+last_reviewed: "2026-08-28"
 review_triggers:
   - application-code-change
   - package-change
@@ -41,19 +41,21 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - Identity cookie'si HttpOnly, Secure, SameSite=Lax, sekiz saatlik kayan süre ve `.StockFlow.Auth` adıyla yapılandırılmıştır. `UseAuthentication`, routing ile authorization arasında çalışır.
 - `Admin` ve `Employee` rol adları tek sabit kaynaktadır. Başlangıç kullanıcıları User Secrets/ortam yapılandırmasından idempotent seed edilir; eksik/geçersiz ayar uygulamayı hassas değer göstermeden durdurur.
 - `HomeController` ve varsayılan Razor şablon sayfaları dışında hedef yönetim ekranları yoktur.
+- `ICategoryService`/`CategoryService` ve güvenli giriş, sorgu ve çıkış ViewModel'leri eklenmiştir. Service; ad doğrulama/trim, ad araması, whitelist sıralama, 20 varsayılan ve 100 üst sınırlı normalize sayfalama, `AsNoTracking` projection, bağlı ürün sayısı, detay, oluşturma ve düzenleme akışlarını yönetir.
+- Category fiziksel silme işlemi yalnız bağlı `Product` yoksa yapılır. Eksik kayıt ve bağlı ürün ihlali sırasıyla `NotFound` ve `BusinessRule` sonucu üretir; ad benzersizliği ürün sözleşmesinde veya veritabanında bulunmadığı için ek bir duplicate-name kuralı uygulanmaz.
 - `IOrderService`/`OrderService` ve güvenli Draft giriş modelleri eklenmiştir. Service; Sale/Purchase taraf doğrulamasını, zorunlu audit kullanıcısını, 32 karakterlik sunucu sipariş numarasını, yeni kalemlerde fiyat snapshot'ını, mevcut Draft satırlarında snapshot korumasını ve toplam hesabını yönetir.
 - `OrderService` dış sözleşmesini ve davranışını değiştirmeden kısa orchestration metotları kullanır; Draft doğrulama/satır eşitleme ve transaction dışı kalıcılaştırma hata temizliği özel yardımcı metotlarda ayrıştırılmıştır. Bağımlılıksız `internal` `OrderStockConfirmationPlanner`, Sale/Purchase yeni stok değerlerini entity mutation'dan önce hesaplar; planın tracked entity'lere ve hareketlere uygulanması ile transaction sınırı `OrderService` içinde kalır.
 - Draft oluşturma/düzenleme stok değiştirmez. Confirm; bütün stok kontrollerinden sonra stokları, `StockMovement` kayıtlarını ve terminal `Confirmed` durumunu açık SQL transaction ve tek `SaveChangesAsync` sınırında yazar. Cancel stok hareketi üretmeden terminaldir; yalnız hareket geçmişi olmayan Draft sipariş fiziksel silinir.
-- Beklenen Service hataları `Validation`, `NotFound` ve `BusinessRule` kategorili tipli sonuçlarla ayrılır; beklenmeyen persistence hataları yapılandırılmış loglanır, transaction geri alınır ve yeniden fırlatılır.
+- Beklenen Service hataları `Validation`, `NotFound` ve `BusinessRule` kategorili tipli sonuçlarla ayrılır. Beklenmeyen persistence hataları yapılandırılmış loglanıp ilgili change tracker temizlendikten sonra yeniden fırlatılır; sipariş onayı ayrıca açık transaction'ı geri alır.
 - Yönetim Controller ve Razor ekranları henüz yoktur. Login formu ayrı, doğrulamalı bir ViewModel kullanır.
 - Kaynak kontrollü ayarlarda bağlantı dizesi, başlangıç e-postası veya parola yoktur. LocalDB ve Identity seed değerleri güvenli yapılandırmada kalır.
-- Yirmi iki xUnit testi bulunur. On ilişkisel `OrderService` testi Draft create/update, korunan-yeni-kaldırılan satırlarla snapshot/total, Purchase/Sale confirm, yetersiz stok atomikliği, SaveChanges sonrası rollback, cancel, Draft delete, iki terminal durum ve kategorili hata sonuçlarını kapsar. Dört LocalDB'siz planner testi Sale/Purchase başarı kararlarını, yetersiz stok bağlamını ve Purchase taşmasını doğrular.
+- Otuz xUnit testi bulunur. Sekiz ilişkisel `CategoryService` testi sorgu/projection/sayfalama, detay, doğrulamalı create/update, ilişki korumalı delete ve kalıcılaştırma hata temizliğini kapsar. On ilişkisel `OrderService`, dört saf planner ve sekiz altyapı/Identity testi mevcut davranışları doğrular.
 - Veritabanına dokunan her test, yalnız `(localdb)\MSSQLLocalDB` üzerinde benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur, migration uygular ve test sonunda veritabanını siler. Test altyapısı uygulama yapılandırmasını veya dış bağlantı dizesini kabul etmez.
 - `.gitignore`, `.gitattributes` ve staged içeriği denetleyen repository hygiene betiği GitHub öncesi güvenlik tabanını oluşturur.
 
 ## Doğrulanmış build taban çizgisi
 
-26 Ağustos 2026 tarihinde solution derlemesi (`dotnet build StockFlow.slnx --no-restore`) sonucu:
+28 Ağustos 2026 tarihinde solution derlemesi (`dotnet build StockFlow.slnx --no-restore`) sonucu:
 
 - 0 hata
 - 0 uyarı
@@ -64,17 +66,16 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 | --- | --- | --- |
 | Kimlik | Cookie Identity, özel MVC login/logout, global auth fallback ve idempotent Admin/Employee seed hazır | İş ekranlarında rol matrisi ve role göre navigasyon |
 | Veri | Domain entity/mapping/migration ve sipariş/stok Service kalıcılık akışı hazır | Diğer yönetim Service'leri ve Controller akışları |
-| Uygulama akışı | Sipariş/stok iş kuralları Service ve ViewModel sınırında hazır; varsayılan MVC ekranları Service'i çağırmıyor | İnce Controller ve yönetim ekranlarının Service'lere bağlanması |
+| Uygulama akışı | Category yönetimi ile sipariş/stok iş kuralları Service ve ViewModel sınırında hazır; varsayılan MVC ekranları Service'leri çağırmıyor | İnce Controller ve yönetim ekranlarının Service'lere bağlanması |
 | Arayüz | Varsayılan Razor sayfaları | MVC yönetim ekranları; API yalnızca bonus salt-okunur kapsam |
-| Domain | Sipariş yaşam döngüsü, stok hareketleri ve CreatedBy audit bağı Service akışında kullanılıyor | Kalan Category/Product/Customer/Supplier yönetim akışları |
-| Test | SQL Server hedefli sekiz altyapı/Identity ve on sipariş/stok Service testi var | LocalDB kullanılabilir ortamda yeni ilişkisel paketin tam başarılı koşusunun alınması |
+| Domain | Category yönetimi, sipariş yaşam döngüsü, stok hareketleri ve CreatedBy audit bağı Service akışında kullanılıyor | Kalan Product/Customer/Supplier yönetim akışları |
 
 ## Bilinen riskler ve boşluklar
 
 - İş ekranları bulunmadığı için Admin/Employee rol matrisi henüz controller/action ve navigasyon seviyesinde uygulanmamıştır.
 - Uygulama çalışmadan önce dört `IdentitySeed` secret değeri ve migration uygulanmış veritabanı zorunludur; uygulama otomatik migration çalıştırmaz.
-- Sipariş/stok Service katmanı hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
-- 26 Ağustos 2026 doğrulamasında `MSSQLLocalDB` otomatik örneği başlatılamadığı için ilişkisel testlerin çalışma zamanı sonucu alınamamıştır; test keşfi yirmi iki testi başarıyla listeler, LocalDB gerektirmeyen dokuz test geçer ve çözüm 0 hata/uyarıyla derlenir.
+- Category ve sipariş/stok Service katmanları hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
+- 28 Ağustos 2026 doğrulamasında hedefli sekiz `CategoryService` testi ve otuz testlik tam paket kullanıcıya bağlı `MSSQLLocalDB` örneğinde geçti; tam pakette başarısız veya atlanan test yoktur. Çözüm ayrıca 0 hata/uyarıyla derlenir.
 - İlişkisel test altyapısı Windows ve kurulu SQL Server LocalDB gerektirir; CI ve çapraz platform test hedefi henüz yoktur.
 - LocalDB geliştirme için uygundur fakat production veya çok kullanıcılı deployment hedefi değildir.
 
