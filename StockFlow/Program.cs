@@ -6,6 +6,7 @@ using StockFlow.Data;
 using StockFlow.Entities;
 using StockFlow.Options;
 using StockFlow.Services.Categories;
+using StockFlow.Services.Customers;
 using StockFlow.Services.Orders;
 using StockFlow.Services.Products;
 
@@ -47,6 +48,7 @@ builder.Services.AddSingleton<IValidateOptions<IdentitySeedOptions>, IdentitySee
 builder.Services.AddScoped<IdentityDataSeeder>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<OrderStockConfirmationPlanner>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductService, ProductService>();
