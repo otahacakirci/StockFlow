@@ -1,27 +1,53 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockFlow.Models;
-using System.Diagnostics;
+using StockFlow.Security;
+using StockFlow.Services.Dashboard;
 
-namespace StockFlow.Controllers
+namespace StockFlow.Controllers;
+
+public sealed class HomeController(
+    IDashboardService dashboardService,
+    ILogger<HomeController> logger) : Controller
 {
-    public class HomeController : Controller
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Employee)]
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        public IActionResult Index()
+        var result = await dashboardService.GetAsync(cancellationToken);
+
+        if (!result.IsSuccess || result.Value is null)
         {
-            return View();
+            logger.LogError(
+                "Dashboard verileri alınamadı. ErrorCode: {ErrorCode}, TraceIdentifier: {TraceIdentifier}",
+                result.Error?.Code ?? "Dashboard.UnexpectedResult",
+                HttpContext.TraceIdentifier);
+            Response.StatusCode = StatusCodes.Status500InternalServerError;
+            return View("Error", CreateErrorViewModel());
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        return View(result.Value);
+    }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        [AllowAnonymous]
-        public IActionResult Error()
+    [HttpGet]
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [AllowAnonymous]
+    public IActionResult Error()
+    {
+        return View(CreateErrorViewModel());
+    }
+
+    private ErrorViewModel CreateErrorViewModel()
+    {
+        return new ErrorViewModel
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+        };
     }
 }

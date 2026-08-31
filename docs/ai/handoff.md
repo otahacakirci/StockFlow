@@ -14,25 +14,25 @@ review_triggers:
 ## Son doğrulama
 
 - Tarih: 31 Ağustos 2026
-- Kapsam: Dashboard salt-okunur Service sözleşmesi, güvenli ViewModel'ler, DI ve odaklanmış ilişkisel testler
+- Kapsam: Dashboard ilk Controller/Razor dikey dilimi, Admin/Employee endpoint sınırı, ortak yönetim düzeni ve odaklanmış Controller testleri
 
 ## Son tamamlanan değişiklik
 
-`IDashboardService`/`DashboardService`, toplam Product, düşük stoklu Product, Customer, Supplier ve Order sayılarını; yalnız Confirmed Sale siparişlerin sunucuda üretilmiş `Order.TotalAmount` değerlerinden toplam satışı ve bütün tür/durumlardan son beş sipariş özetini güvenli ViewModel'lerle sunacak biçimde eklendi. Düşük stok ölçütü eşitlik dahil `StockQuantity <= MinimumStockQuantity` koşuludur. Product ve Order metrikleri aggregate projection, Customer/Supplier sayıları scalar sorgu, son siparişler `OrderDate DESC, Id DESC` kararlı sıralı doğrudan projection kullanır. Bütün sorgular aynı DbContext üzerinde sıralı ve `AsNoTracking` çalışır; boş veritabanında güvenli sıfırlar/boş koleksiyon döner ve kalıcı veri değiştirmez. Controller, Razor, entity, mapping ve migration değişmedi.
+`HomeController.Index`, mevcut varsayılan route ve login dönüşlerini koruyarak `IDashboardService` sonucunu güvenli `DashboardViewModel` ile sunan ilk yönetim endpoint'i oldu. Action yalnız `Admin` ve `Employee` rollerine açık, istek iptal belirtecini Service'e aktarır ve başarısız tipli sonucu yalnız hata kodu/trace bağlamıyla loglayıp HTTP 500 durumlu ortak güvenli hata görünümüne dönüştürür. Controller doğrudan `ApplicationDbContext` kullanmaz ve View'a Entity taşımaz.
+
+Dashboard; altı metriği, Türkçe tür/durum etiketli son beş siparişi, Türk lirası biçimli tutarları ve açık UTC tarihlerini responsive kart/tablo düzeninde gösterir. Ortak Razor düzeni yalnız mevcut dashboard bağlantısını, Admin/Employee rol etiketini, kimliği doğrulanmış kullanıcı adını ve antiforgery korumalı POST logout işlemini sunar; henüz geliştirilmemiş yönetim ekranlarına bağlantı eklenmemiştir.
 
 ## Doğrulama kanıtı
 
 - `dotnet format StockFlow.slnx --verify-no-changes --no-restore`: geçti.
 - `dotnet build StockFlow.slnx --no-restore`: geçti; 0 hata ve 0 uyarı.
-- Kullanıcıya bağlı gerçek LocalDB bağlamında hedefli dört `DashboardServiceTests` geçti; başarısız veya atlanan test yoktur.
-- Aynı bağlamda `dotnet test StockFlow.slnx --no-build --no-restore` geçti; seksen yedi test başarılı, başarısız veya atlanan test yoktur.
-- LocalDB kullanıcıya bağlı olduğundan ilişkisel testler izinli sahip kullanıcı bağlamında çalıştırıldı; InMemory veya başka sağlayıcı fallback'i kullanılmadı.
-- Ajan bağlamı, 209 dosyalık repository hygiene, değişen sekiz dosyada hassas içerik/whitespace ve yazma sınırı taraması ile `git diff --check` doğrulamaları geçti.
+- Veritabanısız hedefli üç `HomeControllerTests` geçti; başarısız veya atlanan test yoktur.
+- Kullanıcıya bağlı gerçek LocalDB bağlamında hedefli dört `DashboardServiceTests` ve doksan testlik tam paket geçti; başarısız veya atlanan test yoktur.
+- Ajan bağlamı, repository hygiene, değişen/yeni dosyalarda hassas içerik ve whitespace ile `git diff --check` doğrulamaları geçti.
 
 ## Açık riskler ve boşluklar
 
-- İş ekranlarında Admin/Employee rol matrisi ve role göre navigasyon henüz uygulanmamıştır.
-- Category, Product, Customer, Supplier, sipariş mutation/query, StockMovement query ve Dashboard Service'leri henüz Controller ve Razor akışlarına bağlanmamıştır.
+- Category, Product, Customer, Supplier, sipariş mutation/query ve StockMovement query Service'leri henüz Controller ve Razor akışlarına bağlanmamıştır.
 - Uygulamanın çalışması için migration sonrasında dört `IdentitySeed` değerinin güvenli yapılandırmada bulunması gerekir.
 - İlişkisel testler Windows ve çalışan SQL Server LocalDB gerektirir; CI ve çapraz platform hedefi sonraki kapsamdadır.
 - LocalDB geliştirme ve öğrenme ortamıdır; production veya çok kullanıcılı deployment için tam SQL Server hedefi ayrıca yapılandırılmalıdır.

@@ -1,8 +1,168 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@using System.Globalization
+@using StockFlow.Entities
+@model StockFlow.ViewModels.Dashboard.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="dashboard-heading">
+    <div>
+        <p class="dashboard-eyebrow">OPERASYON ÖZETİ</p>
+        <h1>Dashboard</h1>
+        <p class="dashboard-intro">Stok, iş ortakları ve siparişlerin güncel durumunu tek bakışta izleyin.</p>
+    </div>
 </div>
+
+<section aria-labelledby="dashboard-metrics-title">
+    <h2 id="dashboard-metrics-title" class="visually-hidden">Temel metrikler</h2>
+    <div class="row g-3 g-xl-4">
+        <div class="col-sm-6 col-xl-4">
+            <article class="metric-card h-100">
+                <div>
+                    <p class="metric-card__label">Toplam ürün</p>
+                    <p class="metric-card__value">@Model.TotalProductCount.ToString("N0", turkishCulture)</p>
+                </div>
+                <span class="metric-card__marker metric-card__marker--blue" aria-hidden="true">Ü</span>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <article class="metric-card metric-card--warning h-100">
+                <div>
+                    <p class="metric-card__label">Düşük stok</p>
+                    <p class="metric-card__value">@Model.LowStockProductCount.ToString("N0", turkishCulture)</p>
+                    <p class="metric-card__hint">Minimum stok seviyesinde veya altında</p>
+                </div>
+                <span class="metric-card__marker metric-card__marker--amber" aria-hidden="true">!</span>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <article class="metric-card h-100">
+                <div>
+                    <p class="metric-card__label">Toplam müşteri</p>
+                    <p class="metric-card__value">@Model.TotalCustomerCount.ToString("N0", turkishCulture)</p>
+                </div>
+                <span class="metric-card__marker metric-card__marker--teal" aria-hidden="true">M</span>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <article class="metric-card h-100">
+                <div>
+                    <p class="metric-card__label">Toplam tedarikçi</p>
+                    <p class="metric-card__value">@Model.TotalSupplierCount.ToString("N0", turkishCulture)</p>
+                </div>
+                <span class="metric-card__marker metric-card__marker--violet" aria-hidden="true">T</span>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <article class="metric-card h-100">
+                <div>
+                    <p class="metric-card__label">Toplam sipariş</p>
+                    <p class="metric-card__value">@Model.TotalOrderCount.ToString("N0", turkishCulture)</p>
+                </div>
+                <span class="metric-card__marker metric-card__marker--slate" aria-hidden="true">S</span>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <article class="metric-card metric-card--sales h-100">
+                <div>
+                    <p class="metric-card__label">Onaylı satış toplamı</p>
+                    <p class="metric-card__value metric-card__value--currency">@Model.ConfirmedSaleTotalAmount.ToString("C2", turkishCulture)</p>
+                    <p class="metric-card__hint">Yalnız onaylanmış satış siparişleri</p>
+                </div>
+                <span class="metric-card__marker metric-card__marker--green" aria-hidden="true">₺</span>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="dashboard-panel mt-4 mt-xl-5" aria-labelledby="recent-orders-title">
+    <div class="dashboard-panel__header">
+        <div>
+            <p class="dashboard-eyebrow mb-1">SİPARİŞ AKIŞI</p>
+            <h2 id="recent-orders-title">Son siparişler</h2>
+        </div>
+        <span class="dashboard-panel__count">Son @Model.RecentOrders.Count kayıt</span>
+    </div>
+
+    @if (Model.RecentOrders.Count == 0)
+    {
+        <div class="dashboard-empty-state">
+            <span class="dashboard-empty-state__mark" aria-hidden="true">—</span>
+            <h3>Henüz sipariş yok</h3>
+            <p>Siparişler oluşturulduğunda en güncel kayıtlar burada görüntülenecek.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle mb-0">
+                <caption class="visually-hidden">En yeni siparişlerin özet listesi</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Sipariş no</th>
+                        <th scope="col">Tür</th>
+                        <th scope="col">Taraf</th>
+                        <th scope="col">Tarih</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col" class="text-end">Tutar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.RecentOrders)
+                    {
+                        var utcTimestamp = order.OrderDate.ToString(
+                            "yyyy-MM-ddTHH:mm:ss'Z'",
+                            CultureInfo.InvariantCulture);
+                        <tr>
+                            <td><span class="order-number">@order.OrderNumber</span></td>
+                            <td>
+                                <span class="order-type order-type--@order.Type.ToString().ToLowerInvariant()">
+                                    @GetOrderTypeLabel(order.Type)
+                                </span>
+                            </td>
+                            <td>@order.PartyName</td>
+                            <td>
+                                <time datetime="@utcTimestamp">
+                                    @order.OrderDate.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) UTC
+                                </time>
+                            </td>
+                            <td>
+                                <span class="status-badge @GetOrderStatusClass(order.Status)">
+                                    @GetOrderStatusLabel(order.Status)
+                                </span>
+                            </td>
+                            <td class="text-end fw-semibold">@order.TotalAmount.ToString("C2", turkishCulture)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@functions {
+    private static string GetOrderTypeLabel(OrderType type) => type switch
+    {
+        OrderType.Sale => "Satış",
+        OrderType.Purchase => "Satın alma",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetOrderStatusLabel(OrderStatus status) => status switch
+    {
+        OrderStatus.Draft => "Taslak",
+        OrderStatus.Confirmed => "Onaylandı",
+        OrderStatus.Cancelled => "İptal edildi",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetOrderStatusClass(OrderStatus status) => status switch
+    {
+        OrderStatus.Draft => "status-badge--draft",
+        OrderStatus.Confirmed => "status-badge--confirmed",
+        OrderStatus.Cancelled => "status-badge--cancelled",
+        _ => "status-badge--unknown"
+    };
+}

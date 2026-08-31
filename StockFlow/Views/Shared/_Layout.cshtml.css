@@ -1,48 +1,77 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
-
-a.navbar-brand {
-  white-space: normal;
-  text-align: center;
-  word-break: break-all;
+.app-header {
+  background: #10253f;
+  border-bottom: 3px solid #2bb89a;
+  box-shadow: 0 8px 28px rgba(16, 37, 63, 0.18);
 }
 
-a {
-  color: #0077cc;
+.app-header .navbar {
+  min-height: 74px;
+  padding-bottom: 0.65rem;
+  padding-top: 0.65rem;
 }
 
-.btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
-}
-
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
-}
-
-.border-top {
-  border-top: 1px solid #e5e5e5;
-}
-.border-bottom {
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
-}
-
-button.accept-policy {
-  font-size: 1rem;
-  line-height: inherit;
-}
-
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
+.app-brand {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.75rem;
+  margin-right: 2.25rem;
+  padding: 0;
   white-space: nowrap;
-  line-height: 60px;
+}
+
+.app-brand__mark {
+  align-items: center;
+  background: #2bb89a;
+  border-radius: 0.65rem;
+  color: #08263c;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 800;
+  height: 2.45rem;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  width: 2.45rem;
+}
+
+.app-brand__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.app-brand__text strong {
+  color: #ffffff;
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+}
+
+.app-brand__text small {
+  color: #a8bacd;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  margin-top: 0.3rem;
+  text-transform: uppercase;
+}
+
+.app-footer {
+  border-top: 1px solid #dfe6ec;
+  color: #66778a;
+  font-size: 0.82rem;
+  padding: 1.5rem 0 2rem;
+}
+
+.app-footer .container-xl {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 767.98px) {
+  .app-header .navbar-collapse {
+    padding-top: 1rem;
+  }
+
+  .app-footer .container-xl {
+    justify-content: center;
+  }
 }

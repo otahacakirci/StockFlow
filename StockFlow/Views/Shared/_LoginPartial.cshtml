@@ -1,14 +1,25 @@
+@using StockFlow.Security
+
 @if (User.Identity?.IsAuthenticated == true)
 {
-    <div class="d-flex align-items-center gap-2">
-        <span class="navbar-text">@User.Identity.Name</span>
+    var roleLabel = User.IsInRole(AppRoles.Admin)
+        ? "Yönetici"
+        : User.IsInRole(AppRoles.Employee)
+            ? "Çalışan"
+            : "Kullanıcı";
+
+    <div class="user-menu">
+        <div class="user-menu__identity">
+            <span class="user-menu__role">@roleLabel</span>
+            <span class="user-menu__name">@User.Identity.Name</span>
+        </div>
         <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
             @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-outline-secondary btn-sm">Çıkış</button>
+            <button type="submit" class="btn btn-sm btn-logout">Çıkış</button>
         </form>
     </div>
 }
 else
 {
-    <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Giriş</a>
+    <a class="btn btn-sm btn-login" asp-controller="Account" asp-action="Login">Giriş</a>
 }

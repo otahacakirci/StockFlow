@@ -272,6 +272,8 @@ FR-DASH-04 [ZORUNLU] Son siparişler gerekli alanlara projection ile getirilmeli
 
 FR-DASH-05 [ZORUNLU] Dashboard boş veritabanında hata vermemeli ve sorgular DashboardService içinde bulunmalıdır.
 
+FR-DASH-06 [ZORUNLU] Dashboard üzerindeki parasal tutarlar `tr-TR` sayı biçimi ve Türk lirası simgesiyle sunulmalıdır.
+
 ### 5.8 Kullanıcı geri bildirimi
 
 FR-UX-01 [ZORUNLU] Geçersiz veri alan bazlı, güvenli ve eyleme dönük mesajlarla reddedilmelidir.
@@ -522,7 +524,7 @@ AC-08 - Dashboard hesapları
 
 Olay: Dashboard açılır.
 
-Beklenen: Düşük stok sayısı tanımlı eşik kuralına göre hesaplanır; satış toplamına yalnızca Confirmed Sale kayıtları girer; son siparişler görünür.
+Beklenen: Düşük stok sayısı tanımlı eşik kuralına göre hesaplanır; satış toplamına yalnızca Confirmed Sale kayıtları girer; parasal değerler Türk lirası biçiminde ve son sipariş tarihleri UTC bağlamı açıkça belirtilerek görünür.
 
 AC-09 - Güvenli hata davranışı
 

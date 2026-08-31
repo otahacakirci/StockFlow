@@ -40,7 +40,7 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - Özel MVC `AccountController` login/logout akışı vardır. Login ve hata uçlarıyla statik dosyalar anonim; diğer MVC endpoint'leri varsayılan olarak kimlik doğrulaması gerektirir.
 - Identity cookie'si HttpOnly, Secure, SameSite=Lax, sekiz saatlik kayan süre ve `.StockFlow.Auth` adıyla yapılandırılmıştır. `UseAuthentication`, routing ile authorization arasında çalışır.
 - `Admin` ve `Employee` rol adları tek sabit kaynaktadır. Başlangıç kullanıcıları User Secrets/ortam yapılandırmasından idempotent seed edilir; eksik/geçersiz ayar uygulamayı hassas değer göstermeden durdurur.
-- `HomeController` ve varsayılan Razor şablon sayfaları dışında hedef yönetim ekranları yoktur.
+- `HomeController.Index`, `IDashboardService` çağıran ve yalnız `Admin`/`Employee` rollerine açık ilk yönetim endpoint'idir; varsayılan kök route ve login sonrası dönüş akışı dashboard'a ulaşır.
 - `ICategoryService`/`CategoryService` ve güvenli giriş, sorgu ve çıkış ViewModel'leri eklenmiştir. Service; ad doğrulama/trim, ad araması, whitelist sıralama, 20 varsayılan ve 100 üst sınırlı normalize sayfalama, `AsNoTracking` projection, bağlı ürün sayısı, detay, oluşturma ve düzenleme akışlarını yönetir.
 - Category fiziksel silme işlemi yalnız bağlı `Product` yoksa yapılır. Eksik kayıt ve bağlı ürün ihlali sırasıyla `NotFound` ve `BusinessRule` sonucu üretir; ad benzersizliği ürün sözleşmesinde veya veritabanında bulunmadığı için ek bir duplicate-name kuralı uygulanmaz.
 - `IProductService`/`ProductService` ve ayrı create/update giriş modelleri eklenmiştir. Service; ad/SKU araması, kategori ve düşük stok filtresi, whitelist sıralama, normalize sayfalama, kategori projection'ı, detay, doğrulamalı create/update ve geçmiş korumalı delete akışlarını yönetir.
@@ -62,9 +62,10 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - `IDashboardService`/`DashboardService`, toplam Product, düşük stoklu Product, Customer, Supplier ve Order sayılarını; yalnız Confirmed Sale `Order.TotalAmount` değerlerinden toplam satışı ve son beş sipariş özetini güvenli ViewModel'lerle sunar. Düşük stok ölçütü `StockQuantity <= MinimumStockQuantity` koşuludur; boş veritabanında bütün metrikler sıfır ve son sipariş koleksiyonu boştur.
 - Dashboard sorguları kendi Service sınırında, aynı `ApplicationDbContext` üzerinde sıralı olarak çalışır. Product ve Order metrikleri aggregate projection, Customer/Supplier sayıları scalar sorgu, bütün tür/durumları kapsayan son siparişler ise `OrderDate DESC, Id DESC` sıralı doğrudan projection kullanır. Sorgular `AsNoTracking` olup entity, OrderItem veya Product grafiği açmaz ve kalıcı veri değiştirmez.
 - Beklenen Service hataları `Validation`, `NotFound` ve `BusinessRule` kategorili tipli sonuçlarla ayrılır. Beklenmeyen persistence hataları yapılandırılmış loglanıp ilgili change tracker temizlendikten sonra yeniden fırlatılır; sipariş onayı ayrıca açık transaction'ı geri alır.
-- Yönetim Controller ve Razor ekranları henüz yoktur. Login formu ayrı, doğrulamalı bir ViewModel kullanır.
+- İlk Controller/Razor dikey dilimi dashboard için tamamlanmıştır. `HomeController` doğrudan DbContext kullanmadan güvenli `DashboardViewModel` sonucunu View'a taşır; beklenen başarısız Service sonucu güvenli ortak hata görünümü ve HTTP 500 üretir.
+- Ortak Razor düzeni Türkçe StockFlow yönetim kimliği, yalnız kullanılabilir dashboard bağlantısı, Admin/Employee rol etiketi, kimliği doğrulanmış kullanıcı adı ve antiforgery korumalı POST logout sunar. Dashboard altı metriği ve son beş siparişi responsive olarak gösterir; tutarlar Türk lirası, sipariş tarihleri açık UTC biçimindedir.
 - Kaynak kontrollü ayarlarda bağlantı dizesi, başlangıç e-postası veya parola yoktur. LocalDB ve Identity seed değerleri güvenli yapılandırmada kalır.
-- Seksen yedi xUnit testi bulunur. Dört ilişkisel `DashboardService` testi boş/verili veritabanı metriklerini, düşük stok eşiğini, Confirmed Sale toplamını, bütün tür/durumlardan son beş siparişi ve salt-okunur davranışı kapsar. Yedi `StockMovementQueryService`, sekiz `OrderQueryService`, on üç `SupplierService`, on üç `CustomerService`, on iki `ProductService`, sekiz `CategoryService`, on `OrderService`, dört saf planner ve sekiz altyapı/Identity testi diğer mevcut davranışları doğrular.
+- Doksan xUnit testi bulunur. Üç veritabanısız `HomeController` testi dashboard ViewModel/cancellation token aktarımını, güvenli HTTP 500 hata görünümünü ve yalnız Admin/Employee endpoint metadata'sını doğrular. Dört ilişkisel `DashboardService` testi boş/verili veritabanı metriklerini, düşük stok eşiğini, Confirmed Sale toplamını, bütün tür/durumlardan son beş siparişi ve salt-okunur davranışı kapsar. Yedi `StockMovementQueryService`, sekiz `OrderQueryService`, on üç `SupplierService`, on üç `CustomerService`, on iki `ProductService`, sekiz `CategoryService`, on `OrderService`, dört saf planner ve sekiz altyapı/Identity testi diğer mevcut davranışları doğrular.
 - Veritabanına dokunan her test, yalnız `(localdb)\MSSQLLocalDB` üzerinde benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur, migration uygular ve test sonunda veritabanını siler. Test altyapısı uygulama yapılandırmasını veya dış bağlantı dizesini kabul etmez.
 - `.gitignore`, `.gitattributes` ve staged içeriği denetleyen repository hygiene betiği GitHub öncesi güvenlik tabanını oluşturur.
 
@@ -80,16 +81,16 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 | Alan | Mevcut | Hedef |
 | --- | --- | --- |
 | Kimlik | Cookie Identity, özel MVC login/logout, global auth fallback ve idempotent Admin/Employee seed hazır | İş ekranlarında rol matrisi ve role göre navigasyon |
-| Veri | Domain entity/mapping/migration, Category/Product/Customer/Supplier yönetimi, sipariş mutation/query, StockMovement query ve Dashboard Service akışları hazır | Controller akışları |
-| Uygulama akışı | Category/Product/Customer/Supplier yönetimi, sipariş mutation/query, StockMovement görüntüleme ve Dashboard davranışları Service/ViewModel sınırında hazır; varsayılan MVC ekranları Service'leri çağırmıyor | İnce Controller ve yönetim ekranlarının Service'lere bağlanması |
-| Arayüz | Varsayılan Razor sayfaları | MVC yönetim ekranları; API yalnızca bonus salt-okunur kapsam |
+| Veri | Domain entity/mapping/migration, Category/Product/Customer/Supplier yönetimi, sipariş mutation/query, StockMovement query ve Dashboard Service akışları hazır | Dashboard dışındaki Service akışlarının Controller'lara bağlanması |
+| Uygulama akışı | Dashboard, rol korumalı ince Controller üzerinden Service/ViewModel sınırına bağlı; diğer yönetim davranışları Service katmanında hazır | Kalan yönetim Controller ve ekranlarının Service'lere bağlanması |
+| Arayüz | StockFlow yönetim düzeni ve responsive dashboard hazır | Category, Product, Customer, Supplier, Order ve StockMovement MVC ekranları; API yalnızca bonus salt-okunur kapsam |
 
 ## Bilinen riskler ve boşluklar
 
 - İş ekranları bulunmadığı için Admin/Employee rol matrisi henüz controller/action ve navigasyon seviyesinde uygulanmamıştır.
 - Uygulama çalışmadan önce dört `IdentitySeed` secret değeri ve migration uygulanmış veritabanı zorunludur; uygulama otomatik migration çalıştırmaz.
-- Category, Product, Customer, Supplier, sipariş mutation/query, StockMovement query ve Dashboard Service katmanları hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
-- 31 Ağustos 2026 doğrulamasında hedefli dört `DashboardService` testi ve seksen yedi testlik tam paket kullanıcıya bağlı `MSSQLLocalDB` örneğinde geçti; başarısız veya atlanan test yoktur. Çözüm ayrıca 0 hata/uyarıyla derlenir.
+- Category, Product, Customer, Supplier, sipariş mutation/query ve StockMovement query Service katmanları hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
+- 31 Ağustos 2026 doğrulamasında hedefli üç `HomeController`, dört `DashboardService` testi ve doksan testlik tam paket kullanıcıya bağlı `MSSQLLocalDB` örneğinde geçti; başarısız veya atlanan test yoktur. Çözüm ayrıca 0 hata/uyarıyla derlenir.
 - İlişkisel test altyapısı Windows ve kurulu SQL Server LocalDB gerektirir; CI ve çapraz platform test hedefi henüz yoktur.
 - LocalDB geliştirme için uygundur fakat production veya çok kullanıcılı deployment hedefi değildir.
 
