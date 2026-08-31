@@ -9,6 +9,7 @@ using StockFlow.Services.Categories;
 using StockFlow.Services.Customers;
 using StockFlow.Services.Orders;
 using StockFlow.Services.Products;
+using StockFlow.Services.StockMovements;
 using StockFlow.Services.Suppliers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,6 +55,7 @@ builder.Services.AddScoped<OrderStockConfirmationPlanner>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderQueryService, OrderQueryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IStockMovementQueryService, StockMovementQueryService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 
 builder.Services
