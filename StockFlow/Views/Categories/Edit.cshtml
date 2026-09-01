@@ -1,0 +1,30 @@
+@model StockFlow.ViewModels.Categories.CategoryInputModel
+
+@{
+    ViewData["Title"] = "Kategori düzenle";
+    var categoryId = ViewContext.RouteData.Values["id"];
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">KATEGORİ YÖNETİMİ</p>
+        <h1>Kategoriyi düzenle</h1>
+        <p class="page-intro">Kategori adını güncelleyin. Bağlı ürünler bu işlemden etkilenmez.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel" aria-labelledby="edit-category-title">
+    <h2 id="edit-category-title" class="visually-hidden">Kategori düzenleme formu</h2>
+    <form asp-action="Edit" asp-route-id="@categoryId" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+        <partial name="_FormFields" model="Model" />
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Değişiklikleri kaydet</button>
+            <a asp-action="Details" asp-route-id="@categoryId" class="btn btn-outline-secondary">İptal</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

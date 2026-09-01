@@ -1,0 +1,41 @@
+@model StockFlow.ViewModels.Categories.CategoryViewModel
+
+@{
+    ViewData["Title"] = "Kategori sil";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">KATEGORİ YÖNETİMİ</p>
+        <h1>Kategoriyi sil</h1>
+        <p class="page-intro">Silme işleminden önce kategori durumunu doğrulayın.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel danger-confirmation" aria-labelledby="delete-category-title">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <p class="page-eyebrow">SİLME ONAYI</p>
+    <h2 id="delete-category-title">@Model.Name</h2>
+    <dl class="detail-grid detail-grid--compact">
+        <div>
+            <dt>Bağlı ürün sayısı</dt>
+            <dd>@Model.ProductCount</dd>
+        </div>
+    </dl>
+
+    @if (Model.ProductCount == 0)
+    {
+        <p>Bu işlem kategoriyi kalıcı olarak silecektir. Devam etmek istediğinizden emin olun.</p>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
+            <button type="submit" class="btn btn-danger">Evet, kategoriyi sil</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning mb-4" role="status">
+            Bağlı ürünleri bulunan kategoriler fiziksel olarak silinemez.
+        </div>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Detaya dön</a>
+    }
+</section>

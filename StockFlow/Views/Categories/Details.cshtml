@@ -1,0 +1,63 @@
+@using StockFlow.Security
+@model StockFlow.ViewModels.Categories.CategoryViewModel
+
+@{
+    ViewData["Title"] = "Kategori detayı";
+    var canManageCategories = User.IsInRole(AppRoles.Admin);
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">KATEGORİ DETAYI</p>
+        <h1>@Model.Name</h1>
+        <p class="page-intro">Kategori bilgilerini ve ürün bağlantısı durumunu görüntüleyin.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+        @if (canManageCategories)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Düzenle</a>
+        }
+    </div>
+</div>
+
+<section class="management-panel detail-panel" aria-labelledby="category-information-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">GENEL BİLGİLER</p>
+            <h2 id="category-information-title">Kategori özeti</h2>
+        </div>
+        <span class="record-id">#@Model.Id</span>
+    </div>
+    <dl class="detail-grid">
+        <div>
+            <dt>Kategori adı</dt>
+            <dd>@Model.Name</dd>
+        </div>
+        <div>
+            <dt>Bağlı ürün sayısı</dt>
+            <dd>@Model.ProductCount</dd>
+        </div>
+    </dl>
+</section>
+
+@if (canManageCategories)
+{
+    <section class="management-panel mt-4 danger-zone" aria-labelledby="category-delete-title">
+        <div>
+            <h2 id="category-delete-title">Silme durumu</h2>
+            @if (Model.ProductCount == 0)
+            {
+                <p>Bu kategoriye bağlı ürün bulunmadığı için fiziksel olarak silinebilir.</p>
+            }
+            else
+            {
+                <p>Bağlı ürünleri bulunan kategoriler fiziksel olarak silinemez.</p>
+            }
+        </div>
+        @if (Model.ProductCount == 0)
+        {
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Kategoriyi sil</a>
+        }
+    </section>
+}

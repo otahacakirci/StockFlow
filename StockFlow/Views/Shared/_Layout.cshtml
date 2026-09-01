@@ -1,7 +1,7 @@
 @using StockFlow.Security
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
-    var canViewDashboard = isAuthenticated &&
+    var canViewReadScreens = isAuthenticated &&
         (User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Employee));
     var isDashboard = string.Equals(
         ViewContext.RouteData.Values["controller"]?.ToString(),
@@ -11,6 +11,10 @@
             ViewContext.RouteData.Values["action"]?.ToString(),
             "Index",
             StringComparison.OrdinalIgnoreCase);
+    var isCategories = string.Equals(
+        ViewContext.RouteData.Values["controller"]?.ToString(),
+        "Categories",
+        StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -40,12 +44,17 @@
                 </button>
                 <div id="mainNavigation" class="navbar-collapse collapse">
                     <ul class="navbar-nav me-auto mb-2 mb-md-0">
-                        @if (canViewDashboard)
+                        @if (canViewReadScreens)
                         {
                             <li class="nav-item">
                                 <a class="nav-link app-nav-link @(isDashboard ? "active" : null)"
                                    aria-current="@(isDashboard ? "page" : null)"
                                    asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link app-nav-link @(isCategories ? "active" : null)"
+                                   aria-current="@(isCategories ? "page" : null)"
+                                   asp-area="" asp-controller="Categories" asp-action="Index">Kategoriler</a>
                             </li>
                         }
                     </ul>
@@ -56,6 +65,13 @@
     </header>
 
     <div class="container-xl app-content">
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <div class="alert app-alert alert-dismissible fade show" role="status">
+                <span>@successMessage</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
         <main role="main">
             @RenderBody()
         </main>

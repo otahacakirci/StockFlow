@@ -6,7 +6,7 @@ StockFlow; kategori, ürün, tedarikçi, müşteri, satın alma/satış sipariş
 
 Depodaki uygulama erken aşamadadır. Şu anda .NET 10 MVC/Razor temeli, EF Core domain modeli, LocalDB kalıcılığı, cookie tabanlı ASP.NET Core Identity ve Category, Product, Customer, Supplier, Order, StockMovement ile Dashboard Service akışları bulunur. Uygulama özel MVC login/logout akışı kullanır; Admin ve Employee başlangıç kullanıcıları güvenli yapılandırmadan idempotent seed edilir. Sipariş onayı stok, hareket ve terminal durumu tek SQL transaction sınırında kalıcılaştırır; salt-okunur sorgular güvenli ViewModel projection'ları kullanır.
 
-İlk Controller/Razor dikey diliminde `Home/Index`, Admin ve Employee rollerine açık dashboard olarak uygulanmıştır. Ekran toplam ve düşük stok metriklerini, iş ortağı/sipariş sayılarını, onaylı satış toplamını ve son beş siparişi gösterir. Ortak yönetim düzeni yalnız kullanılabilir dashboard navigasyonunu, kimliği doğrulanmış kullanıcı bilgisini, rol etiketini ve POST logout işlemini sunar; diğer yönetim Service'leri henüz Controller/Razor ekranlarına bağlanmamıştır.
+İlk Controller/Razor dilimleri dashboard ve Category yönetimi için uygulanmıştır. `Home/Index`, Admin ve Employee rollerine açık operasyon özetini gösterir. Category ekranları iki role arama, güvenli sıralama/sayfalama ve detay görüntüleme; yalnız Admin'e doğrulamalı oluşturma/düzenleme ve ilişki korumalı silme akışlarını sunar. Ortak yönetim düzeni yalnız kullanılabilir dashboard/kategori navigasyonunu, kimliği doğrulanmış kullanıcı bilgisini, rol etiketini ve POST logout işlemini içerir; diğer yönetim Service'leri henüz Controller/Razor ekranlarına bağlanmamıştır.
 
 Ayrıntılı mevcut-hedef farkları için [mevcut durum belgesine](docs/ai/current-state.md), normatif kapsam için [ürün spesifikasyonuna](docs/product-spec.md) bakın.
 
@@ -55,7 +55,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-
 
 `StockFlow.Tests`, veritabanına dokunan her test için `(localdb)\MSSQLLocalDB` üzerinde `StockFlow_Tests_<guid>` adlı benzersiz bir veritabanı oluşturur, gerçek migration zincirini uygular ve test sonunda veritabanını siler. Test altyapısı uygulama ayarlarını, User Secrets değerlerini veya ortam connection string'lerini okumaz; yalnız sabit LocalDB örneğini ve güvenli test veritabanı adı biçimini kabul eder. LocalDB kullanılamıyorsa testler geliştirme veritabanına veya InMemory sağlayıcısına geri dönmeden açıklayıcı bir önkoşul hatasıyla başarısız olur.
 
-Doksan xUnit testi bulunur. Üç veritabanısız `HomeController` testi dashboard ViewModel aktarımını, iptal belirtecini, güvenli hata sonucunu ve Admin/Employee endpoint sınırını doğrular. İlişkisel Service testleri dashboard metrikleri dahil Category, Product, Customer, Supplier, Order ve StockMovement davranışlarını; kalan testler saf stok planner'ını, altyapıyı ve Identity seed akışını kapsar. İlişkisel test altyapısı Windows ve SQL Server LocalDB gerektirir; CI ve çapraz platform çalışması sonraki kapsamdadır.
+Yüz dört xUnit testi bulunur. On bir `CategoriesController`, üç `CategoryInputModel` ve üç `HomeController` testi veritabanı gerektirmeden HTTP/form/rol sözleşmelerini doğrular. İlişkisel Service testleri dashboard metrikleri dahil Category, Product, Customer, Supplier, Order ve StockMovement davranışlarını; kalan testler saf stok planner'ını, altyapıyı ve Identity seed akışını kapsar. İlişkisel test altyapısı Windows ve SQL Server LocalDB gerektirir; CI ve çapraz platform çalışması sonraki kapsamdadır.
 
 ## GitHub öncesi repo hijyeni
 

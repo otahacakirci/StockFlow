@@ -1,0 +1,8 @@
+@model StockFlow.ViewModels.Categories.CategoryInputModel
+
+<div class="mb-4">
+    <label asp-for="Name" class="form-label"></label>
+    <input asp-for="Name" class="form-control" autocomplete="off" autofocus />
+    <span asp-validation-for="Name" class="text-danger"></span>
+    <div class="form-text">Kategori adı en fazla 100 karakter olabilir.</div>
+</div>
