@@ -1,0 +1,29 @@
+@model StockFlow.ViewModels.Suppliers.SupplierInputModel
+
+@{
+    ViewData["Title"] = "Yeni tedarikçi";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">TEDARİKÇİ YÖNETİMİ</p>
+        <h1>Yeni tedarikçi</h1>
+        <p class="page-intro">Şirket adını ve varsa iletişim bilgilerini kaydedin.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel" aria-labelledby="create-supplier-title">
+    <h2 id="create-supplier-title" class="visually-hidden">Tedarikçi oluşturma formu</h2>
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+        <partial name="_FormFields" model="Model" />
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Tedarikçiyi oluştur</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">İptal</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

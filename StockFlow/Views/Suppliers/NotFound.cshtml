@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Tedarikçi bulunamadı";
+}
+
+<div class="feedback-panel" role="alert">
+    <span class="feedback-panel__code" aria-hidden="true">404</span>
+    <p class="page-eyebrow">TEDARİKÇİ BULUNAMADI</p>
+    <h1>Aradığınız tedarikçi mevcut değil</h1>
+    <p>Tedarikçi silinmiş olabilir veya bağlantı artık geçerli değildir.</p>
+    <a asp-controller="Suppliers" asp-action="Index" class="btn btn-primary">Tedarikçi listesine dön</a>
+</div>

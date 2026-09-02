@@ -1,0 +1,166 @@
+@using StockFlow.Security
+@using StockFlow.ViewModels.Suppliers
+@model SupplierListViewModel
+
+@{
+    ViewData["Title"] = "Tedarikçiler";
+    var canManageSuppliers = User.IsInRole(AppRoles.Admin);
+    var editReturnUrl = Url.Action(
+        "Index",
+        "Suppliers",
+        new
+        {
+            Model.SearchTerm,
+            Model.SortOrder,
+            Model.Page,
+            Model.PageSize
+        }) ?? "/Suppliers";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">TEDARİKÇİ YÖNETİMİ</p>
+        <h1>Tedarikçiler</h1>
+        <p class="page-intro">Tedarikçileri şirket adı veya iletişim bilgileriyle arayın ve satın alma geçmişlerini izleyin.</p>
+    </div>
+    @if (canManageSuppliers)
+    {
+        <a asp-action="Create" class="btn btn-primary">Yeni tedarikçi</a>
+    }
+</div>
+
+<section class="management-panel" aria-labelledby="supplier-filter-title">
+    <h2 id="supplier-filter-title" class="visually-hidden">Tedarikçi filtreleri</h2>
+    <form asp-action="Index" method="get" class="management-toolbar">
+        <div class="management-toolbar__search">
+            <label for="supplier-search" class="form-label">Tedarikçi ara</label>
+            <input id="supplier-search" name="SearchTerm" value="@Model.SearchTerm"
+                   class="form-control" maxlength="256" placeholder="Şirket adı, e-posta veya telefon" />
+        </div>
+        <div>
+            <label for="supplier-sort" class="form-label">Sıralama</label>
+            <select id="supplier-sort" name="SortOrder" class="form-select">
+                <option value="@SupplierSortOrder.CompanyNameAscending"
+                        selected="@(Model.SortOrder == SupplierSortOrder.CompanyNameAscending)">Şirket adına göre A-Z</option>
+                <option value="@SupplierSortOrder.CompanyNameDescending"
+                        selected="@(Model.SortOrder == SupplierSortOrder.CompanyNameDescending)">Şirket adına göre Z-A</option>
+            </select>
+        </div>
+        <div>
+            <label for="supplier-page-size" class="form-label">Sayfa boyutu</label>
+            <select id="supplier-page-size" name="PageSize" class="form-select">
+                @foreach (var pageSize in new[] { 10, 20, 50, 100 })
+                {
+                    <option value="@pageSize" selected="@(Model.PageSize == pageSize)">@pageSize</option>
+                }
+            </select>
+        </div>
+        <div class="management-toolbar__actions">
+            <button type="submit" class="btn btn-primary">Uygula</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Temizle</a>
+        </div>
+    </form>
+</section>
+
+<section class="management-panel mt-4" aria-labelledby="supplier-list-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">KAYITLAR</p>
+            <h2 id="supplier-list-title">Tedarikçi listesi</h2>
+        </div>
+        <span class="count-pill">@Model.TotalCount kayıt</span>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Gösterilecek tedarikçi yok</h3>
+            <p>Arama ölçütlerini temizleyin veya yeni bir tedarikçi oluşturun.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table align-middle mb-0">
+                <caption class="visually-hidden">Tedarikçi kayıtları</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Şirket</th>
+                        <th scope="col">E-posta</th>
+                        <th scope="col">Telefon</th>
+                        <th scope="col">Satın alma siparişi</th>
+                        <th scope="col" class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var supplier in Model.Items)
+                    {
+                        <tr>
+                            <td><span class="entity-title">@supplier.CompanyName</span></td>
+                            <td>@(supplier.Email ?? "—")</td>
+                            <td>@(supplier.Phone ?? "—")</td>
+                            <td><span class="count-badge">@supplier.OrderCount</span></td>
+                            <td class="text-end">
+                                @if (canManageSuppliers)
+                                {
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@supplier.Id"
+                                           class="btn btn-sm btn-outline-secondary">Görüntüle</a>
+                                        <a asp-action="Edit" asp-route-id="@supplier.Id"
+                                           asp-route-returnUrl="@editReturnUrl"
+                                           class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                        @if (supplier.OrderCount == 0)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@supplier.Id"
+                                               class="btn btn-sm btn-outline-danger">Sil</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="table-action-note">Sipariş geçmişi var</span>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pagination-bar" aria-label="Tedarikçi sayfaları">
+            @if (Model.Page > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-SearchTerm="@Model.SearchTerm"
+                   asp-route-SortOrder="@Model.SortOrder"
+                   asp-route-Page="@(Model.Page - 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Önceki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Önceki</span>
+            }
+
+            <span>Sayfa <strong>@Model.Page</strong> / @Model.TotalPages</span>
+
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a asp-action="Index"
+                   asp-route-SearchTerm="@Model.SearchTerm"
+                   asp-route-SortOrder="@Model.SortOrder"
+                   asp-route-Page="@(Model.Page + 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Sonraki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Sonraki</span>
+            }
+        </nav>
+    }
+</section>

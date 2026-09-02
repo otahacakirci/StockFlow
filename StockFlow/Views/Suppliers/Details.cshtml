@@ -1,0 +1,77 @@
+@using StockFlow.Security
+@model StockFlow.ViewModels.Suppliers.SupplierViewModel
+
+@{
+    ViewData["Title"] = "Tedarikçi detayı";
+    var canManageSuppliers = User.IsInRole(AppRoles.Admin);
+    var editReturnUrl = Url.Action("Details", "Suppliers", new { id = Model.Id }) ?? "/Suppliers";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">TEDARİKÇİ DETAYI</p>
+        <h1>@Model.CompanyName</h1>
+        <p class="page-intro">Tedarikçi iletişim bilgilerini ve satın alma siparişi geçmişini görüntüleyin.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+        @if (canManageSuppliers)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"
+               class="btn btn-primary">Düzenle</a>
+        }
+    </div>
+</div>
+
+<section class="management-panel detail-panel" aria-labelledby="supplier-information-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">GENEL BİLGİLER</p>
+            <h2 id="supplier-information-title">Tedarikçi özeti</h2>
+        </div>
+        <span class="record-id">#@Model.Id</span>
+    </div>
+    <dl class="detail-grid">
+        <div>
+            <dt>Şirket adı</dt>
+            <dd>@Model.CompanyName</dd>
+        </div>
+        <div>
+            <dt>E-posta</dt>
+            <dd>@(Model.Email ?? "—")</dd>
+        </div>
+        <div>
+            <dt>Telefon</dt>
+            <dd>@(Model.Phone ?? "—")</dd>
+        </div>
+        <div>
+            <dt>Satın alma siparişi sayısı</dt>
+            <dd>@Model.OrderCount</dd>
+        </div>
+        <div>
+            <dt>Adres</dt>
+            <dd>@(Model.Address ?? "—")</dd>
+        </div>
+    </dl>
+</section>
+
+@if (canManageSuppliers)
+{
+    <section class="management-panel mt-4 danger-zone" aria-labelledby="supplier-delete-title">
+        <div>
+            <h2 id="supplier-delete-title">Silme durumu</h2>
+            @if (Model.OrderCount == 0)
+            {
+                <p>Satın alma siparişi geçmişi bulunmadığı için tedarikçi fiziksel olarak silinebilir.</p>
+            }
+            else
+            {
+                <p>Satın alma siparişi geçmişi bulunan tedarikçiler fiziksel olarak silinemez.</p>
+            }
+        </div>
+        @if (Model.OrderCount == 0)
+        {
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Tedarikçiyi sil</a>
+        }
+    </section>
+}

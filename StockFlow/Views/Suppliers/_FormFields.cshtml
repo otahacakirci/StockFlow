@@ -1,0 +1,29 @@
+@model StockFlow.ViewModels.Suppliers.SupplierInputModel
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <label asp-for="CompanyName" class="form-label"></label>
+        <input asp-for="CompanyName" class="form-control" maxlength="200"
+               autocomplete="organization" autofocus />
+        <span asp-validation-for="CompanyName" class="text-danger"></span>
+    </div>
+    <div class="col-md-7">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" maxlength="256" autocomplete="email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+        <div class="form-text">Opsiyoneldir.</div>
+    </div>
+    <div class="col-md-5">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" maxlength="32" autocomplete="tel" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+        <div class="form-text">Opsiyoneldir.</div>
+    </div>
+    <div class="col-12">
+        <label asp-for="Address" class="form-label"></label>
+        <textarea asp-for="Address" class="form-control" maxlength="500" rows="4"
+                  autocomplete="street-address"></textarea>
+        <span asp-validation-for="Address" class="text-danger"></span>
+        <div class="form-text">Opsiyoneldir; en fazla 500 karakter olabilir.</div>
+    </div>
+</div>
