@@ -14,29 +14,29 @@ review_triggers:
 ## Son doğrulama
 
 - Tarih: 2 Eylül 2026
-- Kapsam: Admin-only Supplier MVC Controller ve Razor yönetim akışı
+- Kapsam: Admin/Employee salt-okunur Order MVC listeleme ve detay akışı
 
 ## Son tamamlanan değişiklik
 
-`SuppliersController`, mevcut `ISupplierService` sözleşmesini liste/detay/create/edit/delete Razor akışlarına bağlar. Controller sınıfı bütünüyle yalnız Admin rolüne açıktır; ortak navigasyon ve görünüm eylemleri de Employee için Supplier kontrolü üretmez. Controller metadata'sından kurulan gerçek ASP.NET Core authorization policy Admin principal'ı kabul ederken Employee principal'ı reddeder.
+`OrdersController`, mevcut `IOrderQueryService` sözleşmesini yalnız Index ve Details GET akışlarına bağlar. Controller Admin ve Employee rollerine açıktır; gerçek ASP.NET Core authorization policy iki rolü kabul edip izin verilmeyen rolü reddeder. Controller `IOrderService`, DbContext, POST veya başka mutasyon endpoint'i taşımaz.
 
-Supplier listesi şirket adı/e-posta/telefon araması, enum tabanlı şirket adı sıralaması, normalize sayfalama ve filtre korumalı gezinme sunar. Formlar yalnız güvenli ViewModel kullanır; Türkçe DataAnnotations mesajları mevcut 200/256/32/500 uzunluk, biçim ve opsiyonellik sözleşmesini korur. Validation alan bazlı forma, NotFound HTTP 404'e ve Purchase Order geçmişi silme ihlali HTTP 409'a çevrilir; gerçek exception'lar Controller'da yakalanmadan merkezi hata yaklaşımına yayılır.
+Sipariş listesi OrderType/OrderStatus filtreleri, enum tabanlı tarih sıralaması, normalize sayfalama ve filtre korumalı gezinme sunar. Sale için Customer, Purchase için Supplier gösterilir; detay ekranı Product adı/SKU'su, miktar, fiyat snapshot'ı ve satır toplamlarını güvenli çıkış modelleriyle taşır. Sipariş NotFound HTTP 404'e, tutarsız tipli sonuç güvenli HTTP 500'e çevrilir; gerçek exception'lar Controller'da yakalanmaz.
 
 ## Doğrulama kanıtı
 
 - `dotnet format StockFlow.slnx --verify-no-changes --no-restore`: geçti.
 - `dotnet build StockFlow.slnx --no-restore`: geçti; 0 hata ve 0 uyarı.
-- Veritabanısız hedefli 27 `SuppliersController` ve beş `SupplierInputModel` testi geçti; başarısız veya atlanan test yoktur.
-- Kullanıcıya bağlı gerçek LocalDB bağlamında hedefli on üç `SupplierService` testi ve 220 testlik tam paket geçti; başarısız veya atlanan test yoktur.
-- Ajan bağlamı, repository hygiene, değişen/yeni dosyalarda hassas içerik ve whitespace ile `git diff --check` doğrulamaları geçti.
+- Veritabanısız hedefli on iki `OrdersController` senaryosu geçti; başarısız veya atlanan test yoktur.
+- Kullanıcıya bağlı gerçek LocalDB bağlamında sekiz `OrderQueryService`, on dört `OrderService`/planner regresyonu ve 232 testlik tam paket geçti; başarısız veya atlanan test yoktur.
+- Ajan bağlamı, repository hygiene, on bir değişen/yeni dosyada hassas içerik, salt-okunur Razor eylemleri, sayfalama route'ları ve `git diff --check` doğrulamaları geçti; 266 dosyada yasaklı yerel/üretilmiş yol veya yüksek güvenli secret eşleşmesi bulunmadı.
 
 ## Açık riskler ve boşluklar
 
-- Sipariş mutation/query ve StockMovement query Service'leri henüz Controller ve Razor akışlarına bağlanmamıştır.
+- Sipariş mutation ve StockMovement query Service'leri henüz Controller ve Razor akışlarına bağlanmamıştır.
 - Uygulamanın çalışması için migration sonrasında dört `IdentitySeed` değerinin güvenli yapılandırmada bulunması gerekir.
 - İlişkisel testler Windows ve çalışan SQL Server LocalDB gerektirir; CI ve çapraz platform hedefi sonraki kapsamdadır.
 - LocalDB geliştirme ve öğrenme ortamıdır; production veya çok kullanıcılı deployment için tam SQL Server hedefi ayrıca yapılandırılmalıdır.
 
 ## Sonraki sınırlandırılmış görev
 
-Belirlenmedi.
+Sipariş Draft oluşturma/düzenleme mutasyon akışlarından önce StockMovement salt-okunur MVC listeleme ve detay ekranlarını mevcut query Service'e bağlamak.

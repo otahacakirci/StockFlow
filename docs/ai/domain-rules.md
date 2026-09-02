@@ -16,8 +16,8 @@ Bu dosya uygulama sırasında sık gereken kuralların kısa indeksidir. Eksiksi
 
 ## Roller
 
-- `Admin`: ürün/kategori ve Supplier yönetimi, Customer silme, sipariş onaylama/iptal, başlangıç kullanıcı/rol verisi dahil tüm yönetim işlemleri.
-- `Employee`: dashboard, ürün/kategori görüntüleme, Customer listeleme/görüntüleme/oluşturma/düzenleme, Draft sipariş oluşturma/düzenleme ve stok hareketi görüntüleme; Customer silemez.
+- `Admin`: ürün/kategori ve Supplier yönetimi, Customer silme, sipariş listeleme/görüntüleme/onaylama/iptal, başlangıç kullanıcı/rol verisi dahil tüm yönetim işlemleri.
+- `Employee`: dashboard, ürün/kategori görüntüleme, Customer listeleme/görüntüleme/oluşturma/düzenleme, sipariş listeleme/görüntüleme, Draft sipariş oluşturma/düzenleme ve stok hareketi görüntüleme; Customer silemez.
 - Yetki hem UI hem endpoint seviyesinde uygulanır.
 
 ## Çekirdek ilişkiler

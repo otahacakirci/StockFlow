@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Sipariş bulunamadı";
+}
+
+<div class="feedback-panel" role="alert">
+    <span class="feedback-panel__code" aria-hidden="true">404</span>
+    <p class="page-eyebrow">SİPARİŞ BULUNAMADI</p>
+    <h1>Aradığınız sipariş mevcut değil</h1>
+    <p>Sipariş silinmiş olabilir veya bağlantı artık geçerli değildir.</p>
+    <a asp-controller="Orders" asp-action="Index" class="btn btn-primary">Sipariş listesine dön</a>
+</div>

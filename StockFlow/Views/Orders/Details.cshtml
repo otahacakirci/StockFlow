@@ -1,0 +1,160 @@
+@using System.Globalization
+@using StockFlow.Entities
+@model StockFlow.ViewModels.Orders.OrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Sipariş detayı";
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+    var partyLabel = Model.Type switch
+    {
+        OrderType.Sale => "Müşteri",
+        OrderType.Purchase => "Tedarikçi",
+        _ => "Taraf"
+    };
+    var partyName = Model.Type switch
+    {
+        OrderType.Sale => Model.CustomerName,
+        OrderType.Purchase => Model.SupplierCompanyName,
+        _ => null
+    };
+    var utcTimestamp = Model.OrderDate.ToString(
+        "yyyy-MM-ddTHH:mm:ss'Z'",
+        CultureInfo.InvariantCulture);
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">SİPARİŞ DETAYI</p>
+        <h1><span class="order-number">@Model.OrderNumber</span></h1>
+        <p class="page-intro">Sipariş tarafını, durumunu ve kayıt anındaki ürün fiyatlarını inceleyin.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+</div>
+
+<section class="management-panel" aria-labelledby="order-information-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">GENEL BİLGİLER</p>
+            <h2 id="order-information-title">Sipariş özeti</h2>
+        </div>
+        <span class="record-id">#@Model.Id</span>
+    </div>
+    <dl class="detail-grid">
+        <div>
+            <dt>Sipariş türü</dt>
+            <dd>
+                <span class="order-type order-type--@Model.Type.ToString().ToLowerInvariant()">
+                    @GetOrderTypeLabel(Model.Type)
+                </span>
+            </dd>
+        </div>
+        <div>
+            <dt>Durum</dt>
+            <dd>
+                <span class="status-badge @GetOrderStatusClass(Model.Status)">
+                    @GetOrderStatusLabel(Model.Status)
+                </span>
+            </dd>
+        </div>
+        <div>
+            <dt>@partyLabel</dt>
+            <dd>@(partyName ?? "—")</dd>
+        </div>
+        <div>
+            <dt>Sipariş tarihi</dt>
+            <dd>
+                <time datetime="@utcTimestamp">
+                    @Model.OrderDate.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) UTC
+                </time>
+            </dd>
+        </div>
+        <div>
+            <dt>Kalem sayısı</dt>
+            <dd>@Model.Items.Count</dd>
+        </div>
+        <div>
+            <dt>Toplam tutar</dt>
+            <dd>@Model.TotalAmount.ToString("C2", turkishCulture)</dd>
+        </div>
+    </dl>
+</section>
+
+<section class="management-panel mt-4" aria-labelledby="order-items-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">KALEMLER</p>
+            <h2 id="order-items-title">Sipariş kalemleri</h2>
+        </div>
+        <span class="count-pill">@Model.Items.Count kalem</span>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Gösterilecek sipariş kalemi yok</h3>
+            <p>Bu sipariş için kalem bilgisi bulunamadı.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table align-middle mb-0">
+                <caption class="visually-hidden">Sipariş kalemleri ve fiyat snapshot'ları</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Ürün</th>
+                        <th scope="col" class="text-end">Miktar</th>
+                        <th scope="col" class="text-end">Birim fiyat</th>
+                        <th scope="col" class="text-end">Satır toplamı</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <span class="entity-title">@item.ProductName</span>
+                                <span class="entity-subtitle">@item.ProductSku</span>
+                            </td>
+                            <td class="text-end">@item.Quantity</td>
+                            <td class="text-end">@item.UnitPrice.ToString("C2", turkishCulture)</td>
+                            <td class="text-end fw-semibold">@item.LineTotal.ToString("C2", turkishCulture)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th scope="row" colspan="3" class="text-end">Sipariş toplamı</th>
+                        <td class="text-end fw-bold">@Model.TotalAmount.ToString("C2", turkishCulture)</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</section>
+
+@functions {
+    private static string GetOrderTypeLabel(OrderType type) => type switch
+    {
+        OrderType.Sale => "Satış",
+        OrderType.Purchase => "Satın alma",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetOrderStatusLabel(OrderStatus status) => status switch
+    {
+        OrderStatus.Draft => "Taslak",
+        OrderStatus.Confirmed => "Onaylandı",
+        OrderStatus.Cancelled => "İptal edildi",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetOrderStatusClass(OrderStatus status) => status switch
+    {
+        OrderStatus.Draft => "status-badge--draft",
+        OrderStatus.Confirmed => "status-badge--confirmed",
+        OrderStatus.Cancelled => "status-badge--cancelled",
+        _ => "status-badge--unknown"
+    };
+}

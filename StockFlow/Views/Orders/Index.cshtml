@@ -1,0 +1,206 @@
+@using System.Globalization
+@using StockFlow.Entities
+@using StockFlow.ViewModels.Orders
+@model OrderListViewModel
+
+@{
+    ViewData["Title"] = "Siparişler";
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">SİPARİŞ TAKİBİ</p>
+        <h1>Siparişler</h1>
+        <p class="page-intro">Satış ve satın alma siparişlerini tür, durum ve tarihe göre inceleyin.</p>
+    </div>
+</div>
+
+<section class="management-panel" aria-labelledby="order-filter-title">
+    <h2 id="order-filter-title" class="visually-hidden">Sipariş filtreleri</h2>
+    <form asp-action="Index" method="get" class="management-toolbar management-toolbar--orders">
+        <div>
+            <label for="order-type" class="form-label">Sipariş türü</label>
+            <select id="order-type" name="Type" class="form-select">
+                <option value="" selected="@(!Model.Type.HasValue)">Tüm türler</option>
+                <option value="@OrderType.Sale" selected="@(Model.Type == OrderType.Sale)">Satış</option>
+                <option value="@OrderType.Purchase" selected="@(Model.Type == OrderType.Purchase)">Satın alma</option>
+            </select>
+        </div>
+        <div>
+            <label for="order-status" class="form-label">Sipariş durumu</label>
+            <select id="order-status" name="Status" class="form-select">
+                <option value="" selected="@(!Model.Status.HasValue)">Tüm durumlar</option>
+                <option value="@OrderStatus.Draft" selected="@(Model.Status == OrderStatus.Draft)">Taslak</option>
+                <option value="@OrderStatus.Confirmed" selected="@(Model.Status == OrderStatus.Confirmed)">Onaylandı</option>
+                <option value="@OrderStatus.Cancelled" selected="@(Model.Status == OrderStatus.Cancelled)">İptal edildi</option>
+            </select>
+        </div>
+        <div>
+            <label for="order-sort" class="form-label">Tarih sıralaması</label>
+            <select id="order-sort" name="SortOrder" class="form-select">
+                <option value="@OrderSortOrder.DateDescending"
+                        selected="@(Model.SortOrder == OrderSortOrder.DateDescending)">En yeni önce</option>
+                <option value="@OrderSortOrder.DateAscending"
+                        selected="@(Model.SortOrder == OrderSortOrder.DateAscending)">En eski önce</option>
+            </select>
+        </div>
+        <div>
+            <label for="order-page-size" class="form-label">Sayfa boyutu</label>
+            <select id="order-page-size" name="PageSize" class="form-select">
+                @foreach (var pageSize in new[] { 10, 20, 50, 100 })
+                {
+                    <option value="@pageSize" selected="@(Model.PageSize == pageSize)">@pageSize</option>
+                }
+            </select>
+        </div>
+        <div class="management-toolbar__actions">
+            <button type="submit" class="btn btn-primary">Uygula</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Temizle</a>
+        </div>
+    </form>
+</section>
+
+<section class="management-panel mt-4" aria-labelledby="order-list-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">KAYITLAR</p>
+            <h2 id="order-list-title">Sipariş listesi</h2>
+        </div>
+        <span class="count-pill">@Model.TotalCount kayıt</span>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Gösterilecek sipariş yok</h3>
+            <p>Filtreleri temizleyin veya farklı tür ve durum seçimleri deneyin.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table align-middle mb-0">
+                <caption class="visually-hidden">Sipariş kayıtları</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Sipariş no</th>
+                        <th scope="col">Tür</th>
+                        <th scope="col">Taraf</th>
+                        <th scope="col">Tarih</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col">Kalem</th>
+                        <th scope="col" class="text-end">Tutar</th>
+                        <th scope="col" class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.Items)
+                    {
+                        var utcTimestamp = order.OrderDate.ToString(
+                            "yyyy-MM-ddTHH:mm:ss'Z'",
+                            CultureInfo.InvariantCulture);
+                        <tr>
+                            <td><span class="order-number">@order.OrderNumber</span></td>
+                            <td>
+                                <span class="order-type order-type--@order.Type.ToString().ToLowerInvariant()">
+                                    @GetOrderTypeLabel(order.Type)
+                                </span>
+                            </td>
+                            <td>
+                                <span class="entity-title">@order.PartyName</span>
+                                <span class="entity-subtitle">@GetPartyLabel(order.Type)</span>
+                            </td>
+                            <td>
+                                <time datetime="@utcTimestamp">
+                                    @order.OrderDate.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) UTC
+                                </time>
+                            </td>
+                            <td>
+                                <span class="status-badge @GetOrderStatusClass(order.Status)">
+                                    @GetOrderStatusLabel(order.Status)
+                                </span>
+                            </td>
+                            <td><span class="count-badge">@order.ItemCount</span></td>
+                            <td class="text-end fw-semibold">@order.TotalAmount.ToString("C2", turkishCulture)</td>
+                            <td class="text-end">
+                                <a asp-action="Details" asp-route-id="@order.Id"
+                                   class="btn btn-sm btn-outline-secondary">Görüntüle</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pagination-bar" aria-label="Sipariş sayfaları">
+            @if (Model.Page > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-Type="@Model.Type"
+                   asp-route-Status="@Model.Status"
+                   asp-route-SortOrder="@Model.SortOrder"
+                   asp-route-Page="@(Model.Page - 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Önceki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Önceki</span>
+            }
+
+            <span>Sayfa <strong>@Model.Page</strong> / @Model.TotalPages</span>
+
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a asp-action="Index"
+                   asp-route-Type="@Model.Type"
+                   asp-route-Status="@Model.Status"
+                   asp-route-SortOrder="@Model.SortOrder"
+                   asp-route-Page="@(Model.Page + 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Sonraki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Sonraki</span>
+            }
+        </nav>
+    }
+</section>
+
+@functions {
+    private static string GetOrderTypeLabel(OrderType type) => type switch
+    {
+        OrderType.Sale => "Satış",
+        OrderType.Purchase => "Satın alma",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetPartyLabel(OrderType type) => type switch
+    {
+        OrderType.Sale => "Müşteri",
+        OrderType.Purchase => "Tedarikçi",
+        _ => "Taraf"
+    };
+
+    private static string GetOrderStatusLabel(OrderStatus status) => status switch
+    {
+        OrderStatus.Draft => "Taslak",
+        OrderStatus.Confirmed => "Onaylandı",
+        OrderStatus.Cancelled => "İptal edildi",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetOrderStatusClass(OrderStatus status) => status switch
+    {
+        OrderStatus.Draft => "status-badge--draft",
+        OrderStatus.Confirmed => "status-badge--confirmed",
+        OrderStatus.Cancelled => "status-badge--cancelled",
+        _ => "status-badge--unknown"
+    };
+}

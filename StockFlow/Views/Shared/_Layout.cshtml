@@ -27,6 +27,10 @@
         ViewContext.RouteData.Values["controller"]?.ToString(),
         "Suppliers",
         StringComparison.OrdinalIgnoreCase);
+    var isOrders = string.Equals(
+        ViewContext.RouteData.Values["controller"]?.ToString(),
+        "Orders",
+        StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -77,6 +81,11 @@
                                 <a class="nav-link app-nav-link @(isCustomers ? "active" : null)"
                                    aria-current="@(isCustomers ? "page" : null)"
                                    asp-area="" asp-controller="Customers" asp-action="Index">Müşteriler</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link app-nav-link @(isOrders ? "active" : null)"
+                                   aria-current="@(isOrders ? "page" : null)"
+                                   asp-area="" asp-controller="Orders" asp-action="Index">Siparişler</a>
                             </li>
                             @if (User.IsInRole(AppRoles.Admin))
                             {

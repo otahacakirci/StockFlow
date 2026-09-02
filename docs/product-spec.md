@@ -162,6 +162,7 @@ _Tablo 3. Rol ve erişim matrisi_
 | Supplier yönetimi | Evet | Hayır |
 | Customer listeleme, görüntüleme, oluşturma ve düzenleme | Evet | Evet |
 | Sipariş geçmişi olmayan Customer kaydını silme | Evet | Hayır |
+| Sipariş listeleme ve görüntüleme | Evet | Evet |
 | Draft sipariş oluşturma ve düzenleme | Evet | Evet |
 | Sipariş onaylama veya iptal | Evet | Hayır |
 | Stok hareketi görüntüleme | Evet | Evet |

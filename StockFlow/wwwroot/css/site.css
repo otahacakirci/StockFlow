@@ -544,6 +544,10 @@ a {
   grid-template-columns: minmax(15rem, 1.5fr) minmax(11rem, 1fr) minmax(11rem, 1fr) minmax(8rem, auto);
 }
 
+.management-toolbar--orders {
+  grid-template-columns: repeat(4, minmax(9rem, 1fr)) auto;
+}
+
 .management-toolbar__check {
   align-items: center;
   display: flex;
