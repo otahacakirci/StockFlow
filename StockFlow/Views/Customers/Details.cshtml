@@ -1,0 +1,78 @@
+@using StockFlow.Security
+@model StockFlow.ViewModels.Customers.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Müşteri detayı";
+    var canManageCustomers = User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Employee);
+    var canDeleteCustomers = User.IsInRole(AppRoles.Admin);
+    var editReturnUrl = Url.Action("Details", "Customers", new { id = Model.Id }) ?? "/Customers";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">MÜŞTERİ DETAYI</p>
+        <h1>@Model.Name</h1>
+        <p class="page-intro">Müşteri iletişim bilgilerini ve sipariş geçmişi durumunu görüntüleyin.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+        @if (canManageCustomers)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"
+               class="btn btn-primary">Düzenle</a>
+        }
+    </div>
+</div>
+
+<section class="management-panel detail-panel" aria-labelledby="customer-information-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">GENEL BİLGİLER</p>
+            <h2 id="customer-information-title">Müşteri özeti</h2>
+        </div>
+        <span class="record-id">#@Model.Id</span>
+    </div>
+    <dl class="detail-grid">
+        <div>
+            <dt>Müşteri adı</dt>
+            <dd>@Model.Name</dd>
+        </div>
+        <div>
+            <dt>E-posta</dt>
+            <dd>@(Model.Email ?? "—")</dd>
+        </div>
+        <div>
+            <dt>Telefon</dt>
+            <dd>@(Model.Phone ?? "—")</dd>
+        </div>
+        <div>
+            <dt>Sipariş sayısı</dt>
+            <dd>@Model.OrderCount</dd>
+        </div>
+        <div>
+            <dt>Adres</dt>
+            <dd>@(Model.Address ?? "—")</dd>
+        </div>
+    </dl>
+</section>
+
+@if (canDeleteCustomers)
+{
+    <section class="management-panel mt-4 danger-zone" aria-labelledby="customer-delete-title">
+        <div>
+            <h2 id="customer-delete-title">Silme durumu</h2>
+            @if (Model.OrderCount == 0)
+            {
+                <p>Sipariş geçmişi bulunmadığı için müşteri fiziksel olarak silinebilir.</p>
+            }
+            else
+            {
+                <p>Sipariş geçmişi bulunan müşteriler fiziksel olarak silinemez.</p>
+            }
+        </div>
+        @if (Model.OrderCount == 0)
+        {
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Müşteriyi sil</a>
+        }
+    </section>
+}

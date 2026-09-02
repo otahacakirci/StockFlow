@@ -1,0 +1,30 @@
+@model StockFlow.ViewModels.Customers.CustomerEditPageViewModel
+
+@{
+    ViewData["Title"] = "Müşteri düzenle";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">MÜŞTERİ YÖNETİMİ</p>
+        <h1>Müşteriyi düzenle</h1>
+        <p class="page-intro">Müşteri adı ve iletişim bilgilerini güncelleyin. Sipariş geçmişi etkilenmez.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel" aria-labelledby="edit-customer-title">
+    <h2 id="edit-customer-title" class="visually-hidden">Müşteri düzenleme formu</h2>
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+        <partial name="_FormFields" for="Input" />
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Değişiklikleri kaydet</button>
+            <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">İptal</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

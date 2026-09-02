@@ -1,0 +1,170 @@
+@using StockFlow.Security
+@using StockFlow.ViewModels.Customers
+@model CustomerListViewModel
+
+@{
+    ViewData["Title"] = "Müşteriler";
+    var canManageCustomers = User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Employee);
+    var canDeleteCustomers = User.IsInRole(AppRoles.Admin);
+    var editReturnUrl = Url.Action(
+        "Index",
+        "Customers",
+        new
+        {
+            Model.SearchTerm,
+            Model.SortOrder,
+            Model.Page,
+            Model.PageSize
+        }) ?? "/Customers";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">MÜŞTERİ YÖNETİMİ</p>
+        <h1>Müşteriler</h1>
+        <p class="page-intro">Müşterileri ad veya iletişim bilgileriyle arayın ve sipariş geçmişlerini izleyin.</p>
+    </div>
+    @if (canManageCustomers)
+    {
+        <a asp-action="Create" class="btn btn-primary">Yeni müşteri</a>
+    }
+</div>
+
+<section class="management-panel" aria-labelledby="customer-filter-title">
+    <h2 id="customer-filter-title" class="visually-hidden">Müşteri filtreleri</h2>
+    <form asp-action="Index" method="get" class="management-toolbar">
+        <div class="management-toolbar__search">
+            <label for="customer-search" class="form-label">Müşteri ara</label>
+            <input id="customer-search" name="SearchTerm" value="@Model.SearchTerm"
+                   class="form-control" maxlength="256" placeholder="Ad, e-posta veya telefon" />
+        </div>
+        <div>
+            <label for="customer-sort" class="form-label">Sıralama</label>
+            <select id="customer-sort" name="SortOrder" class="form-select">
+                <option value="@CustomerSortOrder.NameAscending"
+                        selected="@(Model.SortOrder == CustomerSortOrder.NameAscending)">Ada göre A-Z</option>
+                <option value="@CustomerSortOrder.NameDescending"
+                        selected="@(Model.SortOrder == CustomerSortOrder.NameDescending)">Ada göre Z-A</option>
+            </select>
+        </div>
+        <div>
+            <label for="customer-page-size" class="form-label">Sayfa boyutu</label>
+            <select id="customer-page-size" name="PageSize" class="form-select">
+                @foreach (var pageSize in new[] { 10, 20, 50, 100 })
+                {
+                    <option value="@pageSize" selected="@(Model.PageSize == pageSize)">@pageSize</option>
+                }
+            </select>
+        </div>
+        <div class="management-toolbar__actions">
+            <button type="submit" class="btn btn-primary">Uygula</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Temizle</a>
+        </div>
+    </form>
+</section>
+
+<section class="management-panel mt-4" aria-labelledby="customer-list-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">KAYITLAR</p>
+            <h2 id="customer-list-title">Müşteri listesi</h2>
+        </div>
+        <span class="count-pill">@Model.TotalCount kayıt</span>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Gösterilecek müşteri yok</h3>
+            <p>Arama ölçütlerini temizleyin veya yeni bir müşteri oluşturun.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table align-middle mb-0">
+                <caption class="visually-hidden">Müşteri kayıtları</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Müşteri</th>
+                        <th scope="col">E-posta</th>
+                        <th scope="col">Telefon</th>
+                        <th scope="col">Sipariş</th>
+                        <th scope="col" class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in Model.Items)
+                    {
+                        <tr>
+                            <td><span class="entity-title">@customer.Name</span></td>
+                            <td>@(customer.Email ?? "—")</td>
+                            <td>@(customer.Phone ?? "—")</td>
+                            <td><span class="count-badge">@customer.OrderCount</span></td>
+                            <td class="text-end">
+                                <div class="table-actions">
+                                    <a asp-action="Details" asp-route-id="@customer.Id"
+                                       class="btn btn-sm btn-outline-secondary">Görüntüle</a>
+                                    @if (canManageCustomers)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@customer.Id"
+                                           asp-route-returnUrl="@editReturnUrl"
+                                           class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                    }
+                                    @if (canDeleteCustomers)
+                                    {
+                                        if (customer.OrderCount == 0)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@customer.Id"
+                                               class="btn btn-sm btn-outline-danger">Sil</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="table-action-note">Sipariş geçmişi var</span>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pagination-bar" aria-label="Müşteri sayfaları">
+            @if (Model.Page > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-SearchTerm="@Model.SearchTerm"
+                   asp-route-SortOrder="@Model.SortOrder"
+                   asp-route-Page="@(Model.Page - 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Önceki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Önceki</span>
+            }
+
+            <span>Sayfa <strong>@Model.Page</strong> / @Model.TotalPages</span>
+
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a asp-action="Index"
+                   asp-route-SearchTerm="@Model.SearchTerm"
+                   asp-route-SortOrder="@Model.SortOrder"
+                   asp-route-Page="@(Model.Page + 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Sonraki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Sonraki</span>
+            }
+        </nav>
+    }
+</section>

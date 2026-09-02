@@ -2,7 +2,7 @@
 title: "StockFlow Mevcut Teknik Durum"
 status: current
 authority: descriptive
-last_reviewed: "2026-09-01"
+last_reviewed: "2026-09-02"
 review_triggers:
   - application-code-change
   - package-change
@@ -67,15 +67,17 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 - Category liste ekranı ad araması, enum tabanlı sıralama, 10/20/50/100 sayfa boyutu ve filtre korumalı önceki/sonraki gezinme sunar. Create/Edit aynı güvenli `CategoryInputModel` ve ortak form partial'ını; Details/Delete yalnız güvenli projection/page modellerini kullanır. Edit İptal hedefi liste arama/sıralama/sayfa bağlamını veya Details geliş noktasını yerel URL olarak korur; eksik/dış hedef filtresiz Category listesine düşer. Ürünü bulunan kategori için Admin silme kontrolü gösterilmez ve Service yarış koşullarına karşı yeniden doğrular.
 - `ProductsController`, Product liste/detay/create/edit/delete akışlarını `IProductService` ve kategori seçimleri için `ICategoryService` üzerinden birleştirir. Liste/detay Admin/Employee; bütün yazma action'ları yalnız Admin rolüne açıktır. Product NotFound güvenli HTTP 404'e, doğrulama ve silinmiş kategori form alanına, geçmişli silme HTTP 409'a, beklenmeyen tipli sonuç güvenli HTTP 500'e çevrilir.
 - Product liste ekranı ad/SKU araması, kategori ve düşük stok filtresi, enum tabanlı ad/fiyat/stok sıralaması, 10/20/50/100 sayfa boyutu ve filtre korumalı sayfalama sunar. Fiyatlar `tr-TR` Türk lirası biçimindedir. Create/Edit fiyat input'u katı Türkçe decimal binder ve yalnız işaretli alana uygulanan istemci doğrulamasıyla virgüllü, en fazla iki basamaklı değer kabul eder; nokta veya binlik ayırıcı içeren belirsiz değer Service'e ulaşmadan reddedilir. Edit İptal hedefi arama/kategori/düşük stok/sıralama/sayfa bağlamını veya Details geliş noktasını korur; eksik/dış hedef filtresiz Product listesine düşer. Create başlangıç stoğunu kabul eder; edit mevcut stoğu yalnız sunucudan okunan bilgi olarak gösterir ve POST modeli `StockQuantity` taşımaz. Geçmişli ürün için Admin silme kontrolü gösterilmez.
-- Ortak Razor düzeni Türkçe StockFlow yönetim kimliği, yalnız kullanılabilir dashboard/kategori/ürün bağlantıları, Admin/Employee rol etiketi, kimliği doğrulanmış kullanıcı adı, TempData başarı bildirimi ve antiforgery korumalı POST logout sunar. Dashboard altı metriği ve son beş siparişi responsive olarak gösterir; tutarlar Türk lirası, sipariş tarihleri açık UTC biçimindedir.
+- `CustomersController`, Customer liste/detay/create/edit akışlarını Admin ve Employee rollerine, Delete GET/POST akışlarını ise yalnız Admin rolüne açar. Validation sonuçları alan bazlı forma, Customer NotFound güvenli HTTP 404'e ve sipariş geçmişi silme ihlali güncel onay görünümüyle HTTP 409'a çevrilir; gerçek exception'lar yakalanmadan merkezi hata middleware'ine yayılır.
+- Customer liste ekranı ad/e-posta/telefon araması, enum tabanlı ad sıralaması, 10/20/50/100 sayfa boyutu ve filtre korumalı sayfalama sunar. Create/Edit yalnız güvenli `CustomerInputModel` kullanır; Türkçe DataAnnotations mesajları mevcut 150/256/32/500 sınırlarını ve opsiyonel iletişim kurallarını korur. Edit İptal hedefi yalnız yerel URL olarak taşınır. Employee UI silme kontrolü üretmez; Admin için de sipariş geçmişli Customer'da silme formu gösterilmez ve Service yarış koşuluna karşı kuralı yeniden doğrular.
+- Ortak Razor düzeni Türkçe StockFlow yönetim kimliği, yalnız kullanılabilir dashboard/kategori/ürün/müşteri bağlantıları, Admin/Employee rol etiketi, kimliği doğrulanmış kullanıcı adı, TempData başarı bildirimi ve antiforgery korumalı POST logout sunar. Dashboard altı metriği ve son beş siparişi responsive olarak gösterir; tutarlar Türk lirası, sipariş tarihleri açık UTC biçimindedir.
 - Kaynak kontrollü ayarlarda bağlantı dizesi, başlangıç e-postası veya parola yoktur. LocalDB ve Identity seed değerleri güvenli yapılandırmada kalır.
-- Yüz elli yedi xUnit testi bulunur. Otuz veritabanısız `ProductsController` testi mevcut HTTP/form/rol sözleşmelerine ek olarak fiyat ModelState kesmesini ve yerel query dönüş hedeflerini; on `TurkishDecimalModelBinder` testi virgüllü giriş ile nokta/binlik/fazla hassasiyet reddini; dört `ProductInputModel` testi Türkçe DataAnnotations, binder seçimi ve update modelinin stok taşımama sözleşmesini doğrular. On dokuz `CategoriesController`, üç `CategoryInputModel`, üç `HomeController` ve dört ilişkisel `DashboardService` testi mevcut UI/dashboard katmanlarını kapsar. Yedi `StockMovementQueryService`, sekiz `OrderQueryService`, on üç `SupplierService`, on üç `CustomerService`, on iki `ProductService`, dokuz `CategoryService`, on `OrderService`, dört saf planner ve sekiz altyapı/Identity testi diğer mevcut davranışları doğrular; ProductService create/update testi `19.34m` fiyatını SQL Server'da aynen doğrular.
+- 188 xUnit testi bulunur. Yirmi altı veritabanısız `CustomersController` testi sorgu/form/HTTP davranışını, alan hata eşlemesini, exception yayılımını ve Admin/Employee ile Admin-only Delete ayrımını; beş `CustomerInputModel` testi mevcut iletişim doğrulama sözleşmesini kanıtlar. Otuz `ProductsController`, on dokuz `CategoriesController`, üç `HomeController`, on `TurkishDecimalModelBinder`, dört `ProductInputModel`, üç `CategoryInputModel` ve dört ilişkisel `DashboardService` testi mevcut UI/dashboard katmanlarını kapsar. Yedi `StockMovementQueryService`, sekiz `OrderQueryService`, on üç `SupplierService`, on üç `CustomerService`, on iki `ProductService`, dokuz `CategoryService`, on `OrderService`, dört saf planner ve sekiz altyapı/Identity testi diğer mevcut davranışları doğrular; ProductService create/update testi `19.34m` fiyatını SQL Server'da aynen doğrular.
 - Veritabanına dokunan her test, yalnız `(localdb)\MSSQLLocalDB` üzerinde benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur, migration uygular ve test sonunda veritabanını siler. Test altyapısı uygulama yapılandırmasını veya dış bağlantı dizesini kabul etmez.
 - `.gitignore`, `.gitattributes` ve staged içeriği denetleyen repository hygiene betiği GitHub öncesi güvenlik tabanını oluşturur.
 
 ## Doğrulanmış build taban çizgisi
 
-1 Eylül 2026 tarihinde solution derlemesi (`dotnet build StockFlow.slnx --no-restore`) sonucu:
+2 Eylül 2026 tarihinde solution derlemesi (`dotnet build StockFlow.slnx --no-restore`) sonucu:
 
 - 0 hata
 - 0 uyarı
@@ -84,17 +86,17 @@ Bu belge bugünkü kod tabanının açıklayıcı anlık görüntüsüdür. Kara
 
 | Alan | Mevcut | Hedef |
 | --- | --- | --- |
-| Kimlik | Cookie Identity, özel MVC login/logout, global auth fallback, seed ve Dashboard/Category/Product rol matrisi hazır | Kalan iş ekranlarında rol matrisi ve role göre navigasyon |
-| Veri | Domain entity/mapping/migration, Category/Product/Customer/Supplier yönetimi, sipariş mutation/query, StockMovement query ve Dashboard Service akışları hazır | Customer/Supplier/Order/StockMovement Service akışlarının Controller'lara bağlanması |
-| Uygulama akışı | Dashboard, Category ve Product rol korumalı ince Controller üzerinden Service/ViewModel sınırına bağlı; diğer yönetim davranışları Service katmanında hazır | Kalan yönetim Controller ve ekranlarının Service'lere bağlanması |
-| Arayüz | StockFlow yönetim düzeni, responsive dashboard, Category ve Product CRUD ekranları hazır | Customer, Supplier, Order ve StockMovement MVC ekranları; API yalnızca bonus salt-okunur kapsam |
+| Kimlik | Cookie Identity, özel MVC login/logout, global auth fallback, seed ve Dashboard/Category/Product/Customer rol matrisi hazır | Kalan iş ekranlarında rol matrisi ve role göre navigasyon |
+| Veri | Domain entity/mapping/migration, Category/Product/Customer/Supplier yönetimi, sipariş mutation/query, StockMovement query ve Dashboard Service akışları hazır | Supplier/Order/StockMovement Service akışlarının Controller'lara bağlanması |
+| Uygulama akışı | Dashboard, Category, Product ve Customer rol korumalı ince Controller üzerinden Service/ViewModel sınırına bağlı; diğer yönetim davranışları Service katmanında hazır | Kalan yönetim Controller ve ekranlarının Service'lere bağlanması |
+| Arayüz | StockFlow yönetim düzeni, responsive dashboard ve Category/Product/Customer CRUD ekranları hazır | Supplier, Order ve StockMovement MVC ekranları; API yalnızca bonus salt-okunur kapsam |
 
 ## Bilinen riskler ve boşluklar
 
-- Dashboard, Category ve Product rol matrisi controller/action ve navigasyon seviyesinde uygulanmıştır; kalan iş ekranlarının rol sınırları henüz HTTP/UI katmanına bağlanmamıştır.
+- Dashboard, Category, Product ve Customer rol matrisi controller/action ve navigasyon seviyesinde uygulanmıştır; kalan iş ekranlarının rol sınırları henüz HTTP/UI katmanına bağlanmamıştır.
 - Uygulama çalışmadan önce dört `IdentitySeed` secret değeri ve migration uygulanmış veritabanı zorunludur; uygulama otomatik migration çalıştırmaz.
-- Customer, Supplier, sipariş mutation/query ve StockMovement query Service katmanları hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
-- 1 Eylül 2026 doğrulamasında fiyat binder'ı ile Product/Category Controller ve ViewModel odaklı 63 veritabanısız test, on iki ilişkisel ProductService testi ve yüz elli yedi testlik tam paket kullanıcıya bağlı `MSSQLLocalDB` örneğinde geçti; başarısız veya atlanan test yoktur. Çözüm ayrıca 0 hata/uyarıyla derlenir.
+- Supplier, sipariş mutation/query ve StockMovement query Service katmanları hazır olsa da Controller, rol matrisi ve yönetim ekranlarına henüz bağlanmamıştır.
+- 2 Eylül 2026 doğrulamasında Customer Controller/ViewModel odaklı 31 veritabanısız test, on üç ilişkisel CustomerService testi ve 188 testlik tam paket kullanıcıya bağlı `MSSQLLocalDB` örneğinde geçti; başarısız veya atlanan test yoktur. Çözüm ayrıca 0 hata/uyarıyla derlenir.
 - İlişkisel test altyapısı Windows ve kurulu SQL Server LocalDB gerektirir; CI ve çapraz platform test hedefi henüz yoktur.
 - LocalDB geliştirme için uygundur fakat production veya çok kullanıcılı deployment hedefi değildir.
 

@@ -2,7 +2,7 @@
 title: "StockFlow Proje Tanıtımı ve Özellik Spesifikasyonu"
 status: active
 authority: normative
-last_reviewed: "2026-08-30"
+last_reviewed: "2026-09-02"
 review_triggers:
   - product-scope-change
   - domain-rule-change
@@ -160,7 +160,8 @@ _Tablo 3. Rol ve erişim matrisi_
 | Ürün/kategori görüntüleme | Evet | Evet |
 | Ürün/kategori oluşturma, düzenleme, silme | Evet | Hayır |
 | Supplier yönetimi | Evet | Hayır |
-| Customer yönetimi | Evet | Evet |
+| Customer listeleme, görüntüleme, oluşturma ve düzenleme | Evet | Evet |
+| Sipariş geçmişi olmayan Customer kaydını silme | Evet | Hayır |
 | Draft sipariş oluşturma ve düzenleme | Evet | Evet |
 | Sipariş onaylama veya iptal | Evet | Hayır |
 | Stok hareketi görüntüleme | Evet | Evet |
@@ -208,7 +209,7 @@ FR-PARTY-01 [ZORUNLU] Admin Supplier kayıtlarını listeleyebilmeli, görüntü
 
 FR-PARTY-02 [ZORUNLU] Admin ve Employee Customer kayıtlarını listeleyebilmeli, görüntüleyebilmeli, oluşturabilmeli ve düzenleyebilmelidir.
 
-FR-PARTY-03 [ZORUNLU] Customer yalnızca ilişkili Order yoksa silinebilmelidir.
+FR-PARTY-03 [ZORUNLU] Yalnızca Admin, ilişkili Order bulunmayan Customer kaydını silebilmelidir; Employee için silme eylemi UI'da gösterilmemeli ve Delete endpoint'leri rol seviyesinde reddedilmelidir.
 
 FR-PARTY-04 [ZORUNLU] E-posta ve telefon alanları ViewModel düzeyinde biçim ve uzunluk doğrulamasına tabi olmalıdır.
 
@@ -508,7 +509,7 @@ AC-06 - Rol ayrımı
 
 Olay: Employee yalnızca Admin'e açık ürün yönetimi veya onay endpoint'ine gider.
 
-Beklenen: UI ilgili eylemi sunmaz; doğrudan endpoint isteği de güvenli biçimde reddedilir. Employee izinli Customer ve Draft sipariş işlemlerini kullanmaya devam eder.
+Beklenen: UI ilgili eylemi sunmaz; doğrudan endpoint isteği de güvenli biçimde reddedilir. Employee Customer kayıtlarını listeleme, görüntüleme, oluşturma ve düzenleme ile izinli Draft sipariş işlemlerini kullanmaya devam eder; Customer silme eylemi ve endpoint'leri yalnız Admin'e açıktır.
 
 AC-07 - Arama ve sayfalama
 

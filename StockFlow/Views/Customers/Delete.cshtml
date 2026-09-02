@@ -1,0 +1,49 @@
+@model StockFlow.ViewModels.Customers.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Müşteri sil";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">MÜŞTERİ YÖNETİMİ</p>
+        <h1>Müşteriyi sil</h1>
+        <p class="page-intro">Silme işleminden önce müşteri ve sipariş geçmişi durumunu doğrulayın.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel danger-confirmation" aria-labelledby="delete-customer-title">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <p class="page-eyebrow">SİLME ONAYI</p>
+    <h2 id="delete-customer-title">@Model.Name</h2>
+    <dl class="detail-grid detail-grid--compact">
+        <div>
+            <dt>E-posta</dt>
+            <dd>@(Model.Email ?? "—")</dd>
+        </div>
+        <div>
+            <dt>Telefon</dt>
+            <dd>@(Model.Phone ?? "—")</dd>
+        </div>
+        <div>
+            <dt>Sipariş sayısı</dt>
+            <dd>@Model.OrderCount</dd>
+        </div>
+    </dl>
+
+    @if (Model.OrderCount == 0)
+    {
+        <p>Bu işlem müşteriyi kalıcı olarak silecektir. Devam etmek istediğinizden emin olun.</p>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
+            <button type="submit" class="btn btn-danger">Evet, müşteriyi sil</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning mb-4" role="status">
+            Sipariş geçmişi bulunan müşteriler fiziksel olarak silinemez.
+        </div>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Detaya dön</a>
+    }
+</section>
