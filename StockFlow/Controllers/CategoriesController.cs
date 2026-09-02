@@ -85,13 +85,17 @@ public sealed class CategoriesController(
     [HttpGet]
     public async Task<IActionResult> Edit(
         int id,
+        string? returnUrl,
         CancellationToken cancellationToken)
     {
         var result = await categoryService.GetByIdAsync(id, cancellationToken);
 
         if (result.IsSuccess && result.Value is not null)
         {
-            return View(new CategoryInputModel { Name = result.Value.Name });
+            return View(new CategoryEditPageViewModel(
+                result.Value.Id,
+                new CategoryInputModel { Name = result.Value.Name },
+                GetLocalReturnUrl(returnUrl)));
         }
 
         return IsNotFound(result.Error)
@@ -104,12 +108,18 @@ public sealed class CategoriesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(
         int id,
-        CategoryInputModel input,
+        string? returnUrl,
+        [Bind(Prefix = nameof(CategoryEditPageViewModel.Input))] CategoryInputModel input,
         CancellationToken cancellationToken)
     {
+        var page = new CategoryEditPageViewModel(
+            id,
+            input,
+            GetLocalReturnUrl(returnUrl));
+
         if (!ModelState.IsValid)
         {
-            return View(input);
+            return View(page);
         }
 
         var result = await categoryService.UpdateAsync(id, input, cancellationToken);
@@ -122,8 +132,8 @@ public sealed class CategoriesController(
 
         if (result.Error?.Category == ServiceErrorCategory.Validation)
         {
-            AddValidationError(result.Error);
-            return View(input);
+            AddValidationError(result.Error, nameof(CategoryEditPageViewModel.Input));
+            return View(page);
         }
 
         return IsNotFound(result.Error)
@@ -189,14 +199,27 @@ public sealed class CategoriesController(
         return UnexpectedFailure("delete", result.Error, id);
     }
 
-    private void AddValidationError(ServiceError error)
+    private void AddValidationError(ServiceError error, string? prefix = null)
     {
         var key = error.Code is CategoryServiceErrorCodes.NameRequired
             or CategoryServiceErrorCodes.NameTooLong
             ? nameof(CategoryInputModel.Name)
             : string.Empty;
 
-        ModelState.AddModelError(key, error.Message);
+        var modelStateKey = string.IsNullOrEmpty(key) || string.IsNullOrEmpty(prefix)
+            ? key
+            : $"{prefix}.{key}";
+        ModelState.AddModelError(modelStateKey, error.Message);
+    }
+
+    private string GetLocalReturnUrl(string? returnUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Url.Content(returnUrl);
+        }
+
+        return Url.Action(nameof(Index)) ?? "/Categories";
     }
 
     private static bool IsNotFound(ServiceError? error)

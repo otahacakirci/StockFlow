@@ -1,0 +1,55 @@
+@using System.Globalization
+@model StockFlow.ViewModels.Products.ProductViewModel
+
+@{
+    ViewData["Title"] = "Ürün sil";
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">ÜRÜN YÖNETİMİ</p>
+        <h1>Ürünü sil</h1>
+        <p class="page-intro">Silme işleminden önce ürün durumunu doğrulayın.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel danger-confirmation" aria-labelledby="delete-product-title">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <p class="page-eyebrow">SİLME ONAYI</p>
+    <h2 id="delete-product-title">@Model.Name</h2>
+    <dl class="detail-grid detail-grid--compact">
+        <div>
+            <dt>SKU</dt>
+            <dd class="entity-code">@Model.Sku</dd>
+        </div>
+        <div>
+            <dt>Kategori</dt>
+            <dd>@Model.CategoryName</dd>
+        </div>
+        <div>
+            <dt>Fiyat</dt>
+            <dd>@Model.Price.ToString("C2", turkishCulture)</dd>
+        </div>
+        <div>
+            <dt>Mevcut stok</dt>
+            <dd>@Model.StockQuantity</dd>
+        </div>
+    </dl>
+
+    @if (Model.CanDelete)
+    {
+        <p>Bu işlem ürünü kalıcı olarak silecektir. Devam etmek istediğinizden emin olun.</p>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
+            <button type="submit" class="btn btn-danger">Evet, ürünü sil</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning mb-4" role="status">
+            Sipariş kalemi veya stok hareketi geçmişi bulunan ürünler fiziksel olarak silinemez.
+        </div>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Detaya dön</a>
+    }
+</section>

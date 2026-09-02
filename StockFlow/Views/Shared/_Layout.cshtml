@@ -15,6 +15,10 @@
         ViewContext.RouteData.Values["controller"]?.ToString(),
         "Categories",
         StringComparison.OrdinalIgnoreCase);
+    var isProducts = string.Equals(
+        ViewContext.RouteData.Values["controller"]?.ToString(),
+        "Products",
+        StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -55,6 +59,11 @@
                                 <a class="nav-link app-nav-link @(isCategories ? "active" : null)"
                                    aria-current="@(isCategories ? "page" : null)"
                                    asp-area="" asp-controller="Categories" asp-action="Index">Kategoriler</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link app-nav-link @(isProducts ? "active" : null)"
+                                   aria-current="@(isProducts ? "page" : null)"
+                                   asp-area="" asp-controller="Products" asp-action="Index">Ürünler</a>
                             </li>
                         }
                     </ul>

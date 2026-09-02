@@ -1,23 +1,36 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
+using StockFlow.ModelBinding;
 
 namespace StockFlow.ViewModels.Products;
 
 public sealed class ProductUpdateInputModel
 {
-    [Required]
-    [StringLength(150)]
+    [Display(Name = "Ürün adı")]
+    [Required(ErrorMessage = "Ürün adı zorunludur.")]
+    [StringLength(150, ErrorMessage = "Ürün adı en fazla 150 karakter olabilir.")]
     public string Name { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(64)]
+    [Display(Name = "SKU")]
+    [Required(ErrorMessage = "SKU zorunludur.")]
+    [StringLength(64, ErrorMessage = "SKU en fazla 64 karakter olabilir.")]
     public string Sku { get; set; } = string.Empty;
 
-    [Range(typeof(decimal), "0.01", "9999999999999999.99")]
+    [Display(Name = "Fiyat")]
+    [ModelBinder(BinderType = typeof(TurkishDecimalModelBinder))]
+    [Range(
+        typeof(decimal),
+        "0.01",
+        "9999999999999999.99",
+        ErrorMessage = "Fiyat sıfırdan büyük ve desteklenen tutar aralığında olmalıdır.",
+        ParseLimitsInInvariantCulture = true)]
     public decimal Price { get; set; }
 
-    [Range(0, int.MaxValue)]
+    [Display(Name = "Minimum stok miktarı")]
+    [Range(0, int.MaxValue, ErrorMessage = "Minimum stok miktarı sıfır veya pozitif olmalıdır.")]
     public int MinimumStockQuantity { get; set; }
 
-    [Range(1, int.MaxValue)]
+    [Display(Name = "Kategori")]
+    [Range(1, int.MaxValue, ErrorMessage = "Geçerli bir kategori seçilmelidir.")]
     public int CategoryId { get; set; }
 }

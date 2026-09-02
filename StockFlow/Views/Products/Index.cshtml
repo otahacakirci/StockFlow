@@ -1,0 +1,206 @@
+@using System.Globalization
+@using StockFlow.Security
+@using StockFlow.ViewModels.Products
+@model ProductListPageViewModel
+
+@{
+    ViewData["Title"] = "Ürünler";
+    var canManageProducts = User.IsInRole(AppRoles.Admin);
+    var products = Model.Products;
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+    var editReturnUrl = Url.Action(
+        "Index",
+        "Products",
+        new
+        {
+            products.SearchTerm,
+            products.CategoryId,
+            products.LowStockOnly,
+            products.SortOrder,
+            products.Page,
+            products.PageSize
+        }) ?? "/Products";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">ÜRÜN KATALOĞU</p>
+        <h1>Ürünler</h1>
+        <p class="page-intro">Ürünleri ad veya SKU ile arayın; kategori ve stok durumuna göre filtreleyin.</p>
+    </div>
+    @if (canManageProducts)
+    {
+        <a asp-action="Create" class="btn btn-primary">Yeni ürün</a>
+    }
+</div>
+
+<section class="management-panel" aria-labelledby="product-filter-title">
+    <h2 id="product-filter-title" class="visually-hidden">Ürün filtreleri</h2>
+    <form asp-action="Index" method="get" class="management-toolbar management-toolbar--products">
+        <div class="management-toolbar__search">
+            <label for="product-search" class="form-label">Ürün ara</label>
+            <input id="product-search" name="SearchTerm" value="@products.SearchTerm"
+                   class="form-control" maxlength="150" placeholder="Ürün adı veya SKU" />
+        </div>
+        <div>
+            <label for="product-category" class="form-label">Kategori</label>
+            <select id="product-category" name="CategoryId" class="form-select">
+                <option value="">Tüm kategoriler</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Id" selected="@(products.CategoryId == category.Id)">@category.Name</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label for="product-sort" class="form-label">Sıralama</label>
+            <select id="product-sort" name="SortOrder" class="form-select">
+                <option value="@ProductSortOrder.NameAscending" selected="@(products.SortOrder == ProductSortOrder.NameAscending)">Ada göre A-Z</option>
+                <option value="@ProductSortOrder.NameDescending" selected="@(products.SortOrder == ProductSortOrder.NameDescending)">Ada göre Z-A</option>
+                <option value="@ProductSortOrder.PriceAscending" selected="@(products.SortOrder == ProductSortOrder.PriceAscending)">Fiyat artan</option>
+                <option value="@ProductSortOrder.PriceDescending" selected="@(products.SortOrder == ProductSortOrder.PriceDescending)">Fiyat azalan</option>
+                <option value="@ProductSortOrder.StockQuantityAscending" selected="@(products.SortOrder == ProductSortOrder.StockQuantityAscending)">Stok artan</option>
+                <option value="@ProductSortOrder.StockQuantityDescending" selected="@(products.SortOrder == ProductSortOrder.StockQuantityDescending)">Stok azalan</option>
+            </select>
+        </div>
+        <div>
+            <label for="product-page-size" class="form-label">Sayfa boyutu</label>
+            <select id="product-page-size" name="PageSize" class="form-select">
+                @foreach (var pageSize in new[] { 10, 20, 50, 100 })
+                {
+                    <option value="@pageSize" selected="@(products.PageSize == pageSize)">@pageSize</option>
+                }
+            </select>
+        </div>
+        <div class="form-check management-toolbar__check">
+            <input id="product-low-stock" name="LowStockOnly" value="true" type="checkbox"
+                   class="form-check-input" checked="@products.LowStockOnly" />
+            <label for="product-low-stock" class="form-check-label">Yalnız düşük stok</label>
+        </div>
+        <div class="management-toolbar__actions">
+            <button type="submit" class="btn btn-primary">Uygula</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Temizle</a>
+        </div>
+    </form>
+</section>
+
+<section class="management-panel mt-4" aria-labelledby="product-list-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">KAYITLAR</p>
+            <h2 id="product-list-title">Ürün listesi</h2>
+        </div>
+        <span class="count-pill">@products.TotalCount kayıt</span>
+    </div>
+
+    @if (products.Items.Count == 0)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Gösterilecek ürün yok</h3>
+            <p>Filtreleri temizleyin veya yetkiniz varsa yeni bir ürün oluşturun.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table align-middle mb-0">
+                <caption class="visually-hidden">Ürün kayıtları</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Ürün</th>
+                        <th scope="col">Kategori</th>
+                        <th scope="col">Fiyat</th>
+                        <th scope="col">Stok</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col" class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in products.Items)
+                    {
+                        <tr>
+                            <td>
+                                <span class="entity-title">@product.Name</span>
+                                <span class="entity-subtitle">@product.Sku</span>
+                            </td>
+                            <td>@product.CategoryName</td>
+                            <td>@product.Price.ToString("C2", turkishCulture)</td>
+                            <td>@product.StockQuantity / @product.MinimumStockQuantity</td>
+                            <td>
+                                @if (product.IsLowStock)
+                                {
+                                    <span class="stock-badge stock-badge--low">Düşük stok</span>
+                                }
+                                else
+                                {
+                                    <span class="stock-badge stock-badge--normal">Yeterli</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="table-actions">
+                                    <a asp-action="Details" asp-route-id="@product.Id"
+                                       class="btn btn-sm btn-outline-secondary">Görüntüle</a>
+                                    @if (canManageProducts)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@product.Id"
+                                           asp-route-returnUrl="@editReturnUrl"
+                                           class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                        @if (product.CanDelete)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@product.Id"
+                                               class="btn btn-sm btn-outline-danger">Sil</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="table-action-note">Geçmiş bağlı</span>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (products.TotalPages > 1)
+    {
+        <nav class="pagination-bar" aria-label="Ürün sayfaları">
+            @if (products.Page > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-SearchTerm="@products.SearchTerm"
+                   asp-route-CategoryId="@products.CategoryId"
+                   asp-route-LowStockOnly="@products.LowStockOnly"
+                   asp-route-SortOrder="@products.SortOrder"
+                   asp-route-Page="@(products.Page - 1)"
+                   asp-route-PageSize="@products.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Önceki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Önceki</span>
+            }
+
+            <span>Sayfa <strong>@products.Page</strong> / @products.TotalPages</span>
+
+            @if (products.Page < products.TotalPages)
+            {
+                <a asp-action="Index"
+                   asp-route-SearchTerm="@products.SearchTerm"
+                   asp-route-CategoryId="@products.CategoryId"
+                   asp-route-LowStockOnly="@products.LowStockOnly"
+                   asp-route-SortOrder="@products.SortOrder"
+                   asp-route-Page="@(products.Page + 1)"
+                   asp-route-PageSize="@products.PageSize"
+                   class="btn btn-sm btn-outline-secondary">Sonraki</a>
+            }
+            else
+            {
+                <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Sonraki</span>
+            }
+        </nav>
+    }
+</section>

@@ -43,6 +43,7 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
         Assert.Equal("Pen", item.Name);
         Assert.Equal("Primary", item.CategoryName);
         Assert.True(item.IsLowStock);
+        Assert.True(item.CanDelete);
 
         var nameSearch = AssertSuccess(await service.GetListAsync(new ProductListQueryModel
         {
@@ -108,6 +109,7 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
         var product = AssertSuccess(await service.GetByIdAsync(productId));
         Assert.Equal("Primary", product.CategoryName);
         Assert.True(product.IsLowStock);
+        Assert.True(product.CanDelete);
         Assert.Empty(dbContext.ChangeTracker.Entries());
 
         AssertFailure(
@@ -126,7 +128,7 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
         {
             Name = "  Opening Product  ",
             Sku = "  Open-001  ",
-            Price = 12.30m,
+            Price = 19.34m,
             StockQuantity = 5,
             MinimumStockQuantity = 5,
             CategoryId = categories.FirstId
@@ -134,11 +136,17 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
 
         Assert.Equal("Opening Product", created.Name);
         Assert.Equal("Open-001", created.Sku);
+        Assert.Equal(19.34m, created.Price);
         Assert.Equal(5, created.StockQuantity);
         Assert.Equal("Primary", created.CategoryName);
         Assert.True(created.IsLowStock);
+        Assert.True(created.CanDelete);
 
         await using var verificationContext = CreateDbContext();
+        Assert.Equal(19.34m, await verificationContext.Products
+            .Where(product => product.Id == created.Id)
+            .Select(product => product.Price)
+            .SingleAsync());
         Assert.Equal(5, await verificationContext.Products
             .Where(product => product.Id == created.Id)
             .Select(product => product.StockQuantity)
@@ -222,21 +230,23 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
                 {
                     Name = "  Updated  ",
                     Sku = "  UPDATED  ",
-                    Price = 9.00m,
+                    Price = 19.34m,
                     MinimumStockQuantity = 8,
                     CategoryId = categories.SecondId
                 }));
 
             Assert.Equal(7, updated.StockQuantity);
-            Assert.Equal(9.00m, updated.Price);
+            Assert.Equal(19.34m, updated.Price);
             Assert.Equal("Secondary", updated.CategoryName);
             Assert.True(updated.IsLowStock);
+            Assert.False(updated.CanDelete);
         }
 
         await using var verificationContext = CreateDbContext();
         var product = await verificationContext.Products.SingleAsync(candidate => candidate.Id == productId);
         Assert.Equal("Updated", product.Name);
         Assert.Equal("UPDATED", product.Sku);
+        Assert.Equal(19.34m, product.Price);
         Assert.Equal(7, product.StockQuantity);
         Assert.Equal(8, product.MinimumStockQuantity);
         Assert.Equal(categories.SecondId, product.CategoryId);

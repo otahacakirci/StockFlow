@@ -79,6 +79,21 @@ internal sealed class CategoryService(
             : ServiceResult<CategoryViewModel>.Success(category);
     }
 
+    public async Task<ServiceResult<IReadOnlyList<CategorySelectionOptionViewModel>>> GetSelectionOptionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var options = await dbContext.Categories
+            .AsNoTracking()
+            .OrderBy(category => category.Name)
+            .ThenBy(category => category.Id)
+            .Select(category => new CategorySelectionOptionViewModel(
+                category.Id,
+                category.Name))
+            .ToListAsync(cancellationToken);
+
+        return ServiceResult<IReadOnlyList<CategorySelectionOptionViewModel>>.Success(options);
+    }
+
     public async Task<ServiceResult<CategoryViewModel>> CreateAsync(
         CategoryInputModel? input,
         CancellationToken cancellationToken = default)

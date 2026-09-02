@@ -23,6 +23,12 @@ public interface ICategoryService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Ürün filtreleri ve formları için kategorileri yalnız kimlik ve ad bilgisiyle sıralı olarak döndürür.
+    /// </summary>
+    Task<ServiceResult<IReadOnlyList<CategorySelectionOptionViewModel>>> GetSelectionOptionsAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Doğrulanmış ve normalize edilmiş adla yeni kategori oluşturur.
     /// </summary>
     Task<ServiceResult<CategoryViewModel>> CreateAsync(

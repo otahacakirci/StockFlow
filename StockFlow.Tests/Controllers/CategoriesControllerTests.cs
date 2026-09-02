@@ -126,6 +126,92 @@ public sealed class CategoriesControllerTests
         Assert.Equal("Kategori başarıyla oluşturuldu.", controller.TempData["SuccessMessage"]);
     }
 
+    [Theory]
+    [InlineData("/Categories?SearchTerm=ofis&SortOrder=NameDescending&Page=3&PageSize=50")]
+    [InlineData("/Categories/Details/5")]
+    public async Task EditGet_WithLocalReturnUrl_PreservesExactTarget(string returnUrl)
+    {
+        var category = new CategoryViewModel(5, "Office", 1);
+        var service = new StubCategoryService
+        {
+            GetByIdHandler = (_, _) => Task.FromResult(
+                ServiceResult<CategoryViewModel>.Success(category))
+        };
+        var controller = CreateController(service);
+
+        var actionResult = await controller.Edit(category.Id, returnUrl, CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        var page = Assert.IsType<CategoryEditPageViewModel>(viewResult.Model);
+        Assert.Equal(category.Id, page.Id);
+        Assert.Equal(category.Name, page.Input.Name);
+        Assert.Equal(returnUrl, page.ReturnUrl);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("https://example.com/Categories")]
+    [InlineData("//example.com/Categories")]
+    public async Task EditGet_WithMissingOrExternalReturnUrl_FallsBackToIndex(string? returnUrl)
+    {
+        var category = new CategoryViewModel(5, "Office", 1);
+        var service = new StubCategoryService
+        {
+            GetByIdHandler = (_, _) => Task.FromResult(
+                ServiceResult<CategoryViewModel>.Success(category))
+        };
+        var controller = CreateController(service);
+
+        var actionResult = await controller.Edit(category.Id, returnUrl, CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        var page = Assert.IsType<CategoryEditPageViewModel>(viewResult.Model);
+        Assert.Equal("/Categories", page.ReturnUrl);
+    }
+
+    [Fact]
+    public async Task Edit_WhenModelStateIsInvalid_PreservesLocalReturnUrlWithoutCallingService()
+    {
+        const string returnUrl =
+            "/Categories?SearchTerm=ofis&SortOrder=NameDescending&Page=3&PageSize=50";
+        var input = new CategoryInputModel { Name = string.Empty };
+        var service = new StubCategoryService();
+        var controller = CreateController(service);
+        controller.ModelState.AddModelError("Input.Name", "Geçersiz.");
+
+        var actionResult = await controller.Edit(
+            5,
+            returnUrl,
+            input,
+            CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        var page = Assert.IsType<CategoryEditPageViewModel>(viewResult.Model);
+        Assert.Same(input, page.Input);
+        Assert.Equal(returnUrl, page.ReturnUrl);
+        Assert.Equal(0, service.UpdateCallCount);
+    }
+
+    [Fact]
+    public async Task Edit_WhenExternalReturnUrlIsPosted_ReplacesItWithIndexFallback()
+    {
+        var service = new StubCategoryService();
+        var controller = CreateController(service);
+        controller.ModelState.AddModelError("Input.Name", "Geçersiz.");
+
+        var actionResult = await controller.Edit(
+            5,
+            "https://example.com/Categories",
+            new CategoryInputModel { Name = string.Empty },
+            CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        var page = Assert.IsType<CategoryEditPageViewModel>(viewResult.Model);
+        Assert.Equal("/Categories", page.ReturnUrl);
+        Assert.Equal(0, service.UpdateCallCount);
+    }
+
     [Fact]
     public async Task Edit_WhenServiceRejectsName_AddsFieldErrorAndKeepsInput()
     {
@@ -140,12 +226,17 @@ public sealed class CategoriesControllerTests
         };
         var controller = CreateController(service);
 
-        var actionResult = await controller.Edit(5, input, CancellationToken.None);
+        const string returnUrl =
+            "/Categories?SearchTerm=ofis&SortOrder=NameDescending&Page=3&PageSize=50";
+
+        var actionResult = await controller.Edit(5, returnUrl, input, CancellationToken.None);
 
         var viewResult = Assert.IsType<ViewResult>(actionResult);
-        Assert.Same(input, viewResult.Model);
+        var page = Assert.IsType<CategoryEditPageViewModel>(viewResult.Model);
+        Assert.Same(input, page.Input);
+        Assert.Equal(returnUrl, page.ReturnUrl);
         var modelState = Assert.Contains(
-            nameof(CategoryInputModel.Name),
+            "Input.Name",
             controller.ModelState);
         Assert.NotNull(modelState);
         Assert.Equal(
@@ -168,6 +259,7 @@ public sealed class CategoriesControllerTests
 
         var actionResult = await controller.Edit(
             updated.Id,
+            null,
             input,
             cancellationTokenSource.Token);
 
@@ -192,6 +284,7 @@ public sealed class CategoriesControllerTests
 
         var actionResult = await controller.Edit(
             404,
+            null,
             new CategoryInputModel { Name = "Missing" },
             CancellationToken.None);
 
@@ -296,7 +389,8 @@ public sealed class CategoriesControllerTests
             categoryService,
             NullLogger<CategoriesController>.Instance)
         {
-            ControllerContext = new ControllerContext { HttpContext = httpContext }
+            ControllerContext = new ControllerContext { HttpContext = httpContext },
+            Url = new TestUrlHelper("/Categories")
         };
         controller.TempData = new TempDataDictionary(
             httpContext,
@@ -344,6 +438,8 @@ public sealed class CategoriesControllerTests
 
         public int CreateCallCount { get; private set; }
 
+        public int UpdateCallCount { get; private set; }
+
         public int? ReceivedCategoryId { get; private set; }
 
         public CategoryInputModel? ReceivedInput { get; private set; }
@@ -374,6 +470,12 @@ public sealed class CategoriesControllerTests
                 : throw MissingHandlerException();
         }
 
+        public Task<ServiceResult<IReadOnlyList<CategorySelectionOptionViewModel>>> GetSelectionOptionsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            throw MissingHandlerException();
+        }
+
         public Task<ServiceResult<CategoryViewModel>> CreateAsync(
             CategoryInputModel? input,
             CancellationToken cancellationToken = default)
@@ -391,6 +493,7 @@ public sealed class CategoriesControllerTests
             CategoryInputModel? input,
             CancellationToken cancellationToken = default)
         {
+            UpdateCallCount++;
             ReceivedCategoryId = categoryId;
             ReceivedInput = input;
             ReceivedCancellationToken = cancellationToken;

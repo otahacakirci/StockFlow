@@ -66,7 +66,8 @@ internal sealed class ProductService(
                 product.MinimumStockQuantity,
                 product.CategoryId,
                 product.Category.Name,
-                product.StockQuantity <= product.MinimumStockQuantity))
+                product.StockQuantity <= product.MinimumStockQuantity,
+                !product.OrderItems.Any() && !product.StockMovements.Any()))
             .ToListAsync(cancellationToken);
 
         return ServiceResult<ProductListViewModel>.Success(new ProductListViewModel(
@@ -97,7 +98,8 @@ internal sealed class ProductService(
                 candidate.MinimumStockQuantity,
                 candidate.CategoryId,
                 candidate.Category.Name,
-                candidate.StockQuantity <= candidate.MinimumStockQuantity))
+                candidate.StockQuantity <= candidate.MinimumStockQuantity,
+                !candidate.OrderItems.Any() && !candidate.StockMovements.Any()))
             .SingleOrDefaultAsync(cancellationToken);
 
         return product is null
@@ -229,10 +231,18 @@ internal sealed class ProductService(
 
         await PersistChangesAsync("update", product, cancellationToken);
 
+        var canDelete = !await dbContext.OrderItems.AnyAsync(
+                item => item.ProductId == product.Id,
+                cancellationToken)
+            && !await dbContext.StockMovements.AnyAsync(
+                movement => movement.ProductId == product.Id,
+                cancellationToken);
+
         logger.LogInformation("Product {ProductId} updated.", product.Id);
         return ServiceResult<ProductViewModel>.Success(ToViewModel(
             product,
-            categoryNameResult.Value!));
+            categoryNameResult.Value!,
+            canDelete));
     }
 
     public async Task<ServiceResult> DeleteAsync(
@@ -469,7 +479,10 @@ internal sealed class ProductService(
         return ServiceResult<T>.Failure(error);
     }
 
-    private static ProductViewModel ToViewModel(Product product, string categoryName)
+    private static ProductViewModel ToViewModel(
+        Product product,
+        string categoryName,
+        bool canDelete = true)
     {
         return new ProductViewModel(
             product.Id,
@@ -480,7 +493,8 @@ internal sealed class ProductService(
             product.MinimumStockQuantity,
             product.CategoryId,
             categoryName,
-            product.StockQuantity <= product.MinimumStockQuantity);
+            product.StockQuantity <= product.MinimumStockQuantity,
+            canDelete);
     }
 
     private static ServiceError DuplicateSkuError()

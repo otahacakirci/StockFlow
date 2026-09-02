@@ -1,0 +1,96 @@
+@using System.Globalization
+@using StockFlow.Security
+@model StockFlow.ViewModels.Products.ProductViewModel
+
+@{
+    ViewData["Title"] = "Ürün detayı";
+    var canManageProducts = User.IsInRole(AppRoles.Admin);
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+    var editReturnUrl = Url.Action("Details", "Products", new { id = Model.Id }) ?? "/Products";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">ÜRÜN DETAYI</p>
+        <h1>@Model.Name</h1>
+        <p class="page-intro">Ürün, kategori, fiyat ve stok bilgilerini görüntüleyin.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+        @if (canManageProducts)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"
+               class="btn btn-primary">Düzenle</a>
+        }
+    </div>
+</div>
+
+<section class="management-panel detail-panel" aria-labelledby="product-information-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">GENEL BİLGİLER</p>
+            <h2 id="product-information-title">Ürün özeti</h2>
+        </div>
+        <span class="record-id">#@Model.Id</span>
+    </div>
+    <dl class="detail-grid">
+        <div>
+            <dt>Ürün adı</dt>
+            <dd>@Model.Name</dd>
+        </div>
+        <div>
+            <dt>SKU</dt>
+            <dd class="entity-code">@Model.Sku</dd>
+        </div>
+        <div>
+            <dt>Kategori</dt>
+            <dd>@Model.CategoryName</dd>
+        </div>
+        <div>
+            <dt>Fiyat</dt>
+            <dd>@Model.Price.ToString("C2", turkishCulture)</dd>
+        </div>
+        <div>
+            <dt>Mevcut stok</dt>
+            <dd>@Model.StockQuantity</dd>
+        </div>
+        <div>
+            <dt>Minimum stok</dt>
+            <dd>@Model.MinimumStockQuantity</dd>
+        </div>
+        <div>
+            <dt>Stok durumu</dt>
+            <dd>
+                @if (Model.IsLowStock)
+                {
+                    <span class="stock-badge stock-badge--low">Düşük stok</span>
+                }
+                else
+                {
+                    <span class="stock-badge stock-badge--normal">Yeterli</span>
+                }
+            </dd>
+        </div>
+    </dl>
+</section>
+
+@if (canManageProducts)
+{
+    <section class="management-panel mt-4 danger-zone" aria-labelledby="product-delete-title">
+        <div>
+            <h2 id="product-delete-title">Silme durumu</h2>
+            @if (Model.CanDelete)
+            {
+                <p>Sipariş kalemi veya stok hareketi geçmişi bulunmadığı için ürün silinebilir.</p>
+            }
+            else
+            {
+                <p>Geçmişi bulunan ürünler fiziksel olarak silinemez.</p>
+            }
+        </div>
+        @if (Model.CanDelete)
+        {
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Ürünü sil</a>
+        }
+    </section>
+}

@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Kategori detayı";
     var canManageCategories = User.IsInRole(AppRoles.Admin);
+    var editReturnUrl = Url.Action("Details", "Categories", new { id = Model.Id }) ?? "/Categories";
 }
 
 <div class="page-heading">
@@ -16,7 +17,8 @@
         <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
         @if (canManageCategories)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Düzenle</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"
+               class="btn btn-primary">Düzenle</a>
         }
     </div>
 </div>

@@ -1,0 +1,42 @@
+@model StockFlow.ViewModels.Products.ProductCreatePageViewModel
+
+@{
+    ViewData["Title"] = "Yeni ürün";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">ÜRÜN YÖNETİMİ</p>
+        <h1>Yeni ürün</h1>
+        <p class="page-intro">Ürünün temel bilgilerini ve hareket üretmeyen başlangıç stoğunu tanımlayın.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel" aria-labelledby="create-product-title">
+    <h2 id="create-product-title" class="visually-hidden">Ürün oluşturma formu</h2>
+    @if (Model.Categories.Count == 0)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Önce bir kategori oluşturun</h3>
+            <p>Her ürün geçerli bir kategoriye bağlı olmalıdır.</p>
+            <a asp-controller="Categories" asp-action="Create" class="btn btn-primary">Kategori oluştur</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Ürün listesine dön</a>
+        </div>
+    }
+    else
+    {
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+            <partial name="_CreateFormFields" model="Model" />
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Ürünü oluştur</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">İptal</a>
+            </div>
+        </form>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

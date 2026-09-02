@@ -1,5 +1,7 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using StockFlow.Data;
@@ -14,6 +16,7 @@ using StockFlow.Services.StockMovements;
 using StockFlow.Services.Suppliers;
 
 var builder = WebApplication.CreateBuilder(args);
+var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
 
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException(
@@ -66,8 +69,19 @@ builder.Services
         .RequireAuthenticatedUser()
         .Build());
 
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture(turkishCulture);
+    options.SupportedCultures = [turkishCulture];
+    options.SupportedUICultures = [turkishCulture];
+});
+
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.ModelBindingMessageProvider.SetValueMustBeANumberAccessor(
+        fieldName => $"{fieldName} alanına geçerli bir sayı girin.");
+});
 
 var app = builder.Build();
 
@@ -85,6 +99,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseRequestLocalization();
 app.UseHttpsRedirection();
 app.UseRouting();
 

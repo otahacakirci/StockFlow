@@ -1,23 +1,23 @@
-@model StockFlow.ViewModels.Categories.CategoryEditPageViewModel
+@model StockFlow.ViewModels.Products.ProductEditPageViewModel
 
 @{
-    ViewData["Title"] = "Kategori düzenle";
+    ViewData["Title"] = "Ürün düzenle";
 }
 
 <div class="page-heading">
     <div>
-        <p class="page-eyebrow">KATEGORİ YÖNETİMİ</p>
-        <h1>Kategoriyi düzenle</h1>
-        <p class="page-intro">Kategori adını güncelleyin. Bağlı ürünler bu işlemden etkilenmez.</p>
+        <p class="page-eyebrow">ÜRÜN YÖNETİMİ</p>
+        <h1>Ürünü düzenle</h1>
+        <p class="page-intro">Ürün bilgilerini güncelleyin. Mevcut stok bu ekrandan değiştirilemez.</p>
     </div>
 </div>
 
-<section class="management-panel form-panel" aria-labelledby="edit-category-title">
-    <h2 id="edit-category-title" class="visually-hidden">Kategori düzenleme formu</h2>
+<section class="management-panel form-panel" aria-labelledby="edit-product-title">
+    <h2 id="edit-product-title" class="visually-hidden">Ürün düzenleme formu</h2>
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
         <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
-        <partial name="_FormFields" for="Input" />
+        <partial name="_EditFormFields" model="Model" />
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Değişiklikleri kaydet</button>
             <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">İptal</a>

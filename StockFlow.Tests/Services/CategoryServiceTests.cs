@@ -108,6 +108,24 @@ public sealed class CategoryServiceTests : SqlServerDatabaseTestBase
     }
 
     [Fact]
+    public async Task GetSelectionOptionsAsync_ReturnsOnlySortedIdentityAndNameProjectionWithoutTracking()
+    {
+        var betaId = await SeedCategoryAsync("Beta", productCount: 1);
+        var alphaId = await SeedCategoryAsync("Alpha");
+
+        await using var dbContext = CreateDbContext();
+        var result = await CreateService(dbContext).GetSelectionOptionsAsync();
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Error);
+        var options = Assert.IsAssignableFrom<IReadOnlyList<CategorySelectionOptionViewModel>>(
+            result.Value);
+
+        Assert.Equal([alphaId, betaId], options.Select(option => option.Id));
+        Assert.Equal(["Alpha", "Beta"], options.Select(option => option.Name));
+        Assert.Empty(dbContext.ChangeTracker.Entries());
+    }
+
+    [Fact]
     public async Task CreateAsync_TrimsNameAndReturnsValidationErrors()
     {
         await using var dbContext = CreateDbContext();

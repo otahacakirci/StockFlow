@@ -9,4 +9,5 @@ public sealed record ProductViewModel(
     int MinimumStockQuantity,
     int CategoryId,
     string CategoryName,
-    bool IsLowStock);
+    bool IsLowStock,
+    bool CanDelete);

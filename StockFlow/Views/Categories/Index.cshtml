@@ -5,6 +5,16 @@
 @{
     ViewData["Title"] = "Kategoriler";
     var canManageCategories = User.IsInRole(AppRoles.Admin);
+    var editReturnUrl = Url.Action(
+        "Index",
+        "Categories",
+        new
+        {
+            Model.SearchTerm,
+            Model.SortOrder,
+            Model.Page,
+            Model.PageSize
+        }) ?? "/Categories";
 }
 
 <div class="page-heading">
@@ -94,6 +104,7 @@
                                     @if (canManageCategories)
                                     {
                                         <a asp-action="Edit" asp-route-id="@category.Id"
+                                           asp-route-returnUrl="@editReturnUrl"
                                            class="btn btn-sm btn-outline-primary">Düzenle</a>
                                         @if (category.ProductCount == 0)
                                         {
