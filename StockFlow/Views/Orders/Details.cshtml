@@ -20,7 +20,10 @@
     var utcTimestamp = Model.OrderDate.ToString(
         "yyyy-MM-ddTHH:mm:ss'Z'",
         CultureInfo.InvariantCulture);
+    var editReturnUrl = Url.Action("Details", "Orders", new { id = Model.Id }) ?? "/Orders";
 }
+
+<div asp-validation-summary="ModelOnly" class="alert alert-warning" role="alert"></div>
 
 <div class="page-heading">
     <div>
@@ -28,7 +31,14 @@
         <h1><span class="order-number">@Model.OrderNumber</span></h1>
         <p class="page-intro">Sipariş tarafını, durumunu ve kayıt anındaki ürün fiyatlarını inceleyin.</p>
     </div>
-    <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+        @if (Model.Status == OrderStatus.Draft)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"
+               class="btn btn-primary">Düzenle</a>
+        }
+    </div>
 </div>
 
 <section class="management-panel" aria-labelledby="order-information-title">

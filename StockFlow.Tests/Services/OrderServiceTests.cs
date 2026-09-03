@@ -119,10 +119,11 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
             order.Items.Single(item => item.ProductId == seed.ThirdProductId).UnitPrice);
         Assert.DoesNotContain(order.Items, item => item.ProductId == seed.SecondProductId);
         Assert.Empty(await verificationContext.StockMovements.ToListAsync());
-        Assert.Equal(10, await verificationContext.Products
-            .Where(product => product.Id == seed.FirstProductId)
+        var stocks = await verificationContext.Products
+            .OrderBy(product => product.Id)
             .Select(product => product.StockQuantity)
-            .SingleAsync());
+            .ToListAsync();
+        Assert.Equal([10, 5, 8], stocks);
     }
 
     [Fact]

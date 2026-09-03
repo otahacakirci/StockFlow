@@ -669,6 +669,12 @@ public sealed class ProductsControllerTests
                 : throw MissingHandlerException();
         }
 
+        public Task<ServiceResult<IReadOnlyList<ProductSelectionOptionViewModel>>> GetSelectionOptionsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            throw MissingHandlerException();
+        }
+
         public Task<ServiceResult<ProductViewModel>> CreateAsync(
             ProductCreateInputModel? input,
             CancellationToken cancellationToken = default)

@@ -1,0 +1,44 @@
+@model StockFlow.ViewModels.Orders.OrderDraftFormPageViewModel
+
+@{
+    ViewData["Title"] = "Yeni taslak sipariş";
+    var canCreate = Model.Products.Count > 0 && (Model.Customers.Count > 0 || Model.Suppliers.Count > 0);
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">SİPARİŞ YÖNETİMİ</p>
+        <h1>Yeni taslak sipariş</h1>
+        <p class="page-intro">Satış veya satın alma tarafını seçin ve sipariş kalemlerini ekleyin.</p>
+    </div>
+</div>
+
+<section class="management-panel order-form-panel" aria-labelledby="create-order-title">
+    <h2 id="create-order-title" class="visually-hidden">Taslak sipariş oluşturma formu</h2>
+    @if (!canCreate)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Sipariş formu için seçim verisi eksik</h3>
+            <p>En az bir ürün ile uygun bir müşteri veya tedarikçi kaydı bulunmalıdır.</p>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">Ürünleri görüntüle</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Sipariş listesine dön</a>
+        </div>
+    }
+    else
+    {
+        <form asp-action="Create" method="post" data-order-draft-form-host>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+            <partial name="_DraftFormFields" model="Model" />
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn btn-primary">Taslağı oluştur</button>
+                <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">İptal</a>
+            </div>
+        </form>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/order-draft-form.js" asp-append-version="true"></script>
+}

@@ -6,6 +6,17 @@
 @{
     ViewData["Title"] = "Siparişler";
     var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+    var editReturnUrl = Url.Action(
+        "Index",
+        "Orders",
+        new
+        {
+            Model.Type,
+            Model.Status,
+            Model.SortOrder,
+            Model.Page,
+            Model.PageSize
+        }) ?? "/Orders";
 }
 
 <div class="page-heading">
@@ -13,6 +24,10 @@
         <p class="page-eyebrow">SİPARİŞ TAKİBİ</p>
         <h1>Siparişler</h1>
         <p class="page-intro">Satış ve satın alma siparişlerini tür, durum ve tarihe göre inceleyin.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Create" asp-route-type="@OrderType.Sale" class="btn btn-primary">Yeni satış taslağı</a>
+        <a asp-action="Create" asp-route-type="@OrderType.Purchase" class="btn btn-outline-primary">Yeni satın alma taslağı</a>
     </div>
 </div>
 
@@ -125,8 +140,16 @@
                             <td><span class="count-badge">@order.ItemCount</span></td>
                             <td class="text-end fw-semibold">@order.TotalAmount.ToString("C2", turkishCulture)</td>
                             <td class="text-end">
-                                <a asp-action="Details" asp-route-id="@order.Id"
-                                   class="btn btn-sm btn-outline-secondary">Görüntüle</a>
+                                <div class="table-actions">
+                                    <a asp-action="Details" asp-route-id="@order.Id"
+                                       class="btn btn-sm btn-outline-secondary">Görüntüle</a>
+                                    @if (order.Status == OrderStatus.Draft)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@order.Id"
+                                           asp-route-returnUrl="@editReturnUrl"
+                                           class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

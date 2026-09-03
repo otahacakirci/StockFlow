@@ -120,6 +120,30 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
     }
 
     [Fact]
+    public async Task GetSelectionOptionsAsync_ReturnsUnpagedNameSkuProjectionWithoutTracking()
+    {
+        var categories = await SeedCategoriesAsync();
+        var betaId = await SeedProductAsync(categories.FirstId, "Beta", "SKU-B", 2.00m, 4, 1);
+        var alphaSecondId = await SeedProductAsync(categories.FirstId, "Alpha", "SKU-2", 3.00m, 5, 1);
+        var alphaFirstId = await SeedProductAsync(categories.SecondId, "Alpha", "SKU-1", 4.00m, 6, 1);
+
+        await using var dbContext = CreateDbContext();
+        var serviceResult = await CreateService(dbContext).GetSelectionOptionsAsync();
+        Assert.True(serviceResult.IsSuccess);
+        Assert.Null(serviceResult.Error);
+        var result = Assert.IsAssignableFrom<IReadOnlyList<ProductSelectionOptionViewModel>>(
+            serviceResult.Value);
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal(
+            [alphaFirstId, alphaSecondId, betaId],
+            result.Select(option => option.Id));
+        Assert.Equal(["Alpha", "Alpha", "Beta"], result.Select(option => option.Name));
+        Assert.Equal(["SKU-1", "SKU-2", "SKU-B"], result.Select(option => option.Sku));
+        Assert.Empty(dbContext.ChangeTracker.Entries());
+    }
+
+    [Fact]
     public async Task CreateAsync_CreatesNormalizedProductWithInitialStockWithoutMovement()
     {
         var categories = await SeedCategoriesAsync();

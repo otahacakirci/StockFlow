@@ -1,0 +1,53 @@
+@using System.Globalization
+@model StockFlow.ViewModels.Orders.OrderDraftFormPageViewModel
+
+@{
+    ViewData["Title"] = "Taslak siparişi düzenle";
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+    var canEdit = Model.Products.Count > 0 && (Model.Customers.Count > 0 || Model.Suppliers.Count > 0);
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">SİPARİŞ YÖNETİMİ</p>
+        <h1>Taslak siparişi düzenle</h1>
+        <p class="page-intro"><span class="order-number">@Model.OrderNumber</span> numaralı taslağın tarafını ve kalemlerini güncelleyin.</p>
+    </div>
+    @if (Model.CurrentTotalAmount.HasValue)
+    {
+        <div class="readonly-summary">
+            <span>Mevcut toplam</span>
+            <strong>@Model.CurrentTotalAmount.Value.ToString("C2", turkishCulture)</strong>
+        </div>
+    }
+</div>
+
+<section class="management-panel order-form-panel" aria-labelledby="edit-order-title">
+    <h2 id="edit-order-title" class="visually-hidden">Taslak sipariş düzenleme formu</h2>
+    @if (!canEdit)
+    {
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h3>Sipariş formu için seçim verisi eksik</h3>
+            <p>Bu taslağın düzenlenebilmesi için ürün ve taraf seçimleri kullanılabilir olmalıdır.</p>
+            <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">Geri dön</a>
+        </div>
+    }
+    else
+    {
+        <form asp-action="Edit" asp-route-id="@Model.OrderId" method="post" data-order-draft-form-host>
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+            <partial name="_DraftFormFields" model="Model" />
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn btn-primary">Değişiklikleri kaydet</button>
+                <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">İptal</a>
+            </div>
+        </form>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/order-draft-form.js" asp-append-version="true"></script>
+}

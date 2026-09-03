@@ -1,0 +1,98 @@
+@using StockFlow.Entities
+@model StockFlow.ViewModels.Orders.OrderDraftFormPageViewModel
+
+<div class="order-draft-form" data-order-draft-form>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label asp-for="Input.Type" class="form-label"></label>
+            <select asp-for="Input.Type" class="form-select" data-order-type>
+                <option value="@((int)OrderType.Sale)"
+                        disabled="@(Model.Customers.Count == 0 ? "disabled" : null)">Satış</option>
+                <option value="@((int)OrderType.Purchase)"
+                        disabled="@(Model.Suppliers.Count == 0 ? "disabled" : null)">Satın alma</option>
+            </select>
+            <span asp-validation-for="Input.Type" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 @(Model.Input.Type == OrderType.Sale ? null : "d-none")"
+             data-sale-party aria-hidden="@(Model.Input.Type == OrderType.Sale ? "false" : "true")">
+            <label asp-for="Input.CustomerId" class="form-label"></label>
+            <select asp-for="Input.CustomerId" class="form-select" data-customer-select
+                    disabled="@(Model.Input.Type == OrderType.Sale ? null : "disabled")">
+                <option value="">Müşteri seçin</option>
+                @foreach (var customer in Model.Customers)
+                {
+                    <option value="@customer.Id">@customer.Name</option>
+                }
+            </select>
+            <span asp-validation-for="Input.CustomerId" class="text-danger"></span>
+            @if (Model.Customers.Count == 0)
+            {
+                <p class="form-text text-danger mb-0">Satış taslağı için önce bir müşteri oluşturulmalıdır.</p>
+            }
+        </div>
+
+        <div class="col-md-6 @(Model.Input.Type == OrderType.Purchase ? null : "d-none")"
+             data-purchase-party aria-hidden="@(Model.Input.Type == OrderType.Purchase ? "false" : "true")">
+            <label asp-for="Input.SupplierId" class="form-label"></label>
+            <select asp-for="Input.SupplierId" class="form-select" data-supplier-select
+                    disabled="@(Model.Input.Type == OrderType.Purchase ? null : "disabled")">
+                <option value="">Tedarikçi seçin</option>
+                @foreach (var supplier in Model.Suppliers)
+                {
+                    <option value="@supplier.Id">@supplier.CompanyName</option>
+                }
+            </select>
+            <span asp-validation-for="Input.SupplierId" class="text-danger"></span>
+            @if (Model.Suppliers.Count == 0)
+            {
+                <p class="form-text text-danger mb-0">Satın alma taslağı için önce bir tedarikçi oluşturulmalıdır.</p>
+            }
+        </div>
+    </div>
+
+    <div class="order-items-heading">
+        <div>
+            <h3>Sipariş kalemleri</h3>
+            <p>Her kalem için ürün ve sıfırdan büyük miktar girin.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-add-order-item>Kalem ekle</button>
+    </div>
+
+    <span asp-validation-for="Input.Items" class="text-danger d-block mb-2"></span>
+
+    <div class="order-item-list" data-order-item-list>
+        @for (var index = 0; index < Model.Input.Items.Count; index++)
+        {
+            <div class="order-item-row" data-order-item-row>
+                <div class="order-item-row__number" aria-hidden="true" data-item-number>@(index + 1)</div>
+                <div class="order-item-row__product">
+                    <label asp-for="Input.Items[index].ProductId" class="form-label"></label>
+                    <select asp-for="Input.Items[index].ProductId" class="form-select" data-product-select>
+                        <option value="">Ürün seçin</option>
+                        @foreach (var product in Model.Products)
+                        {
+                            <option value="@product.Id">@product.Name · @product.Sku</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.Items[index].ProductId" class="text-danger"></span>
+                </div>
+                <div class="order-item-row__quantity">
+                    <label asp-for="Input.Items[index].Quantity" class="form-label"></label>
+                    <input asp-for="Input.Items[index].Quantity" class="form-control" min="1" inputmode="numeric" />
+                    <span asp-validation-for="Input.Items[index].Quantity" class="text-danger"></span>
+                </div>
+                <div class="order-item-row__remove">
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-remove-order-item>
+                        Kaldır
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="alert alert-light border mt-3 mb-0" role="note">
+        Birim fiyatlar ürün kayıtlarından sunucuda alınır. Fiyat snapshot’ları ve toplam tutar kaydetme sırasında
+        <strong>OrderService</strong> tarafından hesaplanır.
+    </div>
+</div>

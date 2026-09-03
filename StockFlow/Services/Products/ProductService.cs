@@ -101,6 +101,23 @@ internal sealed class ProductService(
             : ServiceResult<ProductViewModel>.Success(product);
     }
 
+    public async Task<ServiceResult<IReadOnlyList<ProductSelectionOptionViewModel>>> GetSelectionOptionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var options = await dbContext.Products
+            .AsNoTracking()
+            .OrderBy(product => product.Name)
+            .ThenBy(product => product.Sku)
+            .ThenBy(product => product.Id)
+            .Select(product => new ProductSelectionOptionViewModel(
+                product.Id,
+                product.Name,
+                product.Sku))
+            .ToListAsync(cancellationToken);
+
+        return ServiceResult<IReadOnlyList<ProductSelectionOptionViewModel>>.Success(options);
+    }
+
     public async Task<ServiceResult<ProductViewModel>> CreateAsync(
         ProductCreateInputModel? input,
         CancellationToken cancellationToken = default)

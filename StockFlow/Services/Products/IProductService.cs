@@ -23,6 +23,12 @@ public interface IProductService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Sipariş formları için ürünleri yalnız kimlik, ad ve SKU bilgisiyle sıralı olarak döndürür.
+    /// </summary>
+    Task<ServiceResult<IReadOnlyList<ProductSelectionOptionViewModel>>> GetSelectionOptionsAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Doğrulanmış ürün bilgileri ve nonnegative başlangıç stoğuyla yeni ürün oluşturur.
     /// </summary>
     Task<ServiceResult<ProductViewModel>> CreateAsync(

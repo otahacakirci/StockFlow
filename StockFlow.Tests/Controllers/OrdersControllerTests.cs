@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -12,9 +13,14 @@ using StockFlow.Entities;
 using StockFlow.Models;
 using StockFlow.Security;
 using StockFlow.Services.Common;
+using StockFlow.Services.Customers;
 using StockFlow.Services.Orders;
 using StockFlow.Services.Products;
+using StockFlow.Services.Suppliers;
+using StockFlow.ViewModels.Customers;
 using StockFlow.ViewModels.Orders;
+using StockFlow.ViewModels.Products;
+using StockFlow.ViewModels.Suppliers;
 
 namespace StockFlow.Tests.Controllers;
 
@@ -173,7 +179,181 @@ public sealed class OrdersControllerTests
     }
 
     [Fact]
-    public void Controller_RequiresAdminOrEmployeeAndExposesOnlyReadActions()
+    public async Task CreateGet_ComposesPurchaseFormWithPartyAndProductSelections()
+    {
+        var controller = CreateController(new StubOrderQueryService());
+
+        var actionResult = await controller.Create(OrderType.Purchase, CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        Assert.Equal(nameof(OrdersController.Create), viewResult.ViewName);
+        var page = Assert.IsType<OrderDraftFormPageViewModel>(viewResult.Model);
+        Assert.Equal(OrderType.Purchase, page.Input.Type);
+        Assert.Equal(1, Assert.Single(page.Input.Items).Quantity);
+        Assert.Equal("Test Customer", Assert.Single(page.Customers).Name);
+        Assert.Equal("Test Supplier", Assert.Single(page.Suppliers).CompanyName);
+        Assert.Equal("TEST-SKU", Assert.Single(page.Products).Sku);
+        Assert.Null(page.OrderId);
+    }
+
+    [Fact]
+    public async Task CreatePost_ForwardsSafeInputUserAndTokenAndRedirectsToDetails()
+    {
+        var input = ValidSaleInput();
+        var orderService = new StubOrderService
+        {
+            CreateHandler = (_, _, _) => Task.FromResult(
+                ServiceResult<OrderMutationResult>.Success(new OrderMutationResult(
+                    41,
+                    "ORDER-41",
+                    OrderStatus.Draft,
+                    25m)))
+        };
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var controller = CreateController(new StubOrderQueryService(), orderService);
+
+        var actionResult = await controller.Create(input, cancellationTokenSource.Token);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal(nameof(OrdersController.Details), redirect.ActionName);
+        Assert.Equal(41, redirect.RouteValues!["id"]);
+        Assert.Same(input, orderService.ReceivedInput);
+        Assert.Equal($"{AppRoles.Admin}-user", orderService.ReceivedUserId);
+        Assert.Equal(cancellationTokenSource.Token, orderService.ReceivedCancellationToken);
+        Assert.Equal("Taslak sipariş başarıyla oluşturuldu.", controller.TempData["SuccessMessage"]);
+    }
+
+    [Fact]
+    public async Task CreatePost_WhenModelStateIsInvalid_PreservesInputAndReloadsSelections()
+    {
+        var input = ValidSaleInput();
+        var orderService = new StubOrderService();
+        var controller = CreateController(new StubOrderQueryService(), orderService);
+        controller.ModelState.AddModelError(
+            $"{nameof(OrderDraftFormPageViewModel.Input)}.{nameof(OrderDraftInputModel.Items)}",
+            "Test doğrulama hatası.");
+
+        var actionResult = await controller.Create(input, CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        var page = Assert.IsType<OrderDraftFormPageViewModel>(viewResult.Model);
+        Assert.Same(input, page.Input);
+        Assert.Single(page.Customers);
+        Assert.Single(page.Suppliers);
+        Assert.Single(page.Products);
+        Assert.Equal(0, orderService.CreateCallCount);
+    }
+
+    [Fact]
+    public async Task CreatePost_WhenSelectedProductDisappears_ShowsServiceErrorOnReloadedForm()
+    {
+        var input = ValidSaleInput();
+        var orderService = new StubOrderService
+        {
+            CreateHandler = (_, _, _) => Task.FromResult(
+                ServiceResult<OrderMutationResult>.Failure(new ServiceError(
+                    ServiceErrorCategory.NotFound,
+                    ProductServiceErrorCodes.ProductNotFound,
+                    "Sipariş kalemlerinden en az birine ait ürün bulunamadı.")))
+        };
+        var controller = CreateController(new StubOrderQueryService(), orderService);
+
+        var actionResult = await controller.Create(input, CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        Assert.IsType<OrderDraftFormPageViewModel>(viewResult.Model);
+        var key = $"{nameof(OrderDraftFormPageViewModel.Input)}.{nameof(OrderDraftInputModel.Items)}";
+        var error = Assert.Single(controller.ModelState[key]!.Errors);
+        Assert.Contains("ürün bulunamadı", error.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task EditGet_LoadsOnlyDraftAndMapsPersistedValuesToSafeInput()
+    {
+        var editModel = CreateDraftEdit();
+        var queryService = new StubOrderQueryService
+        {
+            GetDraftForEditHandler = (_, _) => Task.FromResult(
+                ServiceResult<OrderDraftEditViewModel>.Success(editModel))
+        };
+        var controller = CreateController(queryService);
+
+        var actionResult = await controller.Edit(editModel.Id, "/Orders?Status=Draft", CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        var page = Assert.IsType<OrderDraftFormPageViewModel>(viewResult.Model);
+        Assert.Equal(editModel.Id, page.OrderId);
+        Assert.Equal(editModel.OrderNumber, page.OrderNumber);
+        Assert.Equal(editModel.TotalAmount, page.CurrentTotalAmount);
+        Assert.Equal(OrderType.Purchase, page.Input.Type);
+        Assert.Equal(editModel.SupplierId, page.Input.SupplierId);
+        var item = Assert.Single(page.Input.Items);
+        Assert.Equal(9, item.ProductId);
+        Assert.Equal(2, item.Quantity);
+        Assert.Equal("/Orders?Status=Draft", page.ReturnUrl);
+    }
+
+    [Fact]
+    public async Task EditPost_ForwardsDraftInputAndRedirectsToDetails()
+    {
+        var input = ValidSaleInput();
+        var orderService = new StubOrderService
+        {
+            UpdateHandler = (_, _, _) => Task.FromResult(
+                ServiceResult<OrderMutationResult>.Success(new OrderMutationResult(
+                    17,
+                    "ORDER-17",
+                    OrderStatus.Draft,
+                    25m)))
+        };
+        var controller = CreateController(new StubOrderQueryService(), orderService);
+
+        var actionResult = await controller.Edit(17, "/Orders", input, CancellationToken.None);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal(nameof(OrdersController.Details), redirect.ActionName);
+        Assert.Equal(17, redirect.RouteValues!["id"]);
+        Assert.Equal(17, orderService.ReceivedOrderId);
+        Assert.Same(input, orderService.ReceivedInput);
+        Assert.Equal("Taslak sipariş başarıyla güncellendi.", controller.TempData["SuccessMessage"]);
+    }
+
+    [Fact]
+    public async Task EditPost_WhenOrderBecomesTerminal_ReturnsDetailsWithConflictAndSafeMessage()
+    {
+        var detail = CreateDetail();
+        var queryService = new StubOrderQueryService
+        {
+            GetByIdHandler = (_, _) => Task.FromResult(
+                ServiceResult<OrderDetailViewModel>.Success(detail))
+        };
+        var orderService = new StubOrderService
+        {
+            UpdateHandler = (_, _, _) => Task.FromResult(
+                ServiceResult<OrderMutationResult>.Failure(new ServiceError(
+                    ServiceErrorCategory.BusinessRule,
+                    OrderServiceErrorCodes.OrderNotDraft,
+                    "Yalnızca taslak siparişler düzenlenebilir.")))
+        };
+        var controller = CreateController(queryService, orderService);
+
+        var actionResult = await controller.Edit(
+            detail.Id,
+            "/Orders",
+            ValidSaleInput(),
+            CancellationToken.None);
+
+        var viewResult = Assert.IsType<ViewResult>(actionResult);
+        Assert.Equal(nameof(OrdersController.Details), viewResult.ViewName);
+        Assert.Same(detail, viewResult.Model);
+        Assert.Equal(StatusCodes.Status409Conflict, controller.Response.StatusCode);
+        Assert.Contains(
+            controller.ModelState[string.Empty]!.Errors,
+            error => error.ErrorMessage == "Yalnızca taslak siparişler düzenlenebilir.");
+    }
+
+    [Fact]
+    public void Controller_RequiresAdminOrEmployeeAndExposesProtectedDraftActionsWithoutDbContext()
     {
         var authorize = Assert.Single(
             typeof(OrdersController).GetCustomAttributes<AuthorizeAttribute>());
@@ -181,22 +361,30 @@ public sealed class OrdersControllerTests
 
         var actions = typeof(OrdersController)
             .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-        Assert.Equal(2, actions.Length);
-        Assert.All(actions, action =>
-        {
-            Assert.NotNull(action.GetCustomAttribute<HttpGetAttribute>());
-            Assert.Null(action.GetCustomAttribute<HttpPostAttribute>());
-            Assert.Empty(action.GetCustomAttributes<AuthorizeAttribute>());
-        });
+        Assert.Equal(6, actions.Length);
+        var getActions = actions.Where(action => action.GetCustomAttribute<HttpGetAttribute>() is not null).ToList();
+        var postActions = actions.Where(action => action.GetCustomAttribute<HttpPostAttribute>() is not null).ToList();
+        Assert.Equal(4, getActions.Count);
+        Assert.Equal(2, postActions.Count);
+        Assert.Equal(actions.Length, getActions.Count + postActions.Count);
+        Assert.All(postActions, action =>
+            Assert.NotNull(action.GetCustomAttribute<ValidateAntiForgeryTokenAttribute>()));
+        Assert.All(actions, action => Assert.Empty(action.GetCustomAttributes<AuthorizeAttribute>()));
 
         var constructor = Assert.Single(typeof(OrdersController).GetConstructors());
         Assert.Equal(
-            [typeof(IOrderQueryService), typeof(ILogger<OrdersController>)],
+            [
+                typeof(IOrderQueryService),
+                typeof(IOrderService),
+                typeof(ICustomerService),
+                typeof(ISupplierService),
+                typeof(IProductService),
+                typeof(ILogger<OrdersController>)
+            ],
             constructor.GetParameters().Select(parameter => parameter.ParameterType));
         Assert.DoesNotContain(
             constructor.GetParameters(),
-            parameter => parameter.ParameterType == typeof(IOrderService)
-                || parameter.ParameterType == typeof(ApplicationDbContext));
+            parameter => parameter.ParameterType == typeof(ApplicationDbContext));
     }
 
     [Fact]
@@ -234,18 +422,31 @@ public sealed class OrdersControllerTests
     private static readonly DateTime UtcDate =
         new(2026, 9, 2, 9, 30, 0, DateTimeKind.Utc);
 
-    private static OrdersController CreateController(IOrderQueryService orderQueryService)
+    private static OrdersController CreateController(
+        IOrderQueryService orderQueryService,
+        IOrderService? orderService = null,
+        ICustomerService? customerService = null,
+        ISupplierService? supplierService = null,
+        IProductService? productService = null)
     {
         var httpContext = new DefaultHttpContext
         {
-            TraceIdentifier = "order-trace"
+            TraceIdentifier = "order-trace",
+            User = CreatePrincipal(AppRoles.Admin)
         };
-        return new OrdersController(
+        var controller = new OrdersController(
             orderQueryService,
+            orderService ?? new StubOrderService(),
+            customerService ?? new StubCustomerService(),
+            supplierService ?? new StubSupplierService(),
+            productService ?? new StubProductService(),
             NullLogger<OrdersController>.Instance)
         {
-            ControllerContext = new ControllerContext { HttpContext = httpContext }
+            ControllerContext = new ControllerContext { HttpContext = httpContext },
+            Url = new TestUrlHelper("/Orders")
         };
+        controller.TempData = new TempDataDictionary(httpContext, new StubTempDataProvider());
+        return controller;
     }
 
     private static ClaimsPrincipal CreatePrincipal(string role)
@@ -266,6 +467,11 @@ public sealed class OrdersControllerTests
             StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
+    private static InvalidOperationException MissingHandlerException()
+    {
+        return new InvalidOperationException("Beklenmeyen Service çağrısı yapıldı.");
+    }
+
     private static OrderDetailViewModel CreateDetail()
     {
         return new OrderDetailViewModel(
@@ -282,6 +488,29 @@ public sealed class OrdersControllerTests
             [new OrderItemViewModel(4, 9, "Test Product", "TEST-SKU", 2, 12.50m, 25m)]);
     }
 
+    private static OrderDraftEditViewModel CreateDraftEdit()
+    {
+        return new OrderDraftEditViewModel(
+            17,
+            "ORDER-17",
+            UtcDate,
+            OrderType.Purchase,
+            null,
+            8,
+            25m,
+            [new OrderDraftEditItemViewModel(9, "Test Product", "TEST-SKU", 2, 12.50m)]);
+    }
+
+    private static OrderDraftInputModel ValidSaleInput()
+    {
+        return new OrderDraftInputModel
+        {
+            Type = OrderType.Sale,
+            CustomerId = 7,
+            Items = [new OrderItemInputModel { ProductId = 9, Quantity = 2 }]
+        };
+    }
+
     private sealed class StubOrderQueryService : IOrderQueryService
     {
         public Func<OrderListQueryModel?, CancellationToken, Task<ServiceResult<OrderListViewModel>>>?
@@ -290,6 +519,10 @@ public sealed class OrdersControllerTests
 
         public Func<int, CancellationToken, Task<ServiceResult<OrderDetailViewModel>>>?
             GetByIdHandler
+        { get; init; }
+
+        public Func<int, CancellationToken, Task<ServiceResult<OrderDraftEditViewModel>>>?
+            GetDraftForEditHandler
         { get; init; }
 
         public OrderListQueryModel? ReceivedListQuery { get; private set; }
@@ -324,12 +557,140 @@ public sealed class OrdersControllerTests
             int orderId,
             CancellationToken cancellationToken = default)
         {
-            throw MissingHandlerException();
+            ReceivedOrderId = orderId;
+            ReceivedCancellationToken = cancellationToken;
+            return GetDraftForEditHandler is not null
+                ? GetDraftForEditHandler(orderId, cancellationToken)
+                : throw MissingHandlerException();
         }
 
         private static InvalidOperationException MissingHandlerException()
         {
             return new InvalidOperationException("Beklenmeyen Service çağrısı yapıldı.");
+        }
+    }
+
+    private sealed class StubOrderService : IOrderService
+    {
+        public Func<OrderDraftInputModel, string, CancellationToken, Task<ServiceResult<OrderMutationResult>>>?
+            CreateHandler
+        { get; init; }
+
+        public Func<int, OrderDraftInputModel, CancellationToken, Task<ServiceResult<OrderMutationResult>>>?
+            UpdateHandler
+        { get; init; }
+
+        public OrderDraftInputModel? ReceivedInput { get; private set; }
+
+        public string? ReceivedUserId { get; private set; }
+
+        public int? ReceivedOrderId { get; private set; }
+
+        public int CreateCallCount { get; private set; }
+
+        public int UpdateCallCount { get; private set; }
+
+        public CancellationToken ReceivedCancellationToken { get; private set; }
+
+        public Task<ServiceResult<OrderMutationResult>> CreateDraftAsync(
+            OrderDraftInputModel input,
+            string createdByUserId,
+            CancellationToken cancellationToken = default)
+        {
+            CreateCallCount++;
+            ReceivedInput = input;
+            ReceivedUserId = createdByUserId;
+            ReceivedCancellationToken = cancellationToken;
+            return CreateHandler is not null
+                ? CreateHandler(input, createdByUserId, cancellationToken)
+                : throw MissingHandlerException();
+        }
+
+        public Task<ServiceResult<OrderMutationResult>> UpdateDraftAsync(
+            int orderId,
+            OrderDraftInputModel input,
+            CancellationToken cancellationToken = default)
+        {
+            UpdateCallCount++;
+            ReceivedOrderId = orderId;
+            ReceivedInput = input;
+            ReceivedCancellationToken = cancellationToken;
+            return UpdateHandler is not null
+                ? UpdateHandler(orderId, input, cancellationToken)
+                : throw MissingHandlerException();
+        }
+
+        public Task<ServiceResult<OrderMutationResult>> ConfirmDraftAsync(
+            int orderId,
+            CancellationToken cancellationToken = default) => throw MissingHandlerException();
+
+        public Task<ServiceResult<OrderMutationResult>> CancelDraftAsync(
+            int orderId,
+            CancellationToken cancellationToken = default) => throw MissingHandlerException();
+
+        public Task<ServiceResult> DeleteDraftAsync(
+            int orderId,
+            CancellationToken cancellationToken = default) => throw MissingHandlerException();
+    }
+
+    private sealed class StubCustomerService : ICustomerService
+    {
+        public Task<ServiceResult<IReadOnlyList<CustomerSelectionOptionViewModel>>> GetSelectionOptionsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<CustomerSelectionOptionViewModel> options =
+                [new CustomerSelectionOptionViewModel(7, "Test Customer")];
+            return Task.FromResult(ServiceResult<IReadOnlyList<CustomerSelectionOptionViewModel>>.Success(options));
+        }
+
+        public Task<ServiceResult<CustomerListViewModel>> GetListAsync(CustomerListQueryModel? query = null, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<CustomerViewModel>> GetByIdAsync(int customerId, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<CustomerViewModel>> CreateAsync(CustomerInputModel? input, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<CustomerViewModel>> UpdateAsync(int customerId, CustomerInputModel? input, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult> DeleteAsync(int customerId, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+    }
+
+    private sealed class StubSupplierService : ISupplierService
+    {
+        public Task<ServiceResult<IReadOnlyList<SupplierSelectionOptionViewModel>>> GetSelectionOptionsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<SupplierSelectionOptionViewModel> options =
+                [new SupplierSelectionOptionViewModel(8, "Test Supplier")];
+            return Task.FromResult(ServiceResult<IReadOnlyList<SupplierSelectionOptionViewModel>>.Success(options));
+        }
+
+        public Task<ServiceResult<SupplierListViewModel>> GetListAsync(SupplierListQueryModel? query = null, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<SupplierViewModel>> GetByIdAsync(int supplierId, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<SupplierViewModel>> CreateAsync(SupplierInputModel? input, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<SupplierViewModel>> UpdateAsync(int supplierId, SupplierInputModel? input, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult> DeleteAsync(int supplierId, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+    }
+
+    private sealed class StubProductService : IProductService
+    {
+        public Task<ServiceResult<IReadOnlyList<ProductSelectionOptionViewModel>>> GetSelectionOptionsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<ProductSelectionOptionViewModel> options =
+                [new ProductSelectionOptionViewModel(9, "Test Product", "TEST-SKU")];
+            return Task.FromResult(ServiceResult<IReadOnlyList<ProductSelectionOptionViewModel>>.Success(options));
+        }
+
+        public Task<ServiceResult<ProductListViewModel>> GetListAsync(ProductListQueryModel? query = null, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<ProductViewModel>> GetByIdAsync(int productId, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<ProductViewModel>> CreateAsync(ProductCreateInputModel? input, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult<ProductViewModel>> UpdateAsync(int productId, ProductUpdateInputModel? input, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+        public Task<ServiceResult> DeleteAsync(int productId, CancellationToken cancellationToken = default) => throw MissingHandlerException();
+    }
+
+    private sealed class StubTempDataProvider : ITempDataProvider
+    {
+        public IDictionary<string, object> LoadTempData(HttpContext context) =>
+            new Dictionary<string, object>();
+
+        public void SaveTempData(HttpContext context, IDictionary<string, object> values)
+        {
         }
     }
 
