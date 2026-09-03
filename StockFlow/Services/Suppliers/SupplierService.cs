@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using StockFlow.Data;
 using StockFlow.Entities;
@@ -15,13 +14,12 @@ internal sealed class SupplierService(
     ILogger<SupplierService> logger) : ISupplierService
 {
     private const int MaximumCompanyNameLength = 200;
-    private const int MaximumEmailLength = 256;
-    private const int MaximumPhoneLength = 32;
-    private const int MaximumAddressLength = 500;
-    private const int DefaultPageSize = 20;
-    private const int MaximumPageSize = 100;
-    private static readonly EmailAddressAttribute EmailValidator = new();
-    private static readonly PhoneAttribute PhoneValidator = new();
+    private static readonly ContactInformationErrorCodes ContactErrorCodes = new(
+        SupplierServiceErrorCodes.EmailTooLong,
+        SupplierServiceErrorCodes.EmailInvalid,
+        SupplierServiceErrorCodes.PhoneTooLong,
+        SupplierServiceErrorCodes.PhoneInvalid,
+        SupplierServiceErrorCodes.AddressTooLong);
 
     public async Task<ServiceResult<SupplierListViewModel>> GetListAsync(
         SupplierListQueryModel? query = null,
@@ -39,20 +37,15 @@ internal sealed class SupplierService(
         }
 
         var totalCount = await suppliers.CountAsync(cancellationToken);
-        var totalPages = totalCount == 0
-            ? 0
-            : (int)Math.Ceiling((double)totalCount / normalizedQuery.PageSize);
-        var page = totalPages == 0
-            ? 1
-            : Math.Min(normalizedQuery.Page, totalPages);
+        var page = ListPagingPolicy.Resolve(normalizedQuery.PageRequest, totalCount);
 
         var orderedSuppliers = normalizedQuery.SortOrder == SupplierSortOrder.CompanyNameDescending
             ? suppliers.OrderByDescending(supplier => supplier.CompanyName).ThenByDescending(supplier => supplier.Id)
             : suppliers.OrderBy(supplier => supplier.CompanyName).ThenBy(supplier => supplier.Id);
 
         var items = await orderedSuppliers
-            .Skip((page - 1) * normalizedQuery.PageSize)
-            .Take(normalizedQuery.PageSize)
+            .Skip(page.Offset)
+            .Take(page.PageSize)
             .Select(supplier => new SupplierViewModel(
                 supplier.Id,
                 supplier.CompanyName,
@@ -66,10 +59,10 @@ internal sealed class SupplierService(
             items,
             normalizedQuery.SearchTerm,
             normalizedQuery.SortOrder,
-            page,
-            normalizedQuery.PageSize,
+            page.Page,
+            page.PageSize,
             totalCount,
-            totalPages));
+            page.TotalPages));
     }
 
     public async Task<ServiceResult<SupplierViewModel>> GetByIdAsync(
@@ -202,25 +195,14 @@ internal sealed class SupplierService(
         Supplier supplier,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
+        await TrackedPersistence.SaveChangesAsync(
+            dbContext,
+            exception => logger.LogError(
                 exception,
                 "Supplier persistence operation {Operation} failed for supplier {SupplierId}.",
                 operation,
-                supplier.Id);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+                supplier.Id),
+            cancellationToken);
     }
 
     private static NormalizedSupplierListQuery NormalizeQuery(SupplierListQueryModel? query)
@@ -231,25 +213,22 @@ internal sealed class SupplierService(
         var sortOrder = query is not null && Enum.IsDefined(query.SortOrder)
             ? query.SortOrder
             : SupplierSortOrder.CompanyNameAscending;
-        var page = query?.Page > 0 ? query.Page : 1;
-        var pageSize = query?.PageSize > 0
-            ? Math.Min(query.PageSize, MaximumPageSize)
-            : DefaultPageSize;
+        var pageRequest = ListPagingPolicy.Normalize(query?.Page, query?.PageSize);
 
         return new NormalizedSupplierListQuery(
             searchTerm,
             sortOrder,
-            page,
-            pageSize);
+            pageRequest);
     }
 
     private static ServiceError? ValidateAndNormalizeInput(
         SupplierInputModel? input,
         out ValidatedSupplierInput validatedInput)
     {
+        validatedInput = ValidatedSupplierInput.Empty;
+
         if (input is null)
         {
-            validatedInput = ValidatedSupplierInput.Empty;
             return CreateError(
                 ServiceErrorCategory.Validation,
                 SupplierServiceErrorCodes.InputRequired,
@@ -257,10 +236,6 @@ internal sealed class SupplierService(
         }
 
         var companyName = input.CompanyName?.Trim() ?? string.Empty;
-        var email = NormalizeOptional(input.Email);
-        var phone = NormalizeOptional(input.Phone);
-        var address = NormalizeOptional(input.Address);
-        validatedInput = new ValidatedSupplierInput(companyName, email, phone, address);
 
         if (companyName.Length == 0)
         {
@@ -278,45 +253,22 @@ internal sealed class SupplierService(
                 $"Şirket adı en fazla {MaximumCompanyNameLength} karakter olabilir.");
         }
 
-        if (email?.Length > MaximumEmailLength)
+        var contactResult = ContactInformationPolicy.ValidateAndNormalize(
+            input.Email,
+            input.Phone,
+            input.Address,
+            ContactErrorCodes);
+        if (!contactResult.IsSuccess)
         {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                SupplierServiceErrorCodes.EmailTooLong,
-                $"E-posta adresi en fazla {MaximumEmailLength} karakter olabilir.");
+            return contactResult.Error;
         }
 
-        if (email is not null && !EmailValidator.IsValid(email))
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                SupplierServiceErrorCodes.EmailInvalid,
-                "Geçerli bir e-posta adresi girilmelidir.");
-        }
-
-        if (phone?.Length > MaximumPhoneLength)
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                SupplierServiceErrorCodes.PhoneTooLong,
-                $"Telefon numarası en fazla {MaximumPhoneLength} karakter olabilir.");
-        }
-
-        if (phone is not null && !PhoneValidator.IsValid(phone))
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                SupplierServiceErrorCodes.PhoneInvalid,
-                "Geçerli bir telefon numarası girilmelidir.");
-        }
-
-        if (address?.Length > MaximumAddressLength)
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                SupplierServiceErrorCodes.AddressTooLong,
-                $"Adres en fazla {MaximumAddressLength} karakter olabilir.");
-        }
+        var contact = contactResult.Value!;
+        validatedInput = new ValidatedSupplierInput(
+            companyName,
+            contact.Email,
+            contact.Phone,
+            contact.Address);
 
         return null;
     }
@@ -332,11 +284,6 @@ internal sealed class SupplierService(
             error.Code,
             supplierId);
         return ServiceResult<T>.Failure(error);
-    }
-
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private static SupplierViewModel ToViewModel(Supplier supplier, int orderCount)
@@ -374,8 +321,7 @@ internal sealed class SupplierService(
     private sealed record NormalizedSupplierListQuery(
         string? SearchTerm,
         SupplierSortOrder SortOrder,
-        int Page,
-        int PageSize);
+        NormalizedPageRequest PageRequest);
 
     private sealed record ValidatedSupplierInput(
         string CompanyName,

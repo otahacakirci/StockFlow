@@ -14,21 +14,21 @@ review_triggers:
 ## Son doğrulama
 
 - Tarih: 2 Eylül 2026
-- Kapsam: Admin/Employee salt-okunur Order MVC listeleme ve detay akışı
+- Kapsam: Service katmanında davranış koruyan ortak politika ve hata sahipliği refaktörü
 
 ## Son tamamlanan değişiklik
 
-`OrdersController`, mevcut `IOrderQueryService` sözleşmesini yalnız Index ve Details GET akışlarına bağlar. Controller Admin ve Employee rollerine açıktır; gerçek ASP.NET Core authorization policy iki rolü kabul edip izin verilmeyen rolü reddeder. Controller `IOrderService`, DbContext, POST veya başka mutasyon endpoint'i taşımaz.
+Altı liste Service'indeki sayfa varsayılanı/üst sınırı, toplam sayfa, boş sonuç ve taşan sayfa davranışı `internal` `ListPagingPolicy` içinde birleştirildi. Customer ve Supplier'ın ortak iletişim normalizasyon/doğrulaması `ContactInformationPolicy` içine alındı; domain'e özgü ad, sorgu, projection, hata ve silme davranışları ayrı bırakıldı.
 
-Sipariş listesi OrderType/OrderStatus filtreleri, enum tabanlı tarih sıralaması, normalize sayfalama ve filtre korumalı gezinme sunar. Sale için Customer, Purchase için Supplier gösterilir; detay ekranı Product adı/SKU'su, miktar, fiyat snapshot'ı ve satır toplamlarını güvenli çıkış modelleriyle taşır. Sipariş NotFound HTTP 404'e, tutarsız tipli sonuç güvenli HTTP 500'e çevrilir; gerçek exception'lar Controller'da yakalanmaz.
+Category, Product, Customer, Supplier ve Order'ın transaction dışı kayıtları, mevcut domain log mesajlarını koruyan callback'lerle `TrackedPersistence` üzerinden tracker temizleyip exception'ı yeniden fırlatır. Order confirm transaction'ı değişmedi. Çapraz-domain hata sabitleri kanonik Category/Customer/Supplier/Product kataloglarına bağlandı; mevcut public sabit adları ve kararlı string değerleri alias olarak korundu. Public Service/ViewModel sözleşmesi, HTTP/rol davranışı, veri modeli ve ürün kuralları değişmedi.
 
 ## Doğrulama kanıtı
 
 - `dotnet format StockFlow.slnx --verify-no-changes --no-restore`: geçti.
 - `dotnet build StockFlow.slnx --no-restore`: geçti; 0 hata ve 0 uyarı.
-- Veritabanısız hedefli on iki `OrdersController` senaryosu geçti; başarısız veya atlanan test yoktur.
-- Kullanıcıya bağlı gerçek LocalDB bağlamında sekiz `OrderQueryService`, on dört `OrderService`/planner regresyonu ve 232 testlik tam paket geçti; başarısız veya atlanan test yoktur.
-- Ajan bağlamı, repository hygiene, on bir değişen/yeni dosyada hassas içerik, salt-okunur Razor eylemleri, sayfalama route'ları ve `git diff --check` doğrulamaları geçti; 266 dosyada yasaklı yerel/üretilmiş yol veya yüksek güvenli secret eşleşmesi bulunmadı.
+- On dört veritabanısız ortak politika/planner testi geçti; başarısız veya atlanan test yoktur.
+- Kullanıcıya bağlı gerçek LocalDB bağlamında 86 odaklı Service regresyonu ve 242 testlik tam paket geçti; başarısız veya atlanan test yoktur.
+- Ajan bağlamı, repository hygiene ve `git diff --check` doğrulamaları geçti; yasaklı yerel/üretilmiş yol veya yüksek güvenli secret eşleşmesi bulunmadı.
 
 ## Açık riskler ve boşluklar
 

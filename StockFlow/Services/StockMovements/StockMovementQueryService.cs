@@ -12,9 +12,6 @@ namespace StockFlow.Services.StockMovements;
 internal sealed class StockMovementQueryService(ApplicationDbContext dbContext)
     : IStockMovementQueryService
 {
-    private const int DefaultPageSize = 20;
-    private const int MaximumPageSize = 100;
-
     public async Task<ServiceResult<StockMovementListViewModel>> GetListAsync(
         StockMovementListQueryModel? query = null,
         CancellationToken cancellationToken = default)
@@ -67,12 +64,7 @@ internal sealed class StockMovementQueryService(ApplicationDbContext dbContext)
         }
 
         var totalCount = await movements.CountAsync(cancellationToken);
-        var totalPages = totalCount == 0
-            ? 0
-            : (int)Math.Ceiling((double)totalCount / normalizedQuery.PageSize);
-        var page = totalPages == 0
-            ? 1
-            : Math.Min(normalizedQuery.Page, totalPages);
+        var page = ListPagingPolicy.Resolve(normalizedQuery.PageRequest, totalCount);
 
         var orderedMovements = normalizedQuery.SortOrder == StockMovementSortOrder.DateAscending
             ? movements.OrderBy(movement => movement.MovementDate).ThenBy(movement => movement.Id)
@@ -80,8 +72,8 @@ internal sealed class StockMovementQueryService(ApplicationDbContext dbContext)
                 .ThenByDescending(movement => movement.Id);
 
         var projections = await orderedMovements
-            .Skip((page - 1) * normalizedQuery.PageSize)
-            .Take(normalizedQuery.PageSize)
+            .Skip(page.Offset)
+            .Take(page.PageSize)
             .Select(movement => new StockMovementProjection(
                 movement.Id,
                 movement.ProductId,
@@ -104,10 +96,10 @@ internal sealed class StockMovementQueryService(ApplicationDbContext dbContext)
             normalizedQuery.StartDate,
             normalizedQuery.EndDate,
             normalizedQuery.SortOrder,
-            page,
-            normalizedQuery.PageSize,
+            page.Page,
+            page.PageSize,
             totalCount,
-            totalPages));
+            page.TotalPages));
     }
 
     public async Task<ServiceResult<StockMovementViewModel>> GetByIdAsync(
@@ -150,10 +142,7 @@ internal sealed class StockMovementQueryService(ApplicationDbContext dbContext)
         var sortOrder = query is not null && Enum.IsDefined(query.SortOrder)
             ? query.SortOrder
             : StockMovementSortOrder.DateDescending;
-        var page = query?.Page > 0 ? query.Page : 1;
-        var pageSize = query?.PageSize > 0
-            ? Math.Min(query.PageSize, MaximumPageSize)
-            : DefaultPageSize;
+        var pageRequest = ListPagingPolicy.Normalize(query?.Page, query?.PageSize);
 
         return new NormalizedStockMovementListQuery(
             productId,
@@ -162,8 +151,7 @@ internal sealed class StockMovementQueryService(ApplicationDbContext dbContext)
             query?.StartDate,
             query?.EndDate,
             sortOrder,
-            page,
-            pageSize);
+            pageRequest);
     }
 
     private static StockMovementViewModel ToViewModel(StockMovementProjection projection)
@@ -191,8 +179,7 @@ internal sealed class StockMovementQueryService(ApplicationDbContext dbContext)
         DateOnly? StartDate,
         DateOnly? EndDate,
         StockMovementSortOrder SortOrder,
-        int Page,
-        int PageSize);
+        NormalizedPageRequest PageRequest);
 
     private sealed record StockMovementProjection(
         int Id,

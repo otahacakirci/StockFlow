@@ -320,7 +320,7 @@ public sealed class ProductsController(
             ProductServiceErrorCodes.StockQuantityInvalid => nameof(ProductCreateInputModel.StockQuantity),
             ProductServiceErrorCodes.MinimumStockQuantityInvalid =>
                 nameof(ProductCreateInputModel.MinimumStockQuantity),
-            ProductServiceErrorCodes.CategoryInvalid or ProductServiceErrorCodes.CategoryNotFound =>
+            ProductServiceErrorCodes.CategoryInvalid or CategoryServiceErrorCodes.CategoryNotFound =>
                 nameof(ProductCreateInputModel.CategoryId),
             _ => string.Empty
         };
@@ -334,7 +334,7 @@ public sealed class ProductsController(
     private static bool IsFormError(ServiceError? error)
     {
         return error?.Category == ServiceErrorCategory.Validation
-            || error?.Code == ProductServiceErrorCodes.CategoryNotFound;
+            || error?.Code == CategoryServiceErrorCodes.CategoryNotFound;
     }
 
     private static bool IsProductNotFound(ServiceError? error)

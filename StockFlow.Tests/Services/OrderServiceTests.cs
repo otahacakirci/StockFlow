@@ -5,6 +5,7 @@ using StockFlow.Data;
 using StockFlow.Entities;
 using StockFlow.Services.Common;
 using StockFlow.Services.Orders;
+using StockFlow.Services.Products;
 using StockFlow.Tests.Infrastructure;
 using StockFlow.ViewModels.Orders;
 
@@ -384,7 +385,7 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
                 SaleInput(seed, (int.MaxValue, 1)),
                 CreatorUserId),
             ServiceErrorCategory.NotFound,
-            OrderServiceErrorCodes.ProductNotFound);
+            ProductServiceErrorCodes.ProductNotFound);
 
         AssertFailure(
             await service.CreateDraftAsync(

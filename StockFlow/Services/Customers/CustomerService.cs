@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using StockFlow.Data;
 using StockFlow.Entities;
@@ -15,13 +14,12 @@ internal sealed class CustomerService(
     ILogger<CustomerService> logger) : ICustomerService
 {
     private const int MaximumNameLength = 150;
-    private const int MaximumEmailLength = 256;
-    private const int MaximumPhoneLength = 32;
-    private const int MaximumAddressLength = 500;
-    private const int DefaultPageSize = 20;
-    private const int MaximumPageSize = 100;
-    private static readonly EmailAddressAttribute EmailValidator = new();
-    private static readonly PhoneAttribute PhoneValidator = new();
+    private static readonly ContactInformationErrorCodes ContactErrorCodes = new(
+        CustomerServiceErrorCodes.EmailTooLong,
+        CustomerServiceErrorCodes.EmailInvalid,
+        CustomerServiceErrorCodes.PhoneTooLong,
+        CustomerServiceErrorCodes.PhoneInvalid,
+        CustomerServiceErrorCodes.AddressTooLong);
 
     public async Task<ServiceResult<CustomerListViewModel>> GetListAsync(
         CustomerListQueryModel? query = null,
@@ -39,20 +37,15 @@ internal sealed class CustomerService(
         }
 
         var totalCount = await customers.CountAsync(cancellationToken);
-        var totalPages = totalCount == 0
-            ? 0
-            : (int)Math.Ceiling((double)totalCount / normalizedQuery.PageSize);
-        var page = totalPages == 0
-            ? 1
-            : Math.Min(normalizedQuery.Page, totalPages);
+        var page = ListPagingPolicy.Resolve(normalizedQuery.PageRequest, totalCount);
 
         var orderedCustomers = normalizedQuery.SortOrder == CustomerSortOrder.NameDescending
             ? customers.OrderByDescending(customer => customer.Name).ThenByDescending(customer => customer.Id)
             : customers.OrderBy(customer => customer.Name).ThenBy(customer => customer.Id);
 
         var items = await orderedCustomers
-            .Skip((page - 1) * normalizedQuery.PageSize)
-            .Take(normalizedQuery.PageSize)
+            .Skip(page.Offset)
+            .Take(page.PageSize)
             .Select(customer => new CustomerViewModel(
                 customer.Id,
                 customer.Name,
@@ -66,10 +59,10 @@ internal sealed class CustomerService(
             items,
             normalizedQuery.SearchTerm,
             normalizedQuery.SortOrder,
-            page,
-            normalizedQuery.PageSize,
+            page.Page,
+            page.PageSize,
             totalCount,
-            totalPages));
+            page.TotalPages));
     }
 
     public async Task<ServiceResult<CustomerViewModel>> GetByIdAsync(
@@ -202,25 +195,14 @@ internal sealed class CustomerService(
         Customer customer,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
+        await TrackedPersistence.SaveChangesAsync(
+            dbContext,
+            exception => logger.LogError(
                 exception,
                 "Customer persistence operation {Operation} failed for customer {CustomerId}.",
                 operation,
-                customer.Id);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+                customer.Id),
+            cancellationToken);
     }
 
     private static NormalizedCustomerListQuery NormalizeQuery(CustomerListQueryModel? query)
@@ -231,25 +213,22 @@ internal sealed class CustomerService(
         var sortOrder = query is not null && Enum.IsDefined(query.SortOrder)
             ? query.SortOrder
             : CustomerSortOrder.NameAscending;
-        var page = query?.Page > 0 ? query.Page : 1;
-        var pageSize = query?.PageSize > 0
-            ? Math.Min(query.PageSize, MaximumPageSize)
-            : DefaultPageSize;
+        var pageRequest = ListPagingPolicy.Normalize(query?.Page, query?.PageSize);
 
         return new NormalizedCustomerListQuery(
             searchTerm,
             sortOrder,
-            page,
-            pageSize);
+            pageRequest);
     }
 
     private static ServiceError? ValidateAndNormalizeInput(
         CustomerInputModel? input,
         out ValidatedCustomerInput validatedInput)
     {
+        validatedInput = ValidatedCustomerInput.Empty;
+
         if (input is null)
         {
-            validatedInput = ValidatedCustomerInput.Empty;
             return CreateError(
                 ServiceErrorCategory.Validation,
                 CustomerServiceErrorCodes.InputRequired,
@@ -257,10 +236,6 @@ internal sealed class CustomerService(
         }
 
         var name = input.Name?.Trim() ?? string.Empty;
-        var email = NormalizeOptional(input.Email);
-        var phone = NormalizeOptional(input.Phone);
-        var address = NormalizeOptional(input.Address);
-        validatedInput = new ValidatedCustomerInput(name, email, phone, address);
 
         if (name.Length == 0)
         {
@@ -278,45 +253,22 @@ internal sealed class CustomerService(
                 $"Müşteri adı en fazla {MaximumNameLength} karakter olabilir.");
         }
 
-        if (email?.Length > MaximumEmailLength)
+        var contactResult = ContactInformationPolicy.ValidateAndNormalize(
+            input.Email,
+            input.Phone,
+            input.Address,
+            ContactErrorCodes);
+        if (!contactResult.IsSuccess)
         {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                CustomerServiceErrorCodes.EmailTooLong,
-                $"E-posta adresi en fazla {MaximumEmailLength} karakter olabilir.");
+            return contactResult.Error;
         }
 
-        if (email is not null && !EmailValidator.IsValid(email))
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                CustomerServiceErrorCodes.EmailInvalid,
-                "Geçerli bir e-posta adresi girilmelidir.");
-        }
-
-        if (phone?.Length > MaximumPhoneLength)
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                CustomerServiceErrorCodes.PhoneTooLong,
-                $"Telefon numarası en fazla {MaximumPhoneLength} karakter olabilir.");
-        }
-
-        if (phone is not null && !PhoneValidator.IsValid(phone))
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                CustomerServiceErrorCodes.PhoneInvalid,
-                "Geçerli bir telefon numarası girilmelidir.");
-        }
-
-        if (address?.Length > MaximumAddressLength)
-        {
-            return CreateError(
-                ServiceErrorCategory.Validation,
-                CustomerServiceErrorCodes.AddressTooLong,
-                $"Adres en fazla {MaximumAddressLength} karakter olabilir.");
-        }
+        var contact = contactResult.Value!;
+        validatedInput = new ValidatedCustomerInput(
+            name,
+            contact.Email,
+            contact.Phone,
+            contact.Address);
 
         return null;
     }
@@ -332,11 +284,6 @@ internal sealed class CustomerService(
             error.Code,
             customerId);
         return ServiceResult<T>.Failure(error);
-    }
-
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private static CustomerViewModel ToViewModel(Customer customer, int orderCount)
@@ -374,8 +321,7 @@ internal sealed class CustomerService(
     private sealed record NormalizedCustomerListQuery(
         string? SearchTerm,
         CustomerSortOrder SortOrder,
-        int Page,
-        int PageSize);
+        NormalizedPageRequest PageRequest);
 
     private sealed record ValidatedCustomerInput(
         string Name,

@@ -200,7 +200,7 @@ public sealed class ProductsControllerTests
             CreateHandler = (_, _) => Task.FromResult(
                 ServiceResult<ProductViewModel>.Failure(new ServiceError(
                     ServiceErrorCategory.NotFound,
-                    ProductServiceErrorCodes.CategoryNotFound,
+                    CategoryServiceErrorCodes.CategoryNotFound,
                     "Kategori bulunamadı.")))
         };
         var controller = CreateController(productService);

@@ -13,6 +13,7 @@ using StockFlow.Models;
 using StockFlow.Security;
 using StockFlow.Services.Common;
 using StockFlow.Services.Orders;
+using StockFlow.Services.Products;
 using StockFlow.ViewModels.Orders;
 
 namespace StockFlow.Tests.Controllers;
@@ -148,7 +149,7 @@ public sealed class OrdersControllerTests
     [Theory]
     [InlineData(ServiceErrorCategory.Validation, OrderServiceErrorCodes.InvalidParty)]
     [InlineData(ServiceErrorCategory.BusinessRule, OrderServiceErrorCodes.OrderNotDraft)]
-    [InlineData(ServiceErrorCategory.NotFound, OrderServiceErrorCodes.ProductNotFound)]
+    [InlineData(ServiceErrorCategory.NotFound, ProductServiceErrorCodes.ProductNotFound)]
     public async Task Details_WhenServiceReturnsNonOrderNotFoundFailure_ReturnsSafeErrorView(
         ServiceErrorCategory category,
         string errorCode)

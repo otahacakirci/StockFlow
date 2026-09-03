@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StockFlow.Data;
 using StockFlow.Entities;
+using StockFlow.Services.Categories;
 using StockFlow.Services.Common;
 using StockFlow.ViewModels.Products;
 
@@ -16,8 +17,6 @@ internal sealed class ProductService(
     private const int MaximumNameLength = 150;
     private const int MaximumSkuLength = 64;
     private const decimal MaximumDatabaseAmount = 9_999_999_999_999_999.99m;
-    private const int DefaultPageSize = 20;
-    private const int MaximumPageSize = 100;
 
     public async Task<ServiceResult<ProductListViewModel>> GetListAsync(
         ProductListQueryModel? query = null,
@@ -46,17 +45,12 @@ internal sealed class ProductService(
         }
 
         var totalCount = await products.CountAsync(cancellationToken);
-        var totalPages = totalCount == 0
-            ? 0
-            : (int)Math.Ceiling((double)totalCount / normalizedQuery.PageSize);
-        var page = totalPages == 0
-            ? 1
-            : Math.Min(normalizedQuery.Page, totalPages);
+        var page = ListPagingPolicy.Resolve(normalizedQuery.PageRequest, totalCount);
 
         var orderedProducts = ApplySort(products, normalizedQuery.SortOrder);
         var items = await orderedProducts
-            .Skip((page - 1) * normalizedQuery.PageSize)
-            .Take(normalizedQuery.PageSize)
+            .Skip(page.Offset)
+            .Take(page.PageSize)
             .Select(product => new ProductViewModel(
                 product.Id,
                 product.Name,
@@ -76,10 +70,10 @@ internal sealed class ProductService(
             normalizedQuery.CategoryId,
             normalizedQuery.LowStockOnly,
             normalizedQuery.SortOrder,
-            page,
-            normalizedQuery.PageSize,
+            page.Page,
+            page.PageSize,
             totalCount,
-            totalPages));
+            page.TotalPages));
     }
 
     public async Task<ServiceResult<ProductViewModel>> GetByIdAsync(
@@ -323,7 +317,7 @@ internal sealed class ProductService(
         return categoryName is null
             ? ServiceResult<string>.Failure(CreateError(
                 ServiceErrorCategory.NotFound,
-                ProductServiceErrorCodes.CategoryNotFound,
+                CategoryServiceErrorCodes.CategoryNotFound,
                 "Kategori bulunamadı."))
             : ServiceResult<string>.Success(categoryName);
     }
@@ -344,25 +338,14 @@ internal sealed class ProductService(
         Product product,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
+        await TrackedPersistence.SaveChangesAsync(
+            dbContext,
+            exception => logger.LogError(
                 exception,
                 "Product persistence operation {Operation} failed for product {ProductId}.",
                 operation,
-                product.Id);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+                product.Id),
+            cancellationToken);
     }
 
     private static NormalizedProductListQuery NormalizeQuery(ProductListQueryModel? query)
@@ -374,18 +357,14 @@ internal sealed class ProductService(
         var sortOrder = query is not null && Enum.IsDefined(query.SortOrder)
             ? query.SortOrder
             : ProductSortOrder.NameAscending;
-        var page = query?.Page > 0 ? query.Page : 1;
-        var pageSize = query?.PageSize > 0
-            ? Math.Min(query.PageSize, MaximumPageSize)
-            : DefaultPageSize;
+        var pageRequest = ListPagingPolicy.Normalize(query?.Page, query?.PageSize);
 
         return new NormalizedProductListQuery(
             searchTerm,
             categoryId,
             query?.LowStockOnly ?? false,
             sortOrder,
-            page,
-            pageSize);
+            pageRequest);
     }
 
     private static ServiceError? ValidateAndNormalizeInput(
@@ -531,8 +510,7 @@ internal sealed class ProductService(
         int? CategoryId,
         bool LowStockOnly,
         ProductSortOrder SortOrder,
-        int Page,
-        int PageSize);
+        NormalizedPageRequest PageRequest);
 
     private sealed record ValidatedProductInput(
         string Name,

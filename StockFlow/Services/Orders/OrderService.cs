@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 using StockFlow.Data;
 using StockFlow.Entities;
 using StockFlow.Services.Common;
+using StockFlow.Services.Customers;
+using StockFlow.Services.Products;
+using StockFlow.Services.Suppliers;
 using StockFlow.ViewModels.Orders;
 
 namespace StockFlow.Services.Orders;
@@ -462,26 +465,15 @@ internal sealed class OrderService : IOrderService
         Order order,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
+        await TrackedPersistence.SaveChangesAsync(
+            dbContext,
+            exception => logger.LogError(
                 exception,
                 "Order persistence operation {Operation} failed for order {OrderId} with order number {OrderNumber}.",
                 operation,
                 order.Id,
-                order.OrderNumber);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+                order.OrderNumber),
+            cancellationToken);
     }
 
     private async Task<ServiceResult<ValidatedDraft>> ValidateDraftInputAsync(
@@ -507,7 +499,7 @@ internal sealed class OrderService : IOrderService
         {
             return DraftFailure(
                 ServiceErrorCategory.NotFound,
-                OrderServiceErrorCodes.ProductNotFound,
+                ProductServiceErrorCodes.ProductNotFound,
                 "Sipariş kalemlerinden en az birine ait ürün bulunamadı.");
         }
 
@@ -594,7 +586,7 @@ internal sealed class OrderService : IOrderService
             {
                 return DraftFailure(
                     ServiceErrorCategory.BusinessRule,
-                    OrderServiceErrorCodes.InvalidProductPrice,
+                    ProductServiceErrorCodes.PriceInvalid,
                     "Sipariş kalemlerinden en az birinin geçerli bir fiyatı bulunmuyor.");
             }
 
@@ -607,7 +599,7 @@ internal sealed class OrderService : IOrderService
             {
                 return DraftFailure(
                     ServiceErrorCategory.BusinessRule,
-                    OrderServiceErrorCodes.InvalidProductPrice,
+                    ProductServiceErrorCodes.PriceInvalid,
                     "Sipariş kalemlerinden en az birinin geçerli bir fiyat snapshot'ı bulunmuyor.");
             }
 
@@ -648,7 +640,7 @@ internal sealed class OrderService : IOrderService
             {
                 return CreateError(
                     ServiceErrorCategory.NotFound,
-                    OrderServiceErrorCodes.CustomerNotFound,
+                    CustomerServiceErrorCodes.CustomerNotFound,
                     "Sipariş için seçilen müşteri bulunamadı.");
             }
 
@@ -669,7 +661,7 @@ internal sealed class OrderService : IOrderService
         {
             return CreateError(
                 ServiceErrorCategory.NotFound,
-                OrderServiceErrorCodes.SupplierNotFound,
+                SupplierServiceErrorCodes.SupplierNotFound,
                 "Sipariş için seçilen tedarikçi bulunamadı.");
         }
 
@@ -716,7 +708,7 @@ internal sealed class OrderService : IOrderService
             {
                 return CreateError(
                     ServiceErrorCategory.NotFound,
-                    OrderServiceErrorCodes.CustomerNotFound,
+                    CustomerServiceErrorCodes.CustomerNotFound,
                     "Siparişe ait müşteri bulunamadı.");
             }
 
@@ -737,7 +729,7 @@ internal sealed class OrderService : IOrderService
         {
             return CreateError(
                 ServiceErrorCategory.NotFound,
-                OrderServiceErrorCodes.SupplierNotFound,
+                SupplierServiceErrorCodes.SupplierNotFound,
                 "Siparişe ait tedarikçi bulunamadı.");
         }
 
@@ -791,7 +783,7 @@ internal sealed class OrderService : IOrderService
             {
                 return CreateError(
                     ServiceErrorCategory.NotFound,
-                    OrderServiceErrorCodes.ProductNotFound,
+                    ProductServiceErrorCodes.ProductNotFound,
                     "Sipariş kalemlerinden en az birine ait ürün bulunamadı.");
             }
 
@@ -807,7 +799,7 @@ internal sealed class OrderService : IOrderService
             {
                 return CreateError(
                     ServiceErrorCategory.BusinessRule,
-                    OrderServiceErrorCodes.InvalidProductPrice,
+                    ProductServiceErrorCodes.PriceInvalid,
                     "Geçersiz fiyat snapshot'ı bulunan sipariş onaylanamaz.");
             }
         }

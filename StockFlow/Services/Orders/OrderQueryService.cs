@@ -11,9 +11,6 @@ namespace StockFlow.Services.Orders;
 /// </summary>
 internal sealed class OrderQueryService(ApplicationDbContext dbContext) : IOrderQueryService
 {
-    private const int DefaultPageSize = 20;
-    private const int MaximumPageSize = 100;
-
     public async Task<ServiceResult<OrderListViewModel>> GetListAsync(
         OrderListQueryModel? query = null,
         CancellationToken cancellationToken = default)
@@ -32,20 +29,15 @@ internal sealed class OrderQueryService(ApplicationDbContext dbContext) : IOrder
         }
 
         var totalCount = await orders.CountAsync(cancellationToken);
-        var totalPages = totalCount == 0
-            ? 0
-            : (int)Math.Ceiling((double)totalCount / normalizedQuery.PageSize);
-        var page = totalPages == 0
-            ? 1
-            : Math.Min(normalizedQuery.Page, totalPages);
+        var page = ListPagingPolicy.Resolve(normalizedQuery.PageRequest, totalCount);
 
         var orderedOrders = normalizedQuery.SortOrder == OrderSortOrder.DateAscending
             ? orders.OrderBy(order => order.OrderDate).ThenBy(order => order.Id)
             : orders.OrderByDescending(order => order.OrderDate).ThenByDescending(order => order.Id);
 
         var items = await orderedOrders
-            .Skip((page - 1) * normalizedQuery.PageSize)
-            .Take(normalizedQuery.PageSize)
+            .Skip(page.Offset)
+            .Take(page.PageSize)
             .Select(order => new OrderListItemViewModel(
                 order.Id,
                 order.OrderNumber,
@@ -64,10 +56,10 @@ internal sealed class OrderQueryService(ApplicationDbContext dbContext) : IOrder
             normalizedQuery.Type,
             normalizedQuery.Status,
             normalizedQuery.SortOrder,
-            page,
-            normalizedQuery.PageSize,
+            page.Page,
+            page.PageSize,
             totalCount,
-            totalPages));
+            page.TotalPages));
     }
 
     public async Task<ServiceResult<OrderDetailViewModel>> GetByIdAsync(
@@ -161,12 +153,9 @@ internal sealed class OrderQueryService(ApplicationDbContext dbContext) : IOrder
         var sortOrder = query is not null && Enum.IsDefined(query.SortOrder)
             ? query.SortOrder
             : OrderSortOrder.DateDescending;
-        var page = query?.Page > 0 ? query.Page : 1;
-        var pageSize = query?.PageSize > 0
-            ? Math.Min(query.PageSize, MaximumPageSize)
-            : DefaultPageSize;
+        var pageRequest = ListPagingPolicy.Normalize(query?.Page, query?.PageSize);
 
-        return new NormalizedOrderListQuery(type, status, sortOrder, page, pageSize);
+        return new NormalizedOrderListQuery(type, status, sortOrder, pageRequest);
     }
 
     private static ServiceResult<T> OrderNotFound<T>()
@@ -181,8 +170,7 @@ internal sealed class OrderQueryService(ApplicationDbContext dbContext) : IOrder
         OrderType? Type,
         OrderStatus? Status,
         OrderSortOrder SortOrder,
-        int Page,
-        int PageSize);
+        NormalizedPageRequest PageRequest);
 
     private sealed record DraftEditProjection(
         OrderStatus Status,

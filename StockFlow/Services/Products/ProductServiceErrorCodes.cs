@@ -1,3 +1,5 @@
+using StockFlow.Services.Categories;
+
 namespace StockFlow.Services.Products;
 
 /// <summary>
@@ -15,7 +17,8 @@ public static class ProductServiceErrorCodes
     public const string StockQuantityInvalid = "product.stock_quantity_invalid";
     public const string MinimumStockQuantityInvalid = "product.minimum_stock_quantity_invalid";
     public const string CategoryInvalid = "product.category_invalid";
-    public const string CategoryNotFound = "category.not_found";
+    // Kaynak uyumluluğu için korunur; Category hata kodunun sahibi Category domain'idir.
+    public const string CategoryNotFound = CategoryServiceErrorCodes.CategoryNotFound;
     public const string ProductNotFound = "product.not_found";
     public const string ProductHasHistory = "product.has_history";
 }

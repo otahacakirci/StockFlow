@@ -14,8 +14,6 @@ internal sealed class CategoryService(
     ILogger<CategoryService> logger) : ICategoryService
 {
     private const int MaximumNameLength = 100;
-    private const int DefaultPageSize = 20;
-    private const int MaximumPageSize = 100;
 
     public async Task<ServiceResult<CategoryListViewModel>> GetListAsync(
         CategoryListQueryModel? query = null,
@@ -31,20 +29,15 @@ internal sealed class CategoryService(
         }
 
         var totalCount = await categories.CountAsync(cancellationToken);
-        var totalPages = totalCount == 0
-            ? 0
-            : (int)Math.Ceiling((double)totalCount / normalizedQuery.PageSize);
-        var page = totalPages == 0
-            ? 1
-            : Math.Min(normalizedQuery.Page, totalPages);
+        var page = ListPagingPolicy.Resolve(normalizedQuery.PageRequest, totalCount);
 
         var orderedCategories = normalizedQuery.SortOrder == CategorySortOrder.NameDescending
             ? categories.OrderByDescending(category => category.Name).ThenByDescending(category => category.Id)
             : categories.OrderBy(category => category.Name).ThenBy(category => category.Id);
 
         var items = await orderedCategories
-            .Skip((page - 1) * normalizedQuery.PageSize)
-            .Take(normalizedQuery.PageSize)
+            .Skip(page.Offset)
+            .Take(page.PageSize)
             .Select(category => new CategoryViewModel(
                 category.Id,
                 category.Name,
@@ -55,10 +48,10 @@ internal sealed class CategoryService(
             items,
             normalizedQuery.SearchTerm,
             normalizedQuery.SortOrder,
-            page,
-            normalizedQuery.PageSize,
+            page.Page,
+            page.PageSize,
             totalCount,
-            totalPages));
+            page.TotalPages));
     }
 
     public async Task<ServiceResult<CategoryViewModel>> GetByIdAsync(
@@ -189,25 +182,14 @@ internal sealed class CategoryService(
         Category category,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(
+        await TrackedPersistence.SaveChangesAsync(
+            dbContext,
+            exception => logger.LogError(
                 exception,
                 "Category persistence operation {Operation} failed for category {CategoryId}.",
                 operation,
-                category.Id);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+                category.Id),
+            cancellationToken);
     }
 
     private static NormalizedCategoryListQuery NormalizeQuery(CategoryListQueryModel? query)
@@ -218,12 +200,9 @@ internal sealed class CategoryService(
         var sortOrder = query is not null && Enum.IsDefined(query.SortOrder)
             ? query.SortOrder
             : CategorySortOrder.NameAscending;
-        var page = query?.Page > 0 ? query.Page : 1;
-        var pageSize = query?.PageSize > 0
-            ? Math.Min(query.PageSize, MaximumPageSize)
-            : DefaultPageSize;
+        var pageRequest = ListPagingPolicy.Normalize(query?.Page, query?.PageSize);
 
-        return new NormalizedCategoryListQuery(searchTerm, sortOrder, page, pageSize);
+        return new NormalizedCategoryListQuery(searchTerm, sortOrder, pageRequest);
     }
 
     private static ServiceError? ValidateAndNormalizeName(
@@ -284,6 +263,5 @@ internal sealed class CategoryService(
     private sealed record NormalizedCategoryListQuery(
         string? SearchTerm,
         CategorySortOrder SortOrder,
-        int Page,
-        int PageSize);
+        NormalizedPageRequest PageRequest);
 }

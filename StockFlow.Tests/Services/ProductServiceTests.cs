@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 using StockFlow.Data;
 using StockFlow.Entities;
+using StockFlow.Services.Categories;
 using StockFlow.Services.Common;
 using StockFlow.Services.Products;
 using StockFlow.Tests.Infrastructure;
@@ -187,7 +188,7 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
             AssertFailure(
                 await service.CreateAsync(ValidCreate(int.MaxValue)),
                 ServiceErrorCategory.NotFound,
-                ProductServiceErrorCodes.CategoryNotFound);
+                CategoryServiceErrorCodes.CategoryNotFound);
 
             AssertSuccess(await service.CreateAsync(ValidCreate(categories.FirstId, sku: "SKU-ONE")));
             AssertFailure(
@@ -278,7 +279,7 @@ public sealed class ProductServiceTests : SqlServerDatabaseTestBase
         AssertFailure(
             await service.UpdateAsync(firstProductId, ValidUpdate(int.MaxValue)),
             ServiceErrorCategory.NotFound,
-            ProductServiceErrorCodes.CategoryNotFound);
+            CategoryServiceErrorCodes.CategoryNotFound);
         AssertFailure(
             await service.UpdateAsync(firstProductId, ValidUpdate(categories.FirstId, sku: "second")),
             ServiceErrorCategory.Validation,
