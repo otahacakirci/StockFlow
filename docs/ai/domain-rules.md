@@ -2,7 +2,7 @@
 title: "StockFlow Yüksek Frekanslı Domain Kuralları"
 status: active
 authority: reference
-last_reviewed: "2026-09-02"
+last_reviewed: "2026-09-03"
 review_triggers:
   - domain-rule-change
   - role-matrix-change
@@ -16,8 +16,8 @@ Bu dosya uygulama sırasında sık gereken kuralların kısa indeksidir. Eksiksi
 
 ## Roller
 
-- `Admin`: ürün/kategori ve Supplier yönetimi, Customer silme, sipariş listeleme/görüntüleme/onaylama/iptal, başlangıç kullanıcı/rol verisi dahil tüm yönetim işlemleri.
-- `Employee`: dashboard, ürün/kategori görüntüleme, Customer listeleme/görüntüleme/oluşturma/düzenleme, sipariş listeleme/görüntüleme, Draft sipariş oluşturma/düzenleme ve stok hareketi görüntüleme; Customer silemez.
+- `Admin`: ürün/kategori ve Supplier yönetimi, Customer silme, sipariş listeleme/görüntüleme/onaylama/iptal ve Draft sipariş silme, başlangıç kullanıcı/rol verisi dahil tüm yönetim işlemleri.
+- `Employee`: dashboard, ürün/kategori görüntüleme, Customer listeleme/görüntüleme/oluşturma/düzenleme, sipariş listeleme/görüntüleme, Draft sipariş oluşturma/düzenleme ve stok hareketi görüntüleme; Customer veya Draft sipariş silemez ve sipariş onaylayıp iptal edemez.
 - Yetki hem UI hem endpoint seviyesinde uygulanır.
 
 ## Çekirdek ilişkiler
@@ -72,7 +72,7 @@ stateDiagram-v2
 | Product | OrderItem ve StockMovement geçmişi yoksa |
 | Customer | Yalnız Admin tarafından ve bağlı Order yoksa |
 | Supplier | Bağlı Order yoksa |
-| Order | Yalnızca Draft ise |
+| Order | Yalnızca Admin tarafından ve yalnızca Draft ise |
 
 ## Sorgu ve dashboard
 

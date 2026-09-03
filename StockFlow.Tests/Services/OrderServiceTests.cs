@@ -347,6 +347,55 @@ public sealed class OrderServiceTests : SqlServerDatabaseTestBase
         await using var verificationContext = CreateDbContext();
         Assert.False(await verificationContext.Orders.AnyAsync(order => order.Id == orderId));
         Assert.False(await verificationContext.OrderItems.AnyAsync(item => item.OrderId == orderId));
+        Assert.False(await verificationContext.StockMovements.AnyAsync());
+        var stocks = await verificationContext.Products
+            .OrderBy(product => product.Id)
+            .Select(product => product.StockQuantity)
+            .ToListAsync();
+        Assert.Equal([10, 5, 8], stocks);
+    }
+
+    [Fact]
+    public async Task DeleteDraftAsync_WhenStockMovementHistoryExists_RejectsWithoutChangingData()
+    {
+        var seed = await SeedAsync();
+        var orderId = await CreateDraftAsync(SaleInput(
+            seed,
+            (seed.FirstProductId, 2)));
+
+        await using (var historyContext = CreateDbContext())
+        {
+            historyContext.StockMovements.Add(new StockMovement
+            {
+                OrderId = orderId,
+                ProductId = seed.FirstProductId,
+                Type = StockMovementType.StockOut,
+                Quantity = 2,
+                Description = "Test hareket geçmişi.",
+                MovementDate = FixedUtcNow.UtcDateTime
+            });
+            await historyContext.SaveChangesAsync();
+        }
+
+        await using (var deleteContext = CreateDbContext())
+        {
+            AssertFailure(
+                await CreateService(deleteContext).DeleteDraftAsync(orderId),
+                ServiceErrorCategory.BusinessRule,
+                OrderServiceErrorCodes.DraftHasStockMovements);
+        }
+
+        await using var verificationContext = CreateDbContext();
+        Assert.True(await verificationContext.Orders.AnyAsync(order => order.Id == orderId));
+        Assert.True(await verificationContext.OrderItems.AnyAsync(item => item.OrderId == orderId));
+        Assert.True(await verificationContext.StockMovements.AnyAsync(
+            movement => movement.OrderId == orderId));
+        Assert.Equal(
+            10,
+            await verificationContext.Products
+                .Where(product => product.Id == seed.FirstProductId)
+                .Select(product => product.StockQuantity)
+                .SingleAsync());
     }
 
     [Fact]

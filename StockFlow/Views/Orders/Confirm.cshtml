@@ -1,0 +1,32 @@
+@using StockFlow.Entities
+@model StockFlow.ViewModels.Orders.OrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Siparişi onayla";
+    var stockEffect = Model.Type == OrderType.Sale
+        ? "ürün stoklarını azaltacak ve StockOut hareketleri oluşturacaktır"
+        : "ürün stoklarını artıracak ve StockIn hareketleri oluşturacaktır";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">SİPARİŞ ONAYI</p>
+        <h1>Siparişi onayla</h1>
+        <p class="page-intro">Onaylanan sipariş terminal duruma geçer ve yeniden düzenlenemez.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel" aria-labelledby="confirm-order-title">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <p class="page-eyebrow">ONAY DOĞRULAMASI</p>
+    <h2 id="confirm-order-title">@Model.OrderNumber</h2>
+    <partial name="_DraftActionSummary" model="Model" />
+
+    <div class="alert alert-warning mb-4" role="status">
+        Bu işlem @stockEffect. Devam etmek istediğinizden emin olun.
+    </div>
+    <form asp-action="Confirm" asp-route-id="@Model.Id" method="post" class="form-actions">
+        <button type="submit" class="btn btn-success">Evet, siparişi onayla</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+    </form>
+</section>

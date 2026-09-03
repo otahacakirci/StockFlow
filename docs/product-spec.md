@@ -2,7 +2,7 @@
 title: "StockFlow Proje Tanıtımı ve Özellik Spesifikasyonu"
 status: active
 authority: normative
-last_reviewed: "2026-09-02"
+last_reviewed: "2026-09-03"
 review_triggers:
   - product-scope-change
   - domain-rule-change
@@ -165,6 +165,7 @@ _Tablo 3. Rol ve erişim matrisi_
 | Sipariş listeleme ve görüntüleme | Evet | Evet |
 | Draft sipariş oluşturma ve düzenleme | Evet | Evet |
 | Sipariş onaylama veya iptal | Evet | Hayır |
+| Draft sipariş silme | Evet | Hayır |
 | Stok hareketi görüntüleme | Evet | Evet |
 | Kullanıcı/rol başlangıç verisi | Evet | Hayır |
 
@@ -230,7 +231,7 @@ FR-ORD-05 [ZORUNLU] UnitPrice istemciden güvenilir kabul edilmemeli; sipariş o
 
 FR-ORD-06 [ZORUNLU] Order.TotalAmount, Quantity x UnitPrice satır toplamlarının sunucuda hesaplanan toplamı olmalıdır.
 
-FR-ORD-07 [ZORUNLU] Draft sipariş; düzenlenebilmeli, kalem ekleyip çıkarabilmeli, onaylanabilmeli, iptal edilebilmeli ve gerekirse silinebilmelidir.
+FR-ORD-07 [ZORUNLU] Draft sipariş; Admin ve Employee tarafından düzenlenebilmeli ve kalem ekleyip çıkarabilmeli; yalnız Admin tarafından onaylanabilmeli, iptal edilebilmeli ve gerekirse silinebilmelidir.
 
 FR-ORD-08 [ZORUNLU] Confirmed ve Cancelled siparişler düzenlenmemeli, kalemleri değişmemeli ve fiziksel olarak silinmemelidir.
 
@@ -352,7 +353,7 @@ _Tablo 6. Silme politikası_
 | Product | OrderItem ve StockMovement yoksa | Sipariş ve stok geçmişi korunur. |
 | Customer | Order yoksa | Satış geçmişi korunur. |
 | Supplier | Order yoksa | Satın alma geçmişi korunur. |
-| Order | Yalnızca Draft | Confirmed/Cancelled kayıtları audit geçmişidir. |
+| Order | Yalnızca Admin tarafından ve yalnızca Draft ise | Confirmed/Cancelled kayıtları audit geçmişidir. |
 
 
 
@@ -508,9 +509,9 @@ AC-06 - Rol ayrımı
 
 Ön koşul: Admin ve Employee hesapları vardır.
 
-Olay: Employee yalnızca Admin'e açık ürün yönetimi veya onay endpoint'ine gider.
+Olay: Employee yalnızca Admin'e açık ürün yönetimi, Customer/Draft sipariş silme veya sipariş onaylama/iptal endpoint'ine gider.
 
-Beklenen: UI ilgili eylemi sunmaz; doğrudan endpoint isteği de güvenli biçimde reddedilir. Employee Customer kayıtlarını listeleme, görüntüleme, oluşturma ve düzenleme ile izinli Draft sipariş işlemlerini kullanmaya devam eder; Customer silme eylemi ve endpoint'leri yalnız Admin'e açıktır.
+Beklenen: UI ilgili eylemi sunmaz; doğrudan endpoint isteği de güvenli biçimde reddedilir. Employee Customer kayıtlarını listeleme, görüntüleme, oluşturma ve düzenleme ile Draft sipariş oluşturma/düzenleme işlemlerini kullanmaya devam eder; Customer silme ile sipariş onaylama, iptal etme ve Draft silme eylemleri ve endpoint'leri yalnız Admin'e açıktır.
 
 AC-07 - Arama ve sayfalama
 

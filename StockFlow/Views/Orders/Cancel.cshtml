@@ -1,0 +1,28 @@
+@model StockFlow.ViewModels.Orders.OrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Siparişi iptal et";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">SİPARİŞ İPTALİ</p>
+        <h1>Siparişi iptal et</h1>
+        <p class="page-intro">İptal edilen sipariş terminal duruma geçer ve yeniden açılamaz.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel" aria-labelledby="cancel-order-title">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <p class="page-eyebrow">İPTAL DOĞRULAMASI</p>
+    <h2 id="cancel-order-title">@Model.OrderNumber</h2>
+    <partial name="_DraftActionSummary" model="Model" />
+
+    <div class="alert alert-warning mb-4" role="status">
+        Bu işlem stok veya StockMovement kaydı oluşturmaz. Devam etmek istediğinizden emin olun.
+    </div>
+    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="form-actions">
+        <button type="submit" class="btn btn-warning">Evet, siparişi iptal et</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+    </form>
+</section>

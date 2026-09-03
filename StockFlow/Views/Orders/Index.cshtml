@@ -1,10 +1,12 @@
 @using System.Globalization
 @using StockFlow.Entities
+@using StockFlow.Security
 @using StockFlow.ViewModels.Orders
 @model OrderListViewModel
 
 @{
     ViewData["Title"] = "Siparişler";
+    var canManageOrderState = User.IsInRole(AppRoles.Admin);
     var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
     var editReturnUrl = Url.Action(
         "Index",
@@ -148,6 +150,15 @@
                                         <a asp-action="Edit" asp-route-id="@order.Id"
                                            asp-route-returnUrl="@editReturnUrl"
                                            class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                        @if (canManageOrderState)
+                                        {
+                                            <a asp-action="Confirm" asp-route-id="@order.Id"
+                                               class="btn btn-sm btn-outline-success">Onayla</a>
+                                            <a asp-action="Cancel" asp-route-id="@order.Id"
+                                               class="btn btn-sm btn-outline-warning">İptal et</a>
+                                            <a asp-action="Delete" asp-route-id="@order.Id"
+                                               class="btn btn-sm btn-outline-danger">Sil</a>
+                                        }
                                     }
                                 </div>
                             </td>

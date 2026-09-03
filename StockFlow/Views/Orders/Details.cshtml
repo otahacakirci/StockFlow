@@ -1,9 +1,11 @@
 @using System.Globalization
 @using StockFlow.Entities
+@using StockFlow.Security
 @model StockFlow.ViewModels.Orders.OrderDetailViewModel
 
 @{
     ViewData["Title"] = "Sipariş detayı";
+    var canManageOrderState = User.IsInRole(AppRoles.Admin);
     var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
     var partyLabel = Model.Type switch
     {
@@ -37,6 +39,15 @@
         {
             <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"
                class="btn btn-primary">Düzenle</a>
+            @if (canManageOrderState)
+            {
+                <a asp-action="Confirm" asp-route-id="@Model.Id"
+                   class="btn btn-success">Onayla</a>
+                <a asp-action="Cancel" asp-route-id="@Model.Id"
+                   class="btn btn-outline-warning">İptal et</a>
+                <a asp-action="Delete" asp-route-id="@Model.Id"
+                   class="btn btn-outline-danger">Sil</a>
+            }
         }
     </div>
 </div>

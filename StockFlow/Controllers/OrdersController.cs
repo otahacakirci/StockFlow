@@ -214,6 +214,168 @@ public sealed class OrdersController(
         return UnexpectedFailure("update", result.Error, id);
     }
 
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpGet]
+    public Task<IActionResult> Confirm(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        return DraftActionViewAsync(nameof(Confirm), id, cancellationToken);
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpPost]
+    [ActionName(nameof(Confirm))]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmConfirmed(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await orderService.ConfirmDraftAsync(id, cancellationToken);
+
+        if (result.IsSuccess && result.Value is not null)
+        {
+            TempData[SuccessMessageKey] = "Sipariş başarıyla onaylandı.";
+            return RedirectToAction(nameof(Details), new { id = result.Value.OrderId });
+        }
+
+        return await DraftActionFailureAsync(
+            nameof(Confirm),
+            id,
+            result.Error,
+            cancellationToken,
+            "confirm");
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpGet]
+    public Task<IActionResult> Cancel(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        return DraftActionViewAsync(nameof(Cancel), id, cancellationToken);
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpPost]
+    [ActionName(nameof(Cancel))]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelConfirmed(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await orderService.CancelDraftAsync(id, cancellationToken);
+
+        if (result.IsSuccess && result.Value is not null)
+        {
+            TempData[SuccessMessageKey] = "Sipariş başarıyla iptal edildi.";
+            return RedirectToAction(nameof(Details), new { id = result.Value.OrderId });
+        }
+
+        return await DraftActionFailureAsync(
+            nameof(Cancel),
+            id,
+            result.Error,
+            cancellationToken,
+            "cancel");
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpGet]
+    public Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        return DraftActionViewAsync(nameof(Delete), id, cancellationToken);
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpPost]
+    [ActionName(nameof(Delete))]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await orderService.DeleteDraftAsync(id, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            TempData[SuccessMessageKey] = "Taslak sipariş başarıyla silindi.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return await DraftActionFailureAsync(
+            nameof(Delete),
+            id,
+            result.Error,
+            cancellationToken,
+            "delete");
+    }
+
+    private async Task<IActionResult> DraftActionViewAsync(
+        string viewName,
+        int orderId,
+        CancellationToken cancellationToken)
+    {
+        var result = await orderQueryService.GetByIdAsync(orderId, cancellationToken);
+        if (!result.IsSuccess || result.Value is null)
+        {
+            return IsOrderNotFound(result.Error)
+                ? NotFoundView()
+                : UnexpectedFailure(viewName.ToLowerInvariant() + "_confirmation", result.Error, orderId);
+        }
+
+        if (result.Value.Status != OrderStatus.Draft)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Bu işlem yalnızca taslak siparişlerde yapılabilir.");
+            Response.StatusCode = StatusCodes.Status409Conflict;
+            return View(nameof(Details), result.Value);
+        }
+
+        return View(viewName, result.Value);
+    }
+
+    private async Task<IActionResult> DraftActionFailureAsync(
+        string viewName,
+        int orderId,
+        ServiceError? error,
+        CancellationToken cancellationToken,
+        string operation)
+    {
+        if (error?.Category == ServiceErrorCategory.NotFound)
+        {
+            return NotFoundView();
+        }
+
+        if (IsOrderNotDraft(error))
+        {
+            return await DraftConflictAsync(orderId, error!, cancellationToken, operation + "_conflict");
+        }
+
+        if (error?.Category is not (
+            ServiceErrorCategory.Validation or ServiceErrorCategory.BusinessRule))
+        {
+            return UnexpectedFailure(operation, error, orderId);
+        }
+
+        var detailResult = await orderQueryService.GetByIdAsync(orderId, cancellationToken);
+        if (!detailResult.IsSuccess || detailResult.Value is null)
+        {
+            return IsOrderNotFound(detailResult.Error)
+                ? NotFoundView()
+                : UnexpectedFailure(operation + "_reload", detailResult.Error, orderId);
+        }
+
+        ModelState.AddModelError(string.Empty, error.Message);
+        Response.StatusCode = error.Category == ServiceErrorCategory.Validation
+            ? StatusCodes.Status400BadRequest
+            : StatusCodes.Status409Conflict;
+        return View(viewName, detailResult.Value);
+    }
+
     private async Task<IActionResult> ReloadEditFormAsync(
         int orderId,
         OrderDraftInputModel input,

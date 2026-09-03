@@ -1,0 +1,26 @@
+@model StockFlow.ViewModels.Orders.OrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Taslak siparişi sil";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">SİPARİŞ SİLME</p>
+        <h1>Taslak siparişi sil</h1>
+        <p class="page-intro">Fiziksel silme işlemi geri alınamaz.</p>
+    </div>
+</div>
+
+<section class="management-panel form-panel danger-confirmation" aria-labelledby="delete-order-title">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <p class="page-eyebrow">SİLME DOĞRULAMASI</p>
+    <h2 id="delete-order-title">@Model.OrderNumber</h2>
+    <partial name="_DraftActionSummary" model="Model" />
+
+    <p>Bu işlem taslak siparişi ve kalemlerini kalıcı olarak silecektir. Devam etmek istediğinizden emin olun.</p>
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
+        <button type="submit" class="btn btn-danger">Evet, taslak siparişi sil</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+    </form>
+</section>

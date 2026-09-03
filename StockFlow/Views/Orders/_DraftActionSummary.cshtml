@@ -1,0 +1,34 @@
+@using System.Globalization
+@using StockFlow.Entities
+@model StockFlow.ViewModels.Orders.OrderDetailViewModel
+
+@{
+    var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
+    var partyLabel = Model.Type == OrderType.Sale ? "Müşteri" : "Tedarikçi";
+    var partyName = Model.Type == OrderType.Sale
+        ? Model.CustomerName
+        : Model.SupplierCompanyName;
+}
+
+<dl class="detail-grid detail-grid--compact">
+    <div>
+        <dt>Sipariş no</dt>
+        <dd><span class="order-number">@Model.OrderNumber</span></dd>
+    </div>
+    <div>
+        <dt>Sipariş türü</dt>
+        <dd>@(Model.Type == OrderType.Sale ? "Satış" : "Satın alma")</dd>
+    </div>
+    <div>
+        <dt>@partyLabel</dt>
+        <dd>@(partyName ?? "—")</dd>
+    </div>
+    <div>
+        <dt>Kalem sayısı</dt>
+        <dd>@Model.Items.Count</dd>
+    </div>
+    <div>
+        <dt>Toplam tutar</dt>
+        <dd>@Model.TotalAmount.ToString("C2", turkishCulture)</dd>
+    </div>
+</dl>
