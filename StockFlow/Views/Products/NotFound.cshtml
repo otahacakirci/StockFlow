@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Ürün bulunamadı";
+}
+
+<div class="feedback-panel" role="alert">
+    <span class="feedback-panel__code" aria-hidden="true">404</span>
+    <p class="page-eyebrow">ÜRÜN BULUNAMADI</p>
+    <h1>Aradığınız ürün mevcut değil</h1>
+    <p>Ürün silinmiş olabilir veya bağlantı artık geçerli değildir.</p>
+    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Ürün listesine dön</a>
+</div>

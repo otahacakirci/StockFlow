@@ -24,6 +24,16 @@ internal sealed class SqlServerTestDatabase : IAsyncDisposable
 
     internal string DatabaseName { get; }
 
+    internal string ConnectionString
+    {
+        get
+        {
+            ThrowIfDisposed();
+            EnsureSafeTarget();
+            return _connectionString;
+        }
+    }
+
     internal static SqlServerTestDatabase Create()
     {
         return new SqlServerTestDatabase(GenerateDatabaseName());

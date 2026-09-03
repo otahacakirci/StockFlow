@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Stok hareketi bulunamadı";
+}
+
+<div class="feedback-panel" role="alert">
+    <span class="feedback-panel__code" aria-hidden="true">404</span>
+    <p class="page-eyebrow">STOK HAREKETİ BULUNAMADI</p>
+    <h1>Aradığınız stok hareketi mevcut değil</h1>
+    <p>Hareket kaydı silinmiş olabilir veya bağlantı artık geçerli değildir.</p>
+    <a asp-controller="StockMovements" asp-action="Index" class="btn btn-primary">Stok hareketi listesine dön</a>
+</div>

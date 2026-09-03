@@ -18,12 +18,16 @@ using StockFlow.Services.Suppliers;
 var builder = WebApplication.CreateBuilder(args);
 var turkishCulture = CultureInfo.GetCultureInfo("tr-TR");
 
-var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException(
-        "Veritabanı bağlantısı yapılandırılmamış. ConnectionStrings:DefaultConnection değerini güvenli yapılandırmada tanımlayın.");
+builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+{
+    var defaultConnection = serviceProvider
+        .GetRequiredService<IConfiguration>()
+        .GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException(
+            "Veritabanı bağlantısı yapılandırılmamış. ConnectionStrings:DefaultConnection değerini güvenli yapılandırmada tanımlayın.");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(defaultConnection));
+    options.UseSqlServer(defaultConnection);
+});
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -116,3 +120,5 @@ app.MapControllerRoute(
 
 
 app.Run();
+
+public partial class Program;
