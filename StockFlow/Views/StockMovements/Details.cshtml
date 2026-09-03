@@ -1,0 +1,91 @@
+@using System.Globalization
+@using StockFlow.Entities
+@model StockFlow.ViewModels.StockMovements.StockMovementViewModel
+
+@{
+    ViewData["Title"] = "Stok hareketi detayı";
+    var utcTimestamp = Model.MovementDateUtc.UtcDateTime.ToString(
+        "yyyy-MM-ddTHH:mm:ss'Z'",
+        CultureInfo.InvariantCulture);
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">STOK HAREKETİ DETAYI</p>
+        <h1>Hareket #@Model.Id</h1>
+        <p class="page-intro">Sipariş onayında oluşan salt okunur stok denetim kaydını inceleyin.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+    </div>
+</div>
+
+<section class="management-panel detail-panel" aria-labelledby="stock-movement-information-title">
+    <div class="management-panel__header">
+        <div>
+            <p class="page-eyebrow mb-1">DENETİM KAYDI</p>
+            <h2 id="stock-movement-information-title">Hareket özeti</h2>
+        </div>
+        <span class="record-id">#@Model.Id</span>
+    </div>
+    <dl class="detail-grid">
+        <div>
+            <dt>Hareket türü</dt>
+            <dd>
+                <span class="badge @GetMovementBadgeClass(Model.Type)">
+                    @GetMovementTypeLabel(Model.Type)
+                </span>
+            </dd>
+        </div>
+        <div>
+            <dt>Miktar</dt>
+            <dd>@Model.Quantity</dd>
+        </div>
+        <div>
+            <dt>Ürün</dt>
+            <dd>
+                <a asp-controller="Products" asp-action="Details" asp-route-id="@Model.ProductId">
+                    @Model.ProductName
+                </a>
+                <span class="entity-subtitle">@Model.ProductSku</span>
+            </dd>
+        </div>
+        <div>
+            <dt>Sipariş</dt>
+            <dd>
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId"
+                   class="order-number">@Model.OrderNumber</a>
+            </dd>
+        </div>
+        <div>
+            <dt>UTC hareket tarihi</dt>
+            <dd>
+                <time datetime="@utcTimestamp">
+                    @Model.MovementDateUtc.UtcDateTime.ToString(
+                        "dd.MM.yyyy HH:mm:ss",
+                        CultureInfo.InvariantCulture) UTC
+                </time>
+            </dd>
+        </div>
+        <div>
+            <dt>Açıklama</dt>
+            <dd>@Model.Description</dd>
+        </div>
+    </dl>
+</section>
+
+@functions {
+    private static string GetMovementTypeLabel(StockMovementType type) => type switch
+    {
+        StockMovementType.StockIn => "Stok girişi",
+        StockMovementType.StockOut => "Stok çıkışı",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetMovementBadgeClass(StockMovementType type) => type switch
+    {
+        StockMovementType.StockIn => "text-bg-success",
+        StockMovementType.StockOut => "text-bg-danger",
+        _ => "text-bg-secondary"
+    };
+}

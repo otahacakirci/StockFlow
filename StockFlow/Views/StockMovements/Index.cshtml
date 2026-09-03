@@ -1,0 +1,217 @@
+@using System.Globalization
+@using StockFlow.Entities
+@using StockFlow.ViewModels.StockMovements
+@model StockMovementListPageViewModel
+
+@{
+    ViewData["Title"] = "Stok hareketleri";
+    var results = Model.Results;
+    var startDateRouteValue = Model.StartDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var endDateRouteValue = Model.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+}
+
+<div class="page-heading">
+    <div>
+        <p class="page-eyebrow">STOK DENETİMİ</p>
+        <h1>Stok hareketleri</h1>
+        <p class="page-intro">Sipariş onaylarında oluşan stok giriş ve çıkışlarını UTC zamanlarıyla inceleyin.</p>
+    </div>
+</div>
+
+<section class="management-panel" aria-labelledby="stock-movement-filter-title">
+    <h2 id="stock-movement-filter-title" class="visually-hidden">Stok hareketi filtreleri</h2>
+    <div asp-validation-summary="All" class="alert alert-danger m-3 mb-0" role="alert"></div>
+    <form asp-action="Index" method="get" class="management-toolbar management-toolbar--stock-movements">
+        <div>
+            <label asp-for="ProductId" class="form-label">Ürün kimliği</label>
+            <input asp-for="ProductId" class="form-control" min="1" placeholder="Örn. 17" />
+        </div>
+        <div>
+            <label asp-for="OrderId" class="form-label">Sipariş kimliği</label>
+            <input asp-for="OrderId" class="form-control" min="1" placeholder="Örn. 42" />
+        </div>
+        <div>
+            <label asp-for="Type" class="form-label">Hareket türü</label>
+            <select asp-for="Type" class="form-select">
+                <option value="">Tüm türler</option>
+                <option value="@StockMovementType.StockIn">Stok girişi</option>
+                <option value="@StockMovementType.StockOut">Stok çıkışı</option>
+            </select>
+        </div>
+        <div>
+            <label asp-for="StartDate" class="form-label">Başlangıç (UTC)</label>
+            <input asp-for="StartDate" type="date" class="form-control" />
+        </div>
+        <div>
+            <label asp-for="EndDate" class="form-label">Bitiş (UTC)</label>
+            <input asp-for="EndDate" type="date" class="form-control" />
+        </div>
+        <div>
+            <label asp-for="SortOrder" class="form-label">Tarih sıralaması</label>
+            <select asp-for="SortOrder" class="form-select">
+                <option value="@StockMovementSortOrder.DateDescending">En yeni önce</option>
+                <option value="@StockMovementSortOrder.DateAscending">En eski önce</option>
+            </select>
+        </div>
+        <div>
+            <label asp-for="PageSize" class="form-label">Sayfa boyutu</label>
+            <select asp-for="PageSize" class="form-select">
+                @foreach (var pageSize in new[] { 10, 20, 50, 100 })
+                {
+                    <option value="@pageSize">@pageSize</option>
+                }
+            </select>
+        </div>
+        <div class="management-toolbar__actions">
+            <button type="submit" class="btn btn-primary">Uygula</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Temizle</a>
+        </div>
+    </form>
+</section>
+
+@if (results is null)
+{
+    <section class="management-panel mt-4" aria-labelledby="stock-movement-invalid-title">
+        <div class="management-empty-state">
+            <span aria-hidden="true">—</span>
+            <h2 id="stock-movement-invalid-title">Filtreler doğrulanamadı</h2>
+            <p>Filtre alanlarını düzeltip sorguyu yeniden çalıştırın.</p>
+        </div>
+    </section>
+}
+else
+{
+    <section class="management-panel mt-4" aria-labelledby="stock-movement-list-title">
+        <div class="management-panel__header">
+            <div>
+                <p class="page-eyebrow mb-1">DENETİM KAYITLARI</p>
+                <h2 id="stock-movement-list-title">Hareket listesi</h2>
+            </div>
+            <span class="count-pill">@results.TotalCount kayıt</span>
+        </div>
+
+        @if (results.Items.Count == 0)
+        {
+            <div class="management-empty-state">
+                <span aria-hidden="true">—</span>
+                <h3>Gösterilecek stok hareketi yok</h3>
+                <p>Filtreleri temizleyin veya farklı bir Product/Order bağlamı deneyin.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table data-table align-middle mb-0">
+                    <caption class="visually-hidden">Stok hareketi kayıtları</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">UTC hareket tarihi</th>
+                            <th scope="col">Tür</th>
+                            <th scope="col">Ürün</th>
+                            <th scope="col">Sipariş</th>
+                            <th scope="col" class="text-end">Miktar</th>
+                            <th scope="col">Açıklama</th>
+                            <th scope="col" class="text-end">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var movement in results.Items)
+                        {
+                            var utcTimestamp = movement.MovementDateUtc.UtcDateTime.ToString(
+                                "yyyy-MM-ddTHH:mm:ss'Z'",
+                                CultureInfo.InvariantCulture);
+                            <tr>
+                                <td>
+                                    <time datetime="@utcTimestamp">
+                                        @movement.MovementDateUtc.UtcDateTime.ToString(
+                                            "dd.MM.yyyy HH:mm:ss",
+                                            CultureInfo.InvariantCulture) UTC
+                                    </time>
+                                </td>
+                                <td>
+                                    <span class="badge @GetMovementBadgeClass(movement.Type)">
+                                        @GetMovementTypeLabel(movement.Type)
+                                    </span>
+                                </td>
+                                <td>
+                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@movement.ProductId"
+                                       class="entity-title">@movement.ProductName</a>
+                                    <span class="entity-subtitle">@movement.ProductSku</span>
+                                </td>
+                                <td>
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@movement.OrderId"
+                                       class="order-number">@movement.OrderNumber</a>
+                                </td>
+                                <td class="text-end fw-semibold">@movement.Quantity</td>
+                                <td>@movement.Description</td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@movement.Id"
+                                       class="btn btn-sm btn-outline-secondary">Görüntüle</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (results.TotalPages > 1)
+        {
+            <nav class="pagination-bar" aria-label="Stok hareketi sayfaları">
+                @if (results.Page > 1)
+                {
+                    <a asp-action="Index"
+                       asp-route-ProductId="@Model.ProductId"
+                       asp-route-OrderId="@Model.OrderId"
+                       asp-route-Type="@Model.Type"
+                       asp-route-StartDate="@startDateRouteValue"
+                       asp-route-EndDate="@endDateRouteValue"
+                       asp-route-SortOrder="@Model.SortOrder"
+                       asp-route-Page="@(results.Page - 1)"
+                       asp-route-PageSize="@Model.PageSize"
+                       class="btn btn-sm btn-outline-secondary">Önceki</a>
+                }
+                else
+                {
+                    <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Önceki</span>
+                }
+
+                <span>Sayfa <strong>@results.Page</strong> / @results.TotalPages</span>
+
+                @if (results.Page < results.TotalPages)
+                {
+                    <a asp-action="Index"
+                       asp-route-ProductId="@Model.ProductId"
+                       asp-route-OrderId="@Model.OrderId"
+                       asp-route-Type="@Model.Type"
+                       asp-route-StartDate="@startDateRouteValue"
+                       asp-route-EndDate="@endDateRouteValue"
+                       asp-route-SortOrder="@Model.SortOrder"
+                       asp-route-Page="@(results.Page + 1)"
+                       asp-route-PageSize="@Model.PageSize"
+                       class="btn btn-sm btn-outline-secondary">Sonraki</a>
+                }
+                else
+                {
+                    <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Sonraki</span>
+                }
+            </nav>
+        }
+    </section>
+}
+
+@functions {
+    private static string GetMovementTypeLabel(StockMovementType type) => type switch
+    {
+        StockMovementType.StockIn => "Stok girişi",
+        StockMovementType.StockOut => "Stok çıkışı",
+        _ => "Bilinmiyor"
+    };
+
+    private static string GetMovementBadgeClass(StockMovementType type) => type switch
+    {
+        StockMovementType.StockIn => "text-bg-success",
+        StockMovementType.StockOut => "text-bg-danger",
+        _ => "text-bg-secondary"
+    };
+}

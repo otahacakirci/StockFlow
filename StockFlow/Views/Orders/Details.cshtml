@@ -35,6 +35,11 @@
     </div>
     <div class="page-actions">
         <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+        @if (Model.Status == OrderStatus.Confirmed)
+        {
+            <a asp-controller="StockMovements" asp-action="Index" asp-route-OrderId="@Model.Id"
+               class="btn btn-outline-secondary">Stok hareketleri</a>
+        }
         @if (Model.Status == OrderStatus.Draft)
         {
             <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"

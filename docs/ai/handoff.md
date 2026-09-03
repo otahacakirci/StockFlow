@@ -14,29 +14,28 @@ review_triggers:
 ## Son doğrulama
 
 - Tarih: 3 Eylül 2026
-- Kapsam: Admin Draft sipariş onaylama, iptal etme ve silme MVC akışları
+- Kapsam: StockMovement salt-okunur liste ve detay MVC akışları
 
 ## Son tamamlanan değişiklik
 
-Mevcut `IOrderService` confirm/cancel/delete mutasyonları `OrdersController` ve ayrı doğrulama Razor ekranlarına bağlandı. Altı GET/POST action yalnız Admin rolüne açıktır; GET veri değiştirmez, POST antiforgery korumasıyla gerçek mutasyonu yürütür. Admin Draft siparişlerde liste ve detaydan onaylama, iptal etme ve silme eylemlerini görür; Employee ile terminal siparişler bu kontrolleri görmez.
+Mevcut `IStockMovementQueryService`, yalnız Admin ve Employee rollerine açık yeni `StockMovementsController` ile liste/detay Razor ekranlarına bağlandı. Controller yalnız GET action'ları ve güvenli ViewModel projection'ları kullanır; DbContext, mutation Service'i veya oluşturma/düzenleme/silme davranışı içermez. Geçersiz filtreler 400, eksik detay 404 ve beklenmeyen tipli sonuçlar güvenli 500 üretir.
 
-Confirm/Cancel başarısı güncel sipariş detayına, Delete başarısı listeye yönlenir. NotFound 404, Validation 400, BusinessRule ve terminal durum yarışları 409 üretir ve güvenli Service mesajını ilgili doğrulama/detay görünümünde gösterir. `OrderService`, transaction, stok planner'ı ve hareket üretimi değiştirilmedi. Ürün spesifikasyonu ile domain kuralları Draft sipariş silmenin de yalnız Admin yetkisi olduğunu açıkça kaydeder.
+Liste Product/Order kimliği, hareket türü, inclusive UTC tarih aralığı, tarih sıralaması ve normalize sayfalama filtrelerini korur. Product ve Confirmed Order detayları filtreli hareket geçmişine; hareket satırları ve detayları ilgili Product/Order ekranlarına bağlanır. Ana navigasyon her iki role de stok hareketlerini gösterir. `OrderService` confirm transaction'ı, stok mutation'ı ve hareket üretimi değiştirilmedi.
 
 ## Doğrulama kanıtı
 
 - `dotnet format StockFlow.slnx --verify-no-changes --no-restore`: geçti.
 - `dotnet build StockFlow.slnx --no-restore`: geçti; 0 hata ve 0 uyarı.
-- Kullanıcıya bağlı gerçek LocalDB bağlamında 61 odaklı Order Controller/Service/Query/Planner testi geçti; başarısız veya atlanan test yoktur.
-- 274 testlik tam paket geçti; başarısız veya atlanan test yoktur.
+- Kullanıcıya bağlı gerçek LocalDB bağlamında 34 odaklı StockMovement Controller/Query ve OrderService/planner testi geçti; başarısız veya atlanan test yoktur.
+- 286 testlik tam paket geçti; başarısız veya atlanan test yoktur.
 - Ajan bağlamı, repository hygiene ve `git diff --check` doğrulamaları geçti; yasaklı yerel/üretilmiş yol veya yüksek güvenli secret eşleşmesi bulunmadı.
 
 ## Açık riskler ve boşluklar
 
-- StockMovement query Service'i henüz Controller ve Razor akışlarına bağlanmamıştır.
 - Uygulamanın çalışması için migration sonrasında dört `IdentitySeed` değerinin güvenli yapılandırmada bulunması gerekir.
 - İlişkisel testler Windows ve çalışan SQL Server LocalDB gerektirir; CI ve çapraz platform hedefi sonraki kapsamdadır.
 - LocalDB geliştirme ve öğrenme ortamıdır; production veya çok kullanıcılı deployment için tam SQL Server hedefi ayrıca yapılandırılmalıdır.
 
 ## Sonraki sınırlandırılmış görev
 
-StockMovement liste/detay MVC ekranlarını mevcut `IStockMovementQueryService` sözleşmesine bağlamak.
+Belirlenmedi.

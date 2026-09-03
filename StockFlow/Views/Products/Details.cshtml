@@ -17,6 +17,8 @@
     </div>
     <div class="page-actions">
         <a asp-action="Index" class="btn btn-outline-secondary">Listeye dön</a>
+        <a asp-controller="StockMovements" asp-action="Index" asp-route-ProductId="@Model.Id"
+           class="btn btn-outline-secondary">Stok hareketleri</a>
         @if (canManageProducts)
         {
             <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@editReturnUrl"
