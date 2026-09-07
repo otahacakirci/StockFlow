@@ -14,29 +14,35 @@ review_triggers:
 ## Son doğrulama
 
 - Tarih: 3 Eylül 2026
-- Kapsam: Controller ve Razor UI ürün kabul davranışlarının gerçek MVC pipeline doğrulaması
+- Kapsam: Development demo veri başlangıç yüklemesi ve README kurulum belgesi
 
 ## Son tamamlanan değişiklik
 
-`Microsoft.AspNetCore.Mvc.Testing` tabanlı, her senaryoda mevcut güvenlik kontrollü benzersiz LocalDB veritabanını ve gerçek Identity cookie akışını kullanan MVC kabul paketi eklendi. Paket anonim login yönlendirmesini, Admin/Employee doğrudan endpoint ayrımını, rol duyarlı navigasyonu, antiforgery, login/logout, form değeri koruması, TempData bildirimi, filtre korumalı sayfalama ve production güvenli hata middleware'ini gerçek HTTP pipeline üzerinde doğrular.
+Identity seed sonrasında çağrılan, varsayılanı kapalı `DemoData:Enabled` bayrağı ve Development ortam kontrolü bulunan özel demo data seeder eklendi. Seeder yedi domain tablosundan herhangi biri doluysa mevcut kayıtlara dokunmadan güvenli logla atlar; boş domain veritabanında bütün veri grafiğini tek serializable SQL transaction ve tek `SaveChangesAsync` ile yazar.
 
-Product ve StockMovement eksik kayıt ekranları yanlış Category dönüş bağlantısı yerine kendi domain listelerine yönlendiren güvenli 404 görünümlerine kavuştu. `Program` bağlantı çözümlemesi WebApplicationFactory yapılandırmasını destekleyecek zamanda yapılırken başlangıç seeder'ının fail-fast davranışı korundu. Service sözleşmeleri, rol matrisi, sipariş transaction sınırı ve veritabanı modeli değiştirilmedi.
+Deterministik katalog; 6 kategori, 30 ürün, 10 müşteri, 6 tedarikçi, 24 sipariş, 54 sipariş kalemi ve 30 stok hareketi içerir. 12 Confirmed, 7 Draft ve 5 Cancelled sipariş; Sale/Purchase tarafları, fiyat snapshot'ları, toplamlar, açılış stokları ve yalnız Confirmed hareketlerin net etkisiyle sekiz düşük stoklu ürün sonucu birlikte korunur. Bütün taraf ve iletişim değerleri açıkça kurgusaldır. Veritabanı modeli, migration zinciri, public Service/ViewModel sözleşmeleri ve sipariş yaşam döngüsü değiştirilmedi.
+
+README mevcut MVC mini ERP kapsamı, rol matrisi, teknoloji/önkoşullar, güvenli LocalDB veya SQL Server bağlantısı, Identity User Secrets/ortam anahtarları, migration/run sırası, demo seed güvenlik davranışı ve format/build/test komutlarıyla güncellendi.
 
 ## Doğrulama kanıtı
 
+- `dotnet restore StockFlow.slnx`: sandbox dışı güvenli NuGet yapılandırma erişimiyle geçti; bütün projeler güncel.
 - `dotnet format StockFlow.slnx --verify-no-changes --no-restore`: geçti.
 - `dotnet build StockFlow.slnx --no-restore`: geçti; 0 hata ve 0 uyarı.
-- Veritabanısız 155 Controller testi geçti; başarısız veya atlanan test yoktur.
-- Kullanıcıya bağlı gerçek LocalDB bağlamında on MVC pipeline kabul testi geçti; başarısız veya atlanan test yoktur.
-- 296 testlik tam paket geçti; başarısız veya atlanan test yoktur.
-- Ajan bağlamı, repository hygiene ve `git diff --check` doğrulamaları geçti; yasaklı yerel/üretilmiş yol veya yüksek güvenli secret eşleşmesi bulunmadı.
+- 303 test keşfedildi.
+- Deterministik katalog ile kapalı bayrak/Production erken dönüşünü kapsayan üç odaklı demo veri testi geçti.
+- 155 Controller testi geçti; başarısız veya atlanan test yoktur.
+- Katalog, Identity yapılandırması, ViewModel/model binding, saf stok planner ve ortak Service yardımcılarını kapsayan 47 veritabanısız test geçti; başarısız veya atlanan test yoktur.
+- İlişkisel demo seed testi, `SqlServerTestDatabase.InitializeAsync` içinde LocalDB otomatik örneği oluşturulamadığı için test gövdesinden önce başarısız oldu. Tam paket de Identity DB, Service ve MVC sınıflarında aynı ortam hatasını tekrarladı ve gereksiz tekrar beklememek için durduruldu; InMemory veya geliştirme veritabanı fallback'i kullanılmadı.
+- Ajan bağlamı ve 298 tracked dosyayı denetleyen repository hygiene kontrolleri geçti; yasaklı yol veya yüksek güvenli secret eşleşmesi bulunmadı.
+- Değiştirilen/yeni 11 dosyanın ek hassas içerik taraması, migration diff kontrolü ve `git diff --check` geçti. Migration dosyası değişmedi.
 
 ## Açık riskler ve boşluklar
 
+- Bu makinedeki `(localdb)\MSSQLLocalDB` örneği `Cannot create an automatic instance` / Local Database Runtime hatası veriyor. İlişkisel demo seed, Service, Identity database ve MVC kabul testleri LocalDB onarıldıktan sonra yeniden çalıştırılmalıdır.
 - Uygulamanın çalışması için migration sonrasında dört `IdentitySeed` değerinin güvenli yapılandırmada bulunması gerekir.
-- İlişkisel testler Windows ve çalışan SQL Server LocalDB gerektirir; CI ve çapraz platform hedefi sonraki kapsamdadır.
-- LocalDB geliştirme ve öğrenme ortamıdır; production veya çok kullanıcılı deployment için tam SQL Server hedefi ayrıca yapılandırılmalıdır.
+- LocalDB geliştirme ve öğrenme ortamıdır; production veya çok kullanıcılı deployment hedefi değildir.
 
 ## Sonraki sınırlandırılmış görev
 
-Belirlenmedi.
+LocalDB örneğini depo dışında onarıp ilişkisel demo seed testlerini ve 303 testlik tam paketi fallback kullanmadan yeniden çalıştırmak.

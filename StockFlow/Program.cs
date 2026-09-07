@@ -54,8 +54,12 @@ builder.Services
     .AddOptions<IdentitySeedOptions>()
     .Bind(builder.Configuration.GetSection(IdentitySeedOptions.SectionName))
     .ValidateOnStart();
+builder.Services
+    .AddOptions<DemoDataOptions>()
+    .Bind(builder.Configuration.GetSection(DemoDataOptions.SectionName));
 builder.Services.AddSingleton<IValidateOptions<IdentitySeedOptions>, IdentitySeedOptionsValidator>();
 builder.Services.AddScoped<IdentityDataSeeder>();
+builder.Services.AddScoped<DemoDataSeeder>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
@@ -91,8 +95,11 @@ var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<IdentityDataSeeder>();
-    await seeder.SeedAsync();
+    var identitySeeder = scope.ServiceProvider.GetRequiredService<IdentityDataSeeder>();
+    await identitySeeder.SeedAsync();
+
+    var demoDataSeeder = scope.ServiceProvider.GetRequiredService<DemoDataSeeder>();
+    await demoDataSeeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.

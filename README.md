@@ -1,83 +1,184 @@
 # StockFlow
 
-StockFlow; kategori, ürün, tedarikçi, müşteri, satın alma/satış siparişi ve stok hareketlerini yönetecek ASP.NET Core MVC tabanlı bir mini ERP projesidir.
+StockFlow; küçük ve orta ölçekli işletmeler için kategori, ürün, müşteri, tedarikçi, satış/satın alma siparişi ve stok hareketlerini tek ASP.NET Core MVC uygulamasında yöneten örnek bir mini ERP projesidir. Uygulamanın temel değeri, Draft siparişlerin stoğu etkilememesi ve Confirm işleminin sipariş durumu, ürün stokları ile hareket geçmişini tek SQL transaction içinde tutarlı biçimde değiştirmesidir.
 
-## Mevcut durum
+## Temel özellikler
 
-Depodaki uygulama erken aşamadadır. Şu anda .NET 10 MVC/Razor temeli, EF Core domain modeli, LocalDB kalıcılığı, cookie tabanlı ASP.NET Core Identity ve Category, Product, Customer, Supplier, Order, StockMovement ile Dashboard Service akışları bulunur. Uygulama özel MVC login/logout akışı kullanır; Admin ve Employee başlangıç kullanıcıları güvenli yapılandırmadan idempotent seed edilir. Sipariş onayı stok, hareket ve terminal durumu tek SQL transaction sınırında kalıcılaştırır; salt-okunur sorgular güvenli ViewModel projection'ları kullanır.
+- Cookie tabanlı ASP.NET Core Identity login/logout akışı ve global kimlik doğrulama koruması.
+- Admin ve Employee rolleri için hem endpoint hem kullanıcı arayüzü seviyesinde yetkilendirme.
+- Category, Product, Customer ve Supplier yönetim ekranları.
+- Sale ve Purchase türünde, birden fazla ürün kalemi içerebilen Draft siparişler.
+- Draft düzenleme; Admin için Confirm, Cancel ve Draft silme işlemleri.
+- Confirmed Purchase için StockIn, Confirmed Sale için StockOut hareketleri ve atomik stok güncellemesi.
+- Ürün, sipariş ve stok hareketlerinde arama/filtreleme, güvenli sıralama ve sunucu taraflı sayfalama.
+- Toplam ürün, düşük stok, müşteri, tedarikçi, sipariş, Confirmed satış toplamı ve son siparişleri gösteren dashboard.
+- Güvenli ViewModel sınırları, Service katmanında iş kuralları, EF Core SQL Server kalıcılığı ve xUnit testleri.
 
-İlk Controller/Razor dilimleri dashboard, Category ve Product yönetimi için uygulanmıştır. `Home/Index`, Admin ve Employee rollerine açık operasyon özetini gösterir. Category ve Product ekranları iki role arama, güvenli filtreleme/sıralama/sayfalama ve detay görüntüleme; yalnız Admin'e doğrulamalı oluşturma/düzenleme ve ilişki korumalı silme akışlarını sunar. Product düzenlemesi mevcut stoğu değiştirmez; kategori seçimleri ayrı güvenli projection üzerinden sağlanır. Uygulama istek kültürünü `tr-TR` olarak sabitler; Product fiyat formları virgüllü, en fazla iki basamaklı ondalık girişi kabul eder ve noktalı/bölenli belirsiz biçimleri alan hatasıyla reddeder. Category ve Product düzenleme ekranlarındaki İptal işlemi güvenli yerel dönüş hedefiyle liste filtrelerini veya detay geliş noktasını korur. Ortak yönetim düzeni yalnız kullanılabilir dashboard/kategori/ürün navigasyonunu, kimliği doğrulanmış kullanıcı bilgisini, rol etiketini ve POST logout işlemini içerir; diğer yönetim Service'leri henüz Controller/Razor ekranlarına bağlanmamıştır.
+## Roller
 
-Ayrıntılı mevcut-hedef farkları için [mevcut durum belgesine](docs/ai/current-state.md), normatif kapsam için [ürün spesifikasyonuna](docs/product-spec.md) bakın.
+| İşlem | Admin | Employee |
+| --- | --- | --- |
+| Dashboard, ürün ve kategori görüntüleme | Evet | Evet |
+| Ürün ve kategori oluşturma/düzenleme/silme | Evet | Hayır |
+| Supplier yönetimi | Evet | Hayır |
+| Customer listeleme/oluşturma/düzenleme | Evet | Evet |
+| Sipariş geçmişi olmayan Customer silme | Evet | Hayır |
+| Sipariş listeleme ve Draft oluşturma/düzenleme | Evet | Evet |
+| Sipariş onaylama, iptal etme ve Draft silme | Evet | Hayır |
+| Stok hareketlerini görüntüleme | Evet | Evet |
 
-## Gereksinimler
+## Teknolojiler
 
-- .NET SDK 10.x
-- Microsoft SQL Server LocalDB (yerel öğrenme/geliştirme için önerilen) veya tam SQL Server örneği
-- PowerShell 5.1 veya PowerShell 7 (bağlam doğrulama betiği için)
-- HTTPS geliştirme sertifikası (`dotnet dev-certs https --trust`)
+- .NET 10 ve C#
+- ASP.NET Core MVC, Razor ve Bootstrap
+- ASP.NET Core Identity ve güvenli cookie oturumu
+- EF Core 10 ve Microsoft SQL Server provider
+- SQL Server LocalDB veya desteklenen tam SQL Server örneği
+- xUnit ve `Microsoft.AspNetCore.Mvc.Testing`
 
-## Kurulum ve çalıştırma
+Uygulama tek MVC hostu içinde çalışır. Controller sınıfları doğrudan `ApplicationDbContext` kullanmaz; HTTP giriş/çıkışları ViewModel, iş ve stok kuralları Service katmanı üzerinden yürütülür.
+
+## Ön koşullar
+
+- [.NET SDK 10.x](https://dotnet.microsoft.com/download/dotnet/10.0)
+- Windows geliştirme ortamında SQL Server LocalDB veya erişilebilir bir SQL Server örneği
+- PowerShell 5.1 ya da PowerShell 7
+- HTTPS geliştirme sertifikası
+
+LocalDB, yerel geliştirme ve test için önerilir. Tam SQL Server kullanılırken bağlantı hesabının mevcut `StockFlow` veritabanında migration uygulama yetkisi bulunmalıdır. LocalDB production veya çok kullanıcılı deployment hedefi değildir.
+
+## İlk kurulum
+
+Depo kökünde aşağıdaki komutları çalıştırın:
 
 ```powershell
 dotnet restore StockFlow.slnx
 dotnet tool restore
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<yerel geliştirme bağlantı dizeniz>" --project StockFlow/StockFlow.csproj
-dotnet user-secrets set "IdentitySeed:Admin:Email" "<yerel admin e-posta adresiniz>" --project StockFlow/StockFlow.csproj
-dotnet user-secrets set "IdentitySeed:Admin:Password" "<güçlü yerel admin parolanız>" --project StockFlow/StockFlow.csproj
-dotnet user-secrets set "IdentitySeed:Employee:Email" "<yerel employee e-posta adresiniz>" --project StockFlow/StockFlow.csproj
-dotnet user-secrets set "IdentitySeed:Employee:Password" "<güçlü yerel employee parolanız>" --project StockFlow/StockFlow.csproj
+dotnet dev-certs https --trust
+```
+
+### 1. Güvenli bağlantı yapılandırması
+
+Doğrulanmış LocalDB hedefi `(localdb)\MSSQLLocalDB` üzerindeki `StockFlow` veritabanıdır. Aşağıdaki komut bağlantı değerini kaynak kontrollü dosyaya yazmadan User Secrets içinde saklar:
+
+```powershell
+$stockFlowConnection = 'Server=(localdb)\MSSQLLocalDB;' + 'Database=StockFlow;Trusted_Connection=True;TrustServerCertificate=True'
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "$stockFlowConnection" --project StockFlow/StockFlow.csproj
+Remove-Variable stockFlowConnection
+```
+
+Tam SQL Server kullanıyorsanız aynı anahtara yöneticinizin sağladığı güvenli bağlantı değerini yazın. Ortam değişkeni kullanan hostlarda karşılığı `ConnectionStrings__DefaultConnection` anahtarıdır. Gerçek bağlantı dizesini README, `appsettings*.json`, kaynak kod veya log içine eklemeyin.
+
+### 2. Admin ve Employee hesapları
+
+Identity başlangıç kullanıcıları sabit parola içermez. Aşağıdaki örnek e-postalar güvenli örnek domainini kullanır; parolalar çalıştırma sırasında sizden alınır ve yalnız User Secrets içine yazılır:
+
+```powershell
+dotnet user-secrets set "IdentitySeed:Admin:Email" "admin@example.com" --project StockFlow/StockFlow.csproj
+$adminSeedPassword = Read-Host "Yerel Admin için güçlü parola"
+dotnet user-secrets set "IdentitySeed:Admin:Password" "$adminSeedPassword" --project StockFlow/StockFlow.csproj
+Remove-Variable adminSeedPassword
+
+dotnet user-secrets set "IdentitySeed:Employee:Email" "employee@example.com" --project StockFlow/StockFlow.csproj
+$employeeSeedPassword = Read-Host "Yerel Employee için güçlü parola"
+dotnet user-secrets set "IdentitySeed:Employee:Password" "$employeeSeedPassword" --project StockFlow/StockFlow.csproj
+Remove-Variable employeeSeedPassword
+```
+
+Güvenli ortam değişkeni kullanan bir hostta karşılık gelen anahtarlar şunlardır:
+
+- `IdentitySeed__Admin__Email`
+- `IdentitySeed__Admin__Password`
+- `IdentitySeed__Employee__Email`
+- `IdentitySeed__Employee__Password`
+
+Dört Identity değeri de zorunludur ve iki hesap farklı e-posta kullanmalıdır. Eksik veya geçersiz yapılandırma uygulamayı hassas değer göstermeden başlangıçta durdurur. Seeder mevcut hesabın parolasını değiştirmez veya eski hesabı silmez; eksik rol üyeliklerini idempotent biçimde tamamlar.
+
+### 3. Migration ve çalıştırma
+
+Uygulama migration'ları otomatik uygulamaz. Önce mevcut migration zincirini veritabanına uygulayın, sonra HTTPS profiliyle uygulamayı başlatın:
+
+```powershell
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 dotnet ef database update --project StockFlow/StockFlow.csproj --startup-project StockFlow/StockFlow.csproj
 dotnet build StockFlow.slnx --no-restore
 dotnet run --project StockFlow/StockFlow.csproj --launch-profile https
 ```
 
-Varsayılan geliştirme profili `https://localhost:7141` ve HTTPS'e yönlendirilen `http://localhost:5117` adreslerini birlikte kullanır. Kimlik cookie'si yalnız güvenli bağlantıda gönderildiği için uygulamayı `https` profiliyle başlatın. Yerel secret değerlerini kaynak kontrollü ayar dosyalarına yazmayın; User Secrets veya ortam değişkenlerini kullanın.
+Varsayılan profil `https://localhost:7141` ve HTTPS'e yönlendirilen `http://localhost:5117` adreslerini kullanır. Güvenli Identity cookie'si nedeniyle tarayıcıda HTTPS adresini açın.
 
-`InitialDomainSchema` yedi domain tablosunu, ikinci migration olan `AddIdentitySchema` ise `ApplicationUser`, yedi standart Identity tablosu ve `Orders.CreatedByUserId` foreign key'ini oluşturur. Bağlantı dizesi ve dört başlangıç kullanıcı değeri yalnız güvenli yapılandırmada tutulur. Değerlerden biri eksik veya iki kullanıcı aynı e-postayı kullanıyorsa uygulama hassas değer göstermeden başlangıçta durur. Migration uygulama başlangıcında otomatik çalıştırılmaz; önce `database update`, sonra uygulama başlatma sırası izlenmelidir.
+## Development demo verileri
 
-Seed işlemi her uygulama başlangıcında rolleri, kullanıcıları ve üyelikleri kontrol eder. Mevcut kayıtlar tekrar oluşturulmaz, mevcut kullanıcının parolası değiştirilmez ve hesaplar otomatik silinmez. Başlangıç e-posta yapılandırmasını değiştirmek eski hesabı kaldırmaz; bu tür hesap bakımı açık yönetim işlemi olarak yapılmalıdır.
-
-### Yerel veritabanı seçimi
-
-Bu depo için doğrulanan geliştirme hedefi `(localdb)\MSSQLLocalDB` üzerindeki `StockFlow` veritabanıdır. LocalDB, Windows tümleşik kimlik doğrulamasıyla kullanıcı hesabı altında çalışır ve yönetici düzeyinde `CREATE DATABASE` yetkisi gerektirmeden migration pratiği yapmayı sağlar. User Secrets değerinde sunucu, veritabanı ve tümleşik kimlik doğrulama bileşenlerini tanımlayın; gerçek bağlantı dizesini kaynak kontrollü dosyalara eklemeyin.
-
-Tam SQL Server veya `SQLEXPRESS` kullanılması da mümkündür. Bu seçenekte ilk `database update` için hesabın veritabanı oluşturma yetkisi olmalı ya da yönetici `StockFlow` veritabanını önceden oluşturup yalnız bu veritabanında migration yetkisi vermelidir. LocalDB geliştirme içindir; deployment veya çok kullanıcılı çalışma ortamı olarak değerlendirilmemelidir.
-
-## Test ve bağlam doğrulama
+Demo veriler varsayılan olarak kapalıdır. Yalnız `Development` ortamında ve `DemoData:Enabled=true` olduğunda, Identity seed tamamlandıktan sonra yüklenir:
 
 ```powershell
+dotnet user-secrets set "DemoData:Enabled" "true" --project StockFlow/StockFlow.csproj
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+dotnet run --project StockFlow/StockFlow.csproj --launch-profile https
+```
+
+Ortam değişkeni kullanılıyorsa eşdeğer anahtar şudur:
+
+```powershell
+$env:DemoData__Enabled = "true"
+```
+
+Demo kümesi 6 kategori, 30 ürün, 10 müşteri, 6 tedarikçi, 24 sipariş, 54 sipariş kalemi ve 30 stok hareketi oluşturur. Sabit UTC tarihler, farklı fiyat/stok seviyeleri, Draft/Confirmed/Cancelled durumları ve çok kalemli Sale/Purchase siparişleri dashboard, filtreleme, sıralama ve sayfalama akışlarını görünür kılar. Bütün kişi/şirket adları kurgusal; iletişim bilgileri güvenli örnek değerleridir.
+
+Güvenlik davranışı:
+
+- Production ortamında anahtar açık olsa bile demo seed çalışmaz.
+- Yedi domain tablosundan herhangi birinde kayıt varsa seed bütünüyle atlanır; mevcut kayıt silinmez, sıfırlanmaz veya güncellenmez.
+- Identity kullanıcıları ve rolleri domain boşluk kontrolünü engellemez.
+- Başarılı ilk yüklemeden sonra yeniden çalıştırma kayıtları çoğaltmaz.
+- Draft ve Cancelled siparişler stok hareketi üretmez. Confirmed hareketler ve güncel stoklar tek transaction içinde matematiksel olarak tutarlı yazılır.
+
+Demo seed'i sonraki başlangıçlar için kapatmak isterseniz:
+
+```powershell
+dotnet user-secrets set "DemoData:Enabled" "false" --project StockFlow/StockFlow.csproj
+```
+
+Bu komut daha önce oluşturulmuş demo verileri silmez.
+
+## Format, build ve test
+
+Kod biçimini uygulamak, ardından değişiklik olmadığını doğrulamak için:
+
+```powershell
+dotnet format StockFlow.slnx --no-restore
+dotnet format StockFlow.slnx --verify-no-changes --no-restore
+```
+
+Tam doğrulama akışı:
+
+```powershell
+dotnet restore StockFlow.slnx
+dotnet build StockFlow.slnx --no-restore
 dotnet test StockFlow.slnx --no-restore
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-agent-context.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-hygiene.ps1
-```
-
-`StockFlow.Tests`, veritabanına dokunan her test için `(localdb)\MSSQLLocalDB` üzerinde `StockFlow_Tests_<guid>` adlı benzersiz bir veritabanı oluşturur, gerçek migration zincirini uygular ve test sonunda veritabanını siler. Test altyapısı uygulama ayarlarını, User Secrets değerlerini veya ortam connection string'lerini okumaz; yalnız sabit LocalDB örneğini ve güvenli test veritabanı adı biçimini kabul eder. LocalDB kullanılamıyorsa testler geliştirme veritabanına veya InMemory sağlayıcısına geri dönmeden açıklayıcı bir önkoşul hatasıyla başarısız olur.
-
-Yüz elli yedi xUnit testi bulunur. Otuz `ProductsController`, on dokuz `CategoriesController`, dört `ProductInputModel`, on `TurkishDecimalModelBinder`, üç `CategoryInputModel` ve üç `HomeController` testi veritabanı gerektirmeden HTTP/form/rol, Türkçe fiyat bağlama ve güvenli dönüş hedefi sözleşmelerini doğrular. İlişkisel Service testleri Category seçim projection'ı, Product silinebilirlik bilgisi ve `19.34m` fiyatının aynen kalıcılaştırılması dahil Dashboard, Category, Product, Customer, Supplier, Order ve StockMovement davranışlarını; kalan testler saf stok planner'ını, altyapıyı ve Identity seed akışını kapsar. İlişkisel test altyapısı Windows ve SQL Server LocalDB gerektirir; CI ve çapraz platform çalışması sonraki kapsamdadır.
-
-## GitHub öncesi repo hijyeni
-
-`.gitignore`, Visual Studio kullanıcı dosyalarını, build/test çıktılarını, yerel ortam dosyalarını, sertifika/anahtarları ve SQL veri dosyalarını dışlar. `scripts/validate-repository-hygiene.ps1`, staged veya tracked dosyalarda yasaklı yolları ve yüksek güvenli secret kalıplarını değerleri göstermeden denetler.
-
-GitHub'a göndermeden önce en az şu kontrolleri çalıştırın:
-
-```powershell
-git diff --cached --check
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-hygiene.ps1
+git diff --check
 git status --short
 ```
 
-Gerçek connection string, parola, token veya sertifika kaynak kontrollü dosyalara eklenmemeli; User Secrets veya ortam değişkenlerinde tutulmalıdır.
+Veritabanına dokunan testler yalnız `(localdb)\MSSQLLocalDB` üzerinde, test başına benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur; migration uygular ve test sonunda yalnız bu geçici veritabanını siler. Test altyapısı uygulamanın bağlantı ayarlarını veya User Secrets değerlerini okumaz. LocalDB kullanılamıyorsa testler geliştirme veritabanına ya da EF Core InMemory sağlayıcısına geri dönmeden açıkça başarısız olur.
+
+## Veri ve migration notları
+
+- `InitialDomainSchema` migration'ı yedi domain tablosunu oluşturur.
+- `AddIdentitySchema` migration'ı Identity tablolarını ve `Orders.CreatedByUserId` ilişkisini ekler.
+- Demo veri eklenmesi şemayı değiştirmez ve yeni migration gerektirmez.
+- Confirmed ve Cancelled siparişler terminaldir; yeniden açılmaz, düzenlenmez veya fiziksel olarak silinmez.
 
 ## Dokümantasyon haritası
 
 - [Ajan bağlam merkezi](docs/ai/README.md)
+- [Mevcut teknik durum](docs/ai/current-state.md)
 - [Kanonik ürün spesifikasyonu](docs/product-spec.md)
 - [Hedef mimari](docs/ai/architecture.md)
-- [Yüksek frekanslı domain kuralları](docs/ai/domain-rules.md)
-- [Geliştirme ve dokümantasyon iş akışı](docs/ai/development-workflow.md)
+- [Domain kuralları](docs/ai/domain-rules.md)
+- [Geliştirme iş akışı](docs/ai/development-workflow.md)
 - [Mimari karar kayıtları](docs/adr/README.md)
 
 Yapay zekâ ajanları çalışmaya kök [AGENTS.md](AGENTS.md) dosyasından başlamalıdır.
