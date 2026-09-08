@@ -1,0 +1,373 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>StockFlow sunum rehberi</title><style>body{font:18px/1.65 system-ui,sans-serif;background:#f4f6f8;color:#18222c;max-width:1060px;margin:48px auto;padding:0 28px}h1{font-size:44px;line-height:1.15}h2{font-size:29px;margin-top:58px;border-top:2px solid #cbd6de;padding-top:24px}h3{font-size:22px;margin-top:36px}table{border-collapse:collapse;width:100%;font-size:16px;margin:24px 0}td,th{text-align:left;vertical-align:top;border-bottom:1px solid #cbd6de;padding:12px}th{background:#e5edf3}code,pre{font-size:15px;overflow-wrap:anywhere}pre{padding:18px;background:#e5edf3;white-space:pre-wrap}a{color:#126491}nav{display:flex;gap:20px;flex-wrap:wrap;margin:26px 0}nav a{font-weight:600}.note{padding:20px;background:#e5edf3}@media print{body{background:white;font-size:11pt;max-width:none;margin:0}h2{break-before:page}h3{break-after:avoid}table{font-size:10pt}nav{display:none}a{color:inherit;text-decoration:none}}</style><nav><a href="StockFlow_Sunum.pptx">PowerPoint</a><a href="StockFlow_Sunum.pdf">PDF</a><a href="Cevrimdisi_Anlatim.html">Çevrimdışı anlatım</a></nav><h1>StockFlow sunum rehberi</h1>
+<p>Bu paket, staj yapılan işyerinde 3–4 teknik meslektaşa yönelik hazırlanmıştır. Ana anlatım yaklaşık 18 dakika 20 saniye, canlı geçişlerle 18–22 dakika sürer. Soru-cevap için 5 dakika bırakılır. Ana sunum 14 slayt, teknik ekler 4 slayttır.</p>
+<h2>1. Aşama: sunum kurgusu</h2>
+<p><strong>Ana fikir:</strong> StockFlow, siparişin hazırlık ve onay aşamalarını ayırarak stok miktarını ve siparişe bağlı hareket geçmişini yönetir.</p>
+<p>Anlatıyı bir satış siparişinin etrafında kur. Önce iş ihtiyacını açıkla, sonra kullanıcıya görünen akışı göster. Mimariye, veri modeline ve kod ayrıntılarına bu örneği açıklamak için geç. Teknoloji isimlerini sıralamak yerine her birinin bu akıştaki görevini anlat.</p>
+<table>
+<thead>
+<tr>
+<th>Bölüm</th>
+<th>Slayt</th>
+<th>Süre</th>
+<th>Dinleyicinin alacağı mesaj</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Açılış ve problem</td>
+<td>1–2</td>
+<td>1:30</td>
+<td>Stok miktarı ile değişikliğin kaynağını birlikte takip etme ihtiyacı</td>
+</tr>
+<tr>
+<td>Kapsam ve yaşam döngüsü</td>
+<td>3–4</td>
+<td>2:40</td>
+<td>Kim hangi işi yapıyor, stok ne zaman değişiyor?</td>
+</tr>
+<tr>
+<td>Sayısal örnek ve demo</td>
+<td>5–6</td>
+<td>5:00</td>
+<td>Draft stok değiştirmez, onay stok ve hareket üretir</td>
+</tr>
+<tr>
+<td>Mimari ve veri modeli</td>
+<td>7–8</td>
+<td>3:00</td>
+<td>Bu davranışın sorumlulukları ve ilişkileri</td>
+</tr>
+<tr>
+<td>Atomik onay ve fiyat</td>
+<td>9–10</td>
+<td>3:00</td>
+<td>Tutarlılık ve geçmiş fiyatın korunması</td>
+</tr>
+<tr>
+<td>Yetki ve kullanım</td>
+<td>11–12</td>
+<td>1:50</td>
+<td>Güvenli giriş sınırları ve günlük operasyon</td>
+</tr>
+<tr>
+<td>Kazanımlar ve kapanış</td>
+<td>13–14</td>
+<td>1:20</td>
+<td>Uygulanan tercihler ve bilinçli kapsam sınırı</td>
+</tr>
+<tr>
+<td>Soru-cevap</td>
+<td>Gerektiğinde 15–18</td>
+<td>Yaklaşık 5:00</td>
+<td>Koda dayalı ayrıntılar</td>
+</tr>
+</tbody></table>
+<h3>Ne kadar ayrıntı?</h3>
+<p>Dinleyiciler teknik olduğu için temel MVC dersine dönüşen bir anlatı yerine proje kararlarını göster. Ana sunumda bütün entity alanlarını, bütün controller metotlarını veya bütün CRUD ekranlarını gezme. Bir ekran eylemini UI, Service ve veritabanı arasında takip etmek yeterli derinliği sağlar. Gerçek kodu soru gelirse 15. slaytta veya kaynak dosyadaki kısa bölümde aç.</p>
+<p>Süre kısalırsa 1–2–4–5–6–7–9–13–14 sırasını kullan. Demo için 3 dakika ayır. Bu sürüm yaklaşık 12–14 dakika sürer. Teknik sorular uzarsa ek slaytlara geç, ana akışı yeniden anlatma.</p>
+<h3>Sunuş tarzı</h3>
+<p>“Bu projede şunu yaptım, çünkü bu iş akışında şu ihtiyaç vardı” cümlesini temel al. Her slayt için tek ana mesaj söyle, ardından ekrandaki bir kanıtı göster. Gösterdiğin alanın adını söylemeden imleçle hızlıca gezinme. Bir sonraki ekrana geçmeden önce gözlenen sonucu bir cümleyle bağla. Bilmediğin soruda varsayım üretme: “Mevcut kodda bu koruma yok, sonraki geliştirme alanı olarak ele alırım” diyebilirsin.</p>
+<p>Kişisel deneyim bölümündeki ifadeleri kendi yaptığın çalışmayla eşleştir. Sana ait olmayan bir katkıyı veya yaşamadığın bir geliştirme hikâyesini sahiplenme. Projede dış destek kullandıysan, sorulduğunda katkı sınırını açıkça anlat.</p>
+<h2>2. Aşama: hazır materyaller</h2>
+<ul>
+<li>StockFlow_Sunum.pptx: düzenlenebilir slaytlar, native tablolar/şemalar ve konuşmacı notları.</li>
+<li>StockFlow_Sunum.pdf: aynı slaytların sabit görünümü. Font veya uygulama uyumsuzluğunda kullanılabilir.</li>
+<li>Sunum_Rehberi.html ve .md: akış, slayt başına metin, demo, soru-cevap ve kaynaklar.</li>
+<li>Cevrimdisi_Anlatim.html: internet ve veritabanı gerektirmeyen etkileşimli iş kuralı açıklaması.</li>
+<li>Teknik_Semalar.md: mimari, durum, ER ve onay akışının Mermaid kaynakları.</li>
+<li>Slayt_Gorselleri/: her slaytın PNG çıktısı. 4, 7, 8 ve 9 numaralar bağımsız teknik şema olarak kullanılabilir.</li>
+<li>Konusmaci_Karti.md: sunum sırasında hızlıca bakılacak kısa hatırlatıcı.</li>
+</ul>
+<h3>Kullanım sınırı</h3>
+<p>İçerik, 8 Eylül 2026 tarihinde ürün belgeleri, uygulama servisleri, controller’lar, ViewModel’ler ve EF mapping dosyaları incelenerek hazırlanmıştır. Bu çalışma sırasında açık bir StockFlow web oturumu bulunmadı. Paket gerçek uygulama ekran görüntüsü veya kaydedilmiş canlı demo içermez. Çevrimdışı anlatım bağımsız bir açıklama modelidir, StockFlow uygulaması değildir. Ekranlarında bu ayrım açıkça yazılıdır. Kurgusal 10 / 7 / 3 stok örneği mevcut veritabanının durumu olarak sunulmaz.</p>
+<h2>Slayt başına konuşma metni</h2>
+<p>Metinleri ezberlemek yerine ilk cümleyi ve gösterilecek noktayı hatırla. Aynı metinler PowerPoint konuşmacı notlarında da bulunur.</p>
+<h3>1. StockFlow (0:30)</h3>
+<p>StockFlow, ürünleri, iş ortaklarını ve siparişleri aynı uygulamada yöneten bir mini ERP projesi. Bugün önce kısa bir satış akışı göstereceğim. Sonra sipariş onaylandığında stok ve hareket geçmişinin nasıl birlikte değiştiğini, bu davranışı hangi mimari kararlarla kurduğumu anlatacağım.</p>
+<p>Kaynak: <code>StockFlow/Program.cs</code>, <code>StockFlow/StockFlow.csproj</code>, <code>docs/product-spec.md</code></p>
+<h3>2. Çözülen iş problemi (1:00)</h3>
+<p>Projeyi, stok ile sipariş bilgisini birlikte takip etme ihtiyacı üzerinden anlatıyorum. Bir ürünün mevcut adedi tek başına yeterli değil. Bu sayının hangi satın alma veya satış işlemiyle değiştiğini de görebilmeliyim. StockFlow ürün listesini, sipariş yaşam döngüsünü ve stok hareketlerini birbirine bağlıyor. Burada ölçülmüş bir zaman veya maliyet tasarrufu iddiam yok. Göstereceğim somut fayda, ilgili kayıtların aynı iş akışı içinde görülebilmesi.</p>
+<p>Kaynak: <code>StockFlow/Services/Dashboard/DashboardService.cs</code>, <code>StockFlow/Views/StockMovements/Details.cshtml</code>, <code>docs/product-spec.md</code></p>
+<h3>3. Kapsam ve kullanıcı rolleri (1:20)</h3>
+<p>Uygulamada kategori, ürün, müşteri, tedarikçi, sipariş, stok hareketi ve dashboard ekranları var. Ekranları tek tek gezmek yerine görev ayrımını öne çıkarıyorum. Employee müşterileri oluşturup düzenleyebilir, Sale ve Purchase taslaklarını hazırlayabilir. Tedarikçi yönetim ekranlarına giremez, ancak Purchase formunda tedarikçi seçebilir. Admin katalog ve tedarikçi kayıtlarını yönetir, sipariş onayını ve iptalini yapar. Silme yetkileri de sınırlıdır. Ayrıntılı rol matrisi ek slaytta bulunuyor.</p>
+<p>Kaynak: <code>StockFlow/Controllers/OrdersController.cs</code>, <code>StockFlow/Controllers/SuppliersController.cs</code>, <code>StockFlow/Controllers/CustomersController.cs</code>, <code>StockFlow/Views/Shared/_Layout.cshtml</code></p>
+<h3>4. Sipariş yaşam döngüsü (1:20)</h3>
+<p>Her sipariş Draft olarak başlar. Bu aşamada kalemleri ve miktarları değiştirebilirim. Taslak stok düşürmez ve rezervasyon yapmaz. Admin onay verdiğinde Purchase stok girişi, Sale stok çıkışı oluşturur. Diğer seçenek taslağı Cancelled durumuna geçirmek. Bu işlem stok hareketi üretmez. Confirmed ve Cancelled terminaldir. Onaylanmış siparişi düzenlemek, iptal etmek veya yeniden açmak mevcut kapsamda yok. Hazırlama ile stok etkisini bu şekilde ayırdım.</p>
+<p>Kaynak: <code>StockFlow/Services/Orders/OrderService.cs:81</code>, <code>StockFlow/Services/Orders/OrderService.cs:146</code>, <code>StockFlow/Services/Orders/OrderService.cs:228</code>, <code>StockFlow/Entities/DomainEnums.cs</code></p>
+<h3>5. Bir satışın stok üzerindeki etkisi (1:00)</h3>
+<p>Bu sayılar anlatım için hazırlanmış kurgusal bir örnek. Ürün A için başlangıç stoğu 10, eşik 3, fiyat 250 lira olsun. Employee 7 adetlik satış taslağı oluşturduğunda stok hâlâ 10. Admin onayladığında stok 3 oluyor, sipariş Confirmed oluyor ve 7 adetlik bir StockOut hareketi oluşuyor. Toplam 7 çarpı 250, yani 1.750 lira. Stok eşikle aynı değere geldiği için ürün düşük stok listesine giriyor. Hareket miktarı pozitif tutuluyor, yönü StockOut alanı belirliyor.</p>
+<p>Kaynak: <code>StockFlow/Services/Orders/OrderStockConfirmationPlanner.cs</code>, <code>StockFlow/Services/Orders/OrderService.cs:411</code>, <code>StockFlow/Services/Dashboard/DashboardService.cs:23</code></p>
+<h3>6. Demo: taslaktan stok hareketine (4:00)</h3>
+<p>Önce Ürünler ekranında SUNUM-A kodlu ürünün 10 adet stoğunu gösteriyorum. Siparişler ekranında yeni satış taslağı açıp kurgusal müşteriyi ve 7 adet ürünü seçiyorum. Kaydettikten sonra taslak durumunu ve 1.750 liralık tutarı gösteriyorum. İkinci sekmedeki ürün detayını yenileyerek stoğun 10 kaldığını belirtiyorum. Admin hesabında sipariş detayından Onayla ekranını açıp onayı tamamlıyorum. Sonra siparişe bağlı Stok hareketleri bağlantısını izliyor, 7 adet çıkışı gösteriyorum. Ürün ekranında 3 adet kalan stokla örneği bağlıyorum. Hesap değişimini hızlandırmak için iki ayrı tarayıcı profili kullanılabilir. Canlı ortam kullanılamazsa aynı sayısal akışı çevrimdışı anlatım dosyasında gösteriyorum ve bunun açıklama modeli olduğunu söylüyorum.</p>
+<p>Kaynak: <code>StockFlow/Views/Orders/Create.cshtml</code>, <code>StockFlow/Views/Orders/Details.cshtml</code>, <code>StockFlow/Views/Orders/Confirm.cshtml</code>, <code>StockFlow/Views/StockMovements/Index.cshtml</code>, <code>StockFlow/Views/Products/Details.cshtml</code></p>
+<h3>7. Tek uygulamada sorumluluk ayrımı (1:30)</h3>
+<p>Tek bir ASP.NET Core MVC uygulaması var. Razor ve Bootstrap ekranı oluşturuyor. Controller form veya sorgu girdisini ViewModel üzerinden alıyor, ilgili servisi çağırıyor ve sonucu ekrana çeviriyor. Stok yeterliliği, fiyat ve durum geçişi gibi kurallar Service katmanında. EF Core ApplicationDbContext kalıcılığı SQL Server üzerinde yönetiyor. Controller doğrudan DbContext kullanmıyor. Entity nesnelerini de form modeli olarak kabul etmiyorum. Aynı host içinde bu ayrım, uygulamanın kapsamına uygun bir sorumluluk sınırı oluşturuyor. OrderQueryService okuma ekranlarını ayırıyor, fakat ayrı bir CQRS altyapısı yok.</p>
+<p>Kaynak: <code>StockFlow/Program.cs</code>, <code>StockFlow/Controllers/OrdersController.cs:18</code>, <code>StockFlow/Data/ApplicationDbContext.cs</code>, <code>StockFlow/ViewModels/Orders/OrderDraftInputModel.cs</code>, <code>docs/ai/architecture.md</code></p>
+<h3>8. Veri modelinin merkezi sipariş (1:30)</h3>
+<p>Yedi iş tablosu var. Category ürünleri grupluyor. Order, OrderItem üzerinden birden fazla ürün taşıyor. Aynı ürün aynı siparişte tek satırda yer alabiliyor. Sale siparişinde müşteri zorunlu ve tedarikçi boş. Purchase için bunun tersi geçerli. Bu eşleşmeyi hem Service hem veritabanı constraint&#39;i koruyor. StockMovement hem siparişe hem ürüne bağlı. Böylece stok değişikliğinden ilgili işleme gidebiliyorum. Identity kullanıcı tabloları aynı DbContext içinde. CreatedByUserId şemada nullable olsa da uygulamanın yeni sipariş akışı mevcut bir kullanıcıyı zorunlu tutuyor. Şema görseli iş modeline odaklanıyor, bütün Identity destek tablolarını göstermiyor.</p>
+<p>Kaynak: <code>StockFlow/Data/ApplicationDbContext.cs</code>, <code>StockFlow/Data/Configurations/OrderConfiguration.cs</code>, <code>StockFlow/Data/Configurations/OrderItemConfiguration.cs</code>, <code>StockFlow/Data/Configurations/StockMovementConfiguration.cs</code>, <code>StockFlow/Services/Orders/OrderService.cs:44</code></p>
+<h3>9. Onay işleminin atomik sınırı (2:00)</h3>
+<p>Onayda açık bir veritabanı transaction&#39;ı başlatıyorum. Siparişi kalemleri ve ürünleriyle okuyup hâlâ Draft olduğunu, tarafını ve kalemlerini doğruluyorum. Stok planlayıcısı, entity değiştirmeden bütün kalemler için sonucu hesaplıyor. Sale içinde tek bir ürünün bile stoğu yetersizse plan reddediliyor. Plan uygunsa ürün stokları, hareket kayıtları ve Confirmed durumu hazırlanıyor. Tek SaveChangesAsync sonrasında transaction commit ediliyor. Hata durumunda rollback ve tracker temizliği var. Bu yapı kısmi kayıt kalmasını önlüyor. Ancak transaction kullanmak eşzamanlı iki onayın tüm yarışlarını tek başına çözmez. Kodda rowversion tabanlı optimistic concurrency koruması bulunmuyor. Bu sınırı ek slaytta ayrıca belirttim.</p>
+<p>Kaynak: <code>StockFlow/Services/Orders/OrderService.cs:146</code>, <code>StockFlow/Services/Orders/OrderService.cs:182</code>, <code>StockFlow/Services/Orders/OrderService.cs:194</code>, <code>StockFlow/Services/Orders/OrderService.cs:914</code>, <code>StockFlow/Services/Orders/OrderStockConfirmationPlanner.cs</code></p>
+<h3>10. Sipariş fiyatı kayıt anını korur (1:00)</h3>
+<p>Sipariş kalemi girişinde yalnız ProductId ve Quantity var. Kullanıcıdan UnitPrice almıyorum. Yeni kalemin fiyatını Product.Price üzerinden okuyup OrderItem.UnitPrice alanına kopyalıyorum. Örneğin 250 liralık üründen iki adetlik taslak 500 lira tutar. Ürünün güncel fiyatı sonradan 300 lira olsa da mevcut satırın fiyatı 250 lira kalır. Taslağa yeni ürün eklenirse onun güncel fiyatı alınır. Toplamı da sunucuda hesaplıyorum. Mevcut modelde Purchase için ayrıca tedarikçi alış fiyatı alanı yok, o da aynı Product.Price kaynağını kullanıyor. Bu nedenle kâr veya maliyet muhasebesi iddiası kurmuyorum.</p>
+<p>Kaynak: <code>StockFlow/ViewModels/Orders/OrderItemInputModel.cs</code>, <code>StockFlow/Services/Orders/OrderService.cs:115</code>, <code>StockFlow/Services/Orders/OrderService.cs:562</code>, <code>StockFlow/Services/Orders/OrderService.cs:576</code></p>
+<h3>11. Yetki ve veri giriş sınırları (1:00)</h3>
+<p>Oturum için cookie tabanlı Identity kullanıyorum. Varsayılan policy kimliği doğrulanmış kullanıcı gerektiriyor. Admin&#39;e özgü işlemlerde endpoint üzerinde ayrıca rol kısıtı var. Ekranda bir düğmeyi gizlemek tek başına yeterli olmadığı için aynı yetkiyi sunucuda da uyguluyorum. POST işlemleri antiforgery koruması taşıyor. Ürün düzenleme modeli stok miktarını, sipariş kalemi giriş modeli fiyatı taşımıyor. Service iş kurallarını ayrıca uyguluyor. Beklenen hatalar Validation, NotFound ve BusinessRule olarak ayrılıyor. Beklenmeyen hata teknik bağlamla loglanıyor, production görünümü stack trace göstermiyor.</p>
+<p>Kaynak: <code>StockFlow/Program.cs</code>, <code>StockFlow/Controllers/OrdersController.cs:246</code>, <code>StockFlow/ViewModels/Products/ProductUpdateInputModel.cs</code>, <code>StockFlow/Services/Common/ServiceErrorCategory.cs</code>, <code>StockFlow/Views/Shared/Error.cshtml</code></p>
+<h3>12. Günlük kullanım ve sorgular (0:50)</h3>
+<p>Operasyon ekranlarında yalnız kayıt eklemeyi değil, kaydı bulmayı da ele aldım. Ürünlerde ad veya SKU araması, kategori ve düşük stok filtreleri var. Siparişlerde tür ve durumla filtreleme yapılıyor. Sorgular veritabanında sayfalanıyor ve yalnız ekranın ihtiyaç duyduğu alanları ViewModel&#39;e yansıtıyor. Dashboard satış tutarına yalnız Confirmed Sale kayıtlarını alıyor. Bu tutar tahsilat veya kâr anlamına gelmiyor. Düşük stok kuralı eşitliği de içeriyor. Tarihler UTC etiketiyle, tutarlar Türk lirası biçiminde gösteriliyor. Ölçülmüş performans kazanımı iddia etmiyorum.</p>
+<p>Kaynak: <code>StockFlow/Services/Products/ProductService.cs:21</code>, <code>StockFlow/Services/Orders/OrderQueryService.cs:18</code>, <code>StockFlow/Services/Dashboard/DashboardService.cs</code>, <code>StockFlow/Views/Home/Index.cshtml</code></p>
+<h3>13. Teknik kazanımlar ve kapsam sınırı (1:00)</h3>
+<p>Bu projede benim için temel teknik kazanım, bir ekran eyleminin veritabanındaki tutarlı karşılığını tasarlamak oldu. MVC, Service ve EF Core sınırlarını somut sipariş akışı üzerinde uyguladım. Mevcut uygulama bir mini ERP kapsamına odaklanıyor. Ödeme, kargo, rezervasyon, depo transferi ve onaylı siparişin ters kaydı bulunmuyor. Sonraki iş olarak eşzamanlı onayları, gerekçeli stok düzeltmesini ve yayın ortamını değerlendirirdim. Bunları tamamlanmış özellikler olarak sunmuyorum.</p>
+<p>Kaynak: <code>docs/product-spec.md</code>, <code>StockFlow/Services/Orders/OrderService.cs</code>, <code>StockFlow/Entities/DomainEnums.cs</code>, <code>StockFlow/Program.cs</code></p>
+<h3>14. Sorular (0:20)</h3>
+<p>StockFlow&#39;un merkezinde sipariş yaşam döngüsü var. Taslak hazırlığı, onay yetkisi ve stok etkisini ayrı sorumluluklarla birleştirdim. İsterseniz şimdi onay işleminin koduna veya veri modelindeki ayrıntılara geçebiliriz.</p>
+<p>Kaynak: <code>StockFlow/Services/Orders/OrderService.cs</code></p>
+<h3>15. Ek: onay akışındaki gerçek kod (Soru gelirse)</h3>
+<p>Bu parça ConfirmDraftAsync metodundaki başarılı yolun doğrudan alıntısı. Sipariş okuma, transaction başlangıcı ve hata dalları bu kısa alıntının dışında kalıyor. CreatePlan kararı bütün stok kontrollerini tamamladıktan sonra ApplyConfirmationPlan değişiklikleri hazırlıyor. SaveChangesAsync tek kayıt çağrısı, CommitAsync ise açık transaction&#39;ın başarılı bitişi. Kodun tamamını açacaksam metot başını ve catch / rollback bölümünü de göstereceğim.</p>
+<p>Kaynak: <code>StockFlow/Services/Orders/OrderService.cs:182</code>, <code>StockFlow/Services/Orders/OrderService.cs:193</code></p>
+<h3>16. Ek: rol matrisi (Soru gelirse)</h3>
+<p>Bu matris endpoint yetkilerini özetliyor. Admin de müşteri ve taslak sipariş hazırlayabilir. Employee Sale ve Purchase taslağı oluşturup düzenleyebilir. Purchase tarafının seçim verisini OrdersController servislerden alıyor, bu Supplier CRUD ekranına erişim yetkisi anlamına gelmiyor. Kayıt silme yetkisi olan kullanıcı için de geçmiş koruma kuralları devam ediyor. Rollerin ayrı olması sipariş bazlı sahiplik izolasyonu anlamına gelmiyor. Mevcut ekranda yalnız kendi siparişlerini görme kuralı yok.</p>
+<p>Kaynak: <code>StockFlow/Controllers/OrdersController.cs</code>, <code>StockFlow/Controllers/CustomersController.cs</code>, <code>StockFlow/Controllers/SuppliersController.cs</code>, <code>StockFlow/Controllers/ProductsController.cs</code>, <code>StockFlow/Controllers/CategoriesController.cs</code>, <code>StockFlow/Controllers/StockMovementsController.cs</code></p>
+<h3>17. Ek: geçmişi koruyan silme kuralları (Soru gelirse)</h3>
+<p>Bağlı kayıtları kontrol ederek fiziksel silmeye izin veriyorum. Ürünün sipariş kalemi veya stok hareketi varsa silinmiyor. Müşteri ve tedarikçi, herhangi bir durumda siparişe bağlıysa silinmiyor. Kategori için bağlı ürün bulunmamalı. Sipariş için yalnız hareket geçmişi olmayan Draft silinebiliyor. İlgili foreign key&#39;lerde Restrict silme davranışı var. Bu soft delete değil. Ayrıca geçmişsiz ürünün silinmesinde stok sıfır olsun diye ek bir şart bulunmuyor.</p>
+<p>Kaynak: <code>StockFlow/Services/Categories/CategoryService.cs</code>, <code>StockFlow/Services/Products/ProductService.cs:259</code>, <code>StockFlow/Services/Customers/CustomerService.cs</code>, <code>StockFlow/Services/Suppliers/SupplierService.cs</code>, <code>StockFlow/Services/Orders/OrderService.cs:251</code>, <code>StockFlow/Data/Configurations/OrderConfiguration.cs</code></p>
+<h3>18. Ek: atomiklik ve eşzamanlılık (Soru gelirse)</h3>
+<p>Ardışık tekrar onay ve eşzamanlı onay farklı konular. Daha önce Confirmed olmuş bir siparişi yeniden onaylama isteği durum kontrolünde reddedilir. Ancak iki istek aynı anda Draft okuyabilir veya iki farklı satış aynı stok değerinden hareket edebilir. Mevcut onay metodu transaction isolation seviyesini açıkça yükseltmiyor ve modelde rowversion concurrency token bulunmuyor. Gelecek tasarımda stok kaydı ve sipariş durumu birlikte ele alınmalı. Optimistic concurrency, koşullu güncelleme veya uygun kilitleme yaklaşımından hangisinin kullanılacağını işlem hacmi ve kullanım senaryosu belirler. Bunu bugün çözülmüş gibi anlatmıyorum.</p>
+<p>Kaynak: <code>StockFlow/Services/Orders/OrderService.cs:150</code>, <code>StockFlow/Data/Configurations/ProductConfiguration.cs</code>, <code>StockFlow/Data/Configurations/OrderConfiguration.cs</code>, <code>docs/product-spec.md</code></p>
+<h2>Canlı demo: 4 dakikalık ana senaryo</h2>
+<h3>Sunumdan önce hazırlanacak kurgusal kayıtlar</h3>
+<p>Bu kayıtlar hazır veri önerisidir. Paket oluşturulurken uygulamanın veritabanına eklenmemiştir. Mevcut kayıtları değiştirmek yerine sunuma ayrılmış yeni kayıtlar kullan. SKU doluysa yeni bir son ek seç ve bütün demo boyunca aynı SKU&#39;yu kullan.</p>
+<table>
+<thead>
+<tr>
+<th>Kayıt</th>
+<th>Değerler</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Kategori</td>
+<td>Sunum Kategorisi</td>
+</tr>
+<tr>
+<td>Ürün A</td>
+<td>Ad: Sunum Ürünü A, SKU: SUNUM-A, fiyat: 250,00, başlangıç stoğu: 10, minimum stok: 3</td>
+</tr>
+<tr>
+<td>Ürün B (isteğe bağlı)</td>
+<td>Ad: Sunum Ürünü B, SKU: SUNUM-B, fiyat: 100,00, başlangıç stoğu: 1, minimum stok: 0</td>
+</tr>
+<tr>
+<td>Müşteri</td>
+<td>Sunum Müşterisi. İletişim alanları boş kalabilir</td>
+</tr>
+<tr>
+<td>Tedarikçi (isteğe bağlı)</td>
+<td>Sunum Tedarikçisi. İletişim alanları boş kalabilir</td>
+</tr>
+</tbody></table>
+<p>Ürün oluşturma Admin işlemidir. Ürün düzenleme ekranından stok sıfırlanmaz. Onaylanan sipariş terminal olduğu için sunum provası stok tüketir. Ana örneği tekrarlarken yeni SKU ile taze bir sunum ürünü oluştur veya başlangıç değerini güncel stoğa göre açıkça değiştir. Mevcut siparişi geri açmaya çalışma. Geliştirme ortamında demo seeder kullanıyorsan onun örnek verileri ile bu özel SUNUM-A senaryosunu karıştırma.</p>
+<h3>Uygulama hazırlığı</h3>
+<p>Gerekenler: .NET 10 SDK, çalışan SQL Server veya LocalDB, migration uygulanmış veritabanı, güvenli yapılandırmada Identity başlangıç kullanıcı ayarları ve HTTPS tarayıcı erişimi. Gerçek hesap bilgilerini slaytlara veya rehbere yazma. Kurulum için depodaki README&#39;yi kullan. Uygulama otomatik migration çalıştırmaz.</p>
+<p>Depodaki launch profili HTTPS için <a href="https://localhost:7141">https://localhost:7141</a> adresini tanımlar. Kendi çalıştırma ortamında adres farklıysa o adresi kullan. Cookie Secure olarak yapılandırıldığı için demoyu HTTPS üzerinden aç. Zaten yapılandırılmış ortamda uygulamayı başlatma komutu:</p>
+<pre><code class="language-powershell">dotnet run --project StockFlow --launch-profile https
+</code></pre>
+<p>Handoff belgesinde 3 Eylül tarihli bir LocalDB başlatma sorunu kaydı var. Bu kayıt sunum günündeki ortamın bozuk olduğunu kanıtlamaz. Sunum öncesinde uygulamanın giriş ekranı ve domain ekranlarını açabildiğini kontrol et. Ortam açılmıyorsa toplantı sırasında altyapı onarımına girme, çevrimdışı anlatıma geç.</p>
+<p>Admin ve Employee hesapları için iki ayrı tarayıcı profili veya normal / gizli pencere kullan. Aynı tarayıcı profili içindeki sekmeler aynı oturumu paylaşır. Adresleri önceden aç: /Products, /Orders, /StockMovements ve /. İlk ekranda filtreler SUNUM-A ürününü gösterecek şekilde hazır olabilir.</p>
+<h3>Sahne akışı</h3>
+<table>
+<thead>
+<tr>
+<th>Süre</th>
+<th>Eylem</th>
+<th>Söylenecek cümle / gösterilecek sonuç</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0:00–0:25</td>
+<td>Ürünler&#39;de SUNUM-A ara, detayı aç</td>
+<td>“Başlangıç stoğum 10, düşük stok eşiğim 3.”</td>
+</tr>
+<tr>
+<td>0:25–1:25</td>
+<td>Employee ile Siparişler, yeni satış. Müşteri ve SUNUM-A seç, miktar 7, kaydet</td>
+<td>“Employee taslağı hazırlıyor. Birim fiyatı kullanıcı girmiyor.”</td>
+</tr>
+<tr>
+<td>1:25–1:50</td>
+<td>Sipariş detayını ve ürün sekmesini yenile</td>
+<td>“Durum Taslak, toplam 1.750 TL. Stok hâlâ 10.”</td>
+</tr>
+<tr>
+<td>1:50–2:45</td>
+<td>Admin oturumunda aynı siparişi aç. Onayla ekranı ve onay işlemi</td>
+<td>“Stok etkisini Admin onayı başlatıyor.”</td>
+</tr>
+<tr>
+<td>2:45–3:25</td>
+<td>Sipariş detayından Stok hareketleri bağlantısını aç</td>
+<td>“Bu siparişe bağlı 7 adet StockOut kaydı var.”</td>
+</tr>
+<tr>
+<td>3:25–4:00</td>
+<td>Ürün detayını ve düşük stok filtresini aç</td>
+<td>“Kalan 3. Eşiğe eşit olduğu için düşük stok listesinde.”</td>
+</tr>
+</tbody></table>
+<p>Demo sonrası geçiş: “Şimdi bu tek onayın arkasındaki sorumluluk ayrımını göstereyim.” Ardından 7. slayta geç.</p>
+<h3>Süre kalırsa alternatif iş kuralı örnekleri</h3>
+<p><strong>Yetersiz stok:</strong> Ana satıştan sonra A stoğu 3, B stoğu 1 olsun. İkinci taslakta A&#39;dan 1, B&#39;den 2 iste. Onay reddedilir. Sipariş Draft kalır, A 3 ve B 1 kalır, bu sipariş için yeni hareket oluşmaz. İki ürün kullanmak, yeterli olan ilk ürünün de değişmediğini anlatmayı kolaylaştırır. Bunu canlı akışa eklemek yaklaşık 2 dakika gerektirir. Ana sunumda zorunlu değildir.</p>
+<p><strong>Satın alma:</strong> Ana satıştan sonra A için 5 adet Purchase taslağı hazırla. Draft sırasında stok 3 kalır. Admin onayı sonrasında 8 olur ve 5 adet StockIn kaydı oluşur. Geçerli Supplier seçimi gerekir. Onaylı satış toplamı bu satın alma yüzünden artmaz.</p>
+<p><strong>İptal:</strong> Yeni bir Draft açıp Admin ile iptal et. Cancelled olur, stok ve hareketler değişmez. Bu örnek onaylı sipariş iptali değildir.</p>
+<p><strong>Fiyat snapshot:</strong> Yeni A kalemini fiyat 250,00 iken iki adetle kaydet. Admin olarak Product fiyatını 300,00 yap. Var olan taslak satırın birim fiyatı 250,00 kalır. Sadece bu sunuma ayrılmış ürün üzerinde uygula. Mevcut satırı kaldırıp yeniden eklemek farklı bir fiyat alma davranışına yol açabileceğinden örneği karmaşıklaştırma.</p>
+<h3>Çevrimdışı seçenek</h3>
+<p>Cevrimdisi_Anlatim.html dosyasını tarayıcıda aç. Ana satış örneğinde Employee olarak taslağı kaydet, Admin rolüne geçip onayla. Stok, durum ve hareket bölümündeki değişikliği göster. Üstteki “Kurgusal açıklama modeli” ifadesini koru. Bu dosya sunum için kuralları görünür kılar, gerçek HTTP yetkisini veya SQL transaction&#39;ını çalıştırmaz. Teknik açıklamanın kanıtı 9. slayt ve kaynak koddur.</p>
+<h2>Ekran görüntüsü / kısa kayıt çekim listesi</h2>
+<p>Gerçek uygulama görüntüsü eklemek istersen aşağıdaki altı kare aynı sunum kaydına ait olsun. Kullanıcı e-postası gibi gereksiz kişisel alanları görüntüye alma. Her karenin altına rolü ve aşamayı yaz. Paket bu kareleri üretilmiş ekran görüntüsü gibi sunmaz.</p>
+<table>
+<thead>
+<tr>
+<th>Kare</th>
+<th>Görünüm</th>
+<th>Kadraj</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>01</td>
+<td>Ürün detayı, önce</td>
+<td>SUNUM-A, stok 10, eşik 3</td>
+</tr>
+<tr>
+<td>02</td>
+<td>Sipariş taslağı detayı</td>
+<td>Draft, 7 adet, 250 TL birim fiyat, 1.750 TL toplam</td>
+</tr>
+<tr>
+<td>03</td>
+<td>Ürün detayı, taslaktan sonra</td>
+<td>Yenileme sonrası stok hâlâ 10</td>
+</tr>
+<tr>
+<td>04</td>
+<td>Sipariş detayı, onaydan sonra</td>
+<td>Confirmed ve Stok hareketleri bağlantısı</td>
+</tr>
+<tr>
+<td>05</td>
+<td>Siparişe filtreli hareket listesi</td>
+<td>Aynı sipariş numarası, StockOut, 7 adet</td>
+</tr>
+<tr>
+<td>06</td>
+<td>Ürün detayı, sonra</td>
+<td>Stok 3 ve düşük stok görünümü</td>
+</tr>
+</tbody></table>
+<p>Kısa ekran kaydı için aynı akışı 60–90 saniyede, yalnız kritik alanlara odaklanarak çekebilirsin. Kullanılacak kurgusal kayıtları önce oluştur, kayda parola girişini alma. Canlı demo ile kayıt arasında farklı sipariş numaralarını aynı işlemmiş gibi birleştirme.</p>
+<h2>Hazırlık ve sunum kontrol listesi</h2>
+<p>Bir gün önce: PPTX ve PDF dosyasını sunum bilgisayarında aç, şemaların ve Türkçe karakterlerin görünümüne bak. Ekran paylaşımı / projeksiyon çözünürlüğünde küçük metinleri kontrol et. Uygulamayı HTTPS ile aç, ayrı rol oturumlarını ve demo kayıtlarını hazırla. İnternet olmasa da PDF ve çevrimdışı HTML yerel olarak açılmalı.</p>
+<p>Toplantıdan 10 dakika önce: Bildirimleri kapat, şarjı bağla, gerekli sekmeleri aç, masaüstündeki gereksiz kişisel pencereleri kapat. PowerPoint konuşmacı notlarını izleyiciye yansıtmadan kendi ekranında gösterecek düzeni seç. Yalnız tek ekran varsa konuşmacı kartını ikinci cihazda veya kağıtta kullan.</p>
+<p>Sunum sırasında: 6. slaytta uygulamaya geç, en fazla 4–5 dakika sonra geri dön. Bir ekran açılmazsa bir kez dene, sonra çevrimdışı örneğe geç. Beklenmedik teknik soruyu kısa cevapla, ayrıntısını 15–18. slaytlara bırak. 22. dakikada ana anlatımı kapat.</p>
+<h2>Beklenen teknik sorular ve kısa yanıtlar</h2>
+<h3>Neden MVC ve tek uygulama?</h3>
+<p>Kapsam, sunucu tarafında form ve liste ekranlarından oluşuyor. Tek MVC uygulaması Razor UI, iş kuralları ve veritabanı erişimini aynı host içinde, ayrı sorumluluklarla sunuyor. Ayrı frontend veya servis dağıtımı gerektiren bir ihtiyaç henüz yok.</p>
+<h3>Neden ayrıca Repository katmanı yok?</h3>
+<p>Service, EF Core ApplicationDbContext üzerinden veri erişiyor. Bu kapsamda generic Repository veya Unit of Work soyutlaması eklemedim. DbContext zaten değişiklik takibini ve kayıt sınırını sağlıyor.</p>
+<h3>Controller ne yapıyor, Service ne yapıyor?</h3>
+<p>Controller HTTP girdisini ViewModel ile alıyor, yetki ve form davranışını yönetiyor, servis sonucunu ekrana çeviriyor. Service taraf ve durum kurallarını, fiyatı, toplamı, stok kontrolünü ve kalıcılığı yönetiyor.</p>
+<h3>Draft stok ayırıyor mu?</h3>
+<p>Hayır. Draft oluşturma ve düzenleme stok miktarını değiştirmiyor, rezervasyon yapmıyor. Stok yeterliliği onay anında yeniden ele alınıyor.</p>
+<h3>Sipariş onaylandıktan sonra iptal edilebilir mi?</h3>
+<p>Mevcut kapsamda hayır. Confirmed ve Cancelled terminal. İade veya reversal için yeni bir iş sözleşmesi ve karşıt stok hareketi tasarımı gerekir.</p>
+<h3>UnitPrice neden ayrıca saklanıyor?</h3>
+<p>Ürünün bugünkü fiyatı değişebilir. Sipariş kaleminde saklanan UnitPrice, o satırın kayıt anındaki fiyatını korur. Mevcut Draft satırının düzenlenmesi fiyatı yenilemez.</p>
+<h3>Purchase fiyatı nereden geliyor?</h3>
+<p>Mevcut kodda yeni Sale ve Purchase kalemleri Product.Price üzerinden fiyat alıyor. Ayrı alış fiyatı veya tedarikçi fiyat listesi bulunmuyor. Dolayısıyla alış maliyeti ya da kâr muhasebesi kapsamı iddia etmiyorum.</p>
+<h3>Transaction eşzamanlı satışı da çözüyor mu?</h3>
+<p>Tek başına hayır. Mevcut yapı ilgili kayıtları atomik yazar. Aynı stoğu veya sipariş durumunu eşzamanlı okuyan istekler için ek concurrency stratejisi gerekiyor. rowversion tabanlı optimistic concurrency bugün uygulanmış değil.</p>
+<h3>Employee neden tedarikçi seçebiliyor ama yönetemiyor?</h3>
+<p>Sipariş hazırlamak için taraf seçimi gerekiyor. OrdersController seçim verisini SupplierService üzerinden alıyor. Tedarikçi listeleme ve CRUD endpoint’leri ise yalnız Admin rolüne açık.</p>
+<h3>Satış toplamı ciro veya tahsilat mı?</h3>
+<p>Dashboard yalnız Confirmed Sale siparişlerinin TotalAmount değerini topluyor. Tahsilat, vergi, iskonto, ödeme veya kâr hesabı anlamına gelmiyor. Ekrandaki adı onaylı satış toplamı.</p>
+<h3>Başlangıç stoğunun hareketi nerede?</h3>
+<p>Ürün oluşturulurken verilen başlangıç stoğu ilk durum kabul ediliyor ve StockMovement üretmiyor. Sonraki sipariş etkileri hareketlere yazılıyor. Bu nedenle yalnız hareketleri toplayıp her ürünün stok miktarına ulaşacağımı söylemem.</p>
+<h3>Soft delete kullanıyor musun?</h3>
+<p>Hayır. Geçmişsiz kayıtlarda koşullu fiziksel silme var. Bağlantılı geçmişi Service kontrolleri ve Restrict foreign key davranışı koruyor.</p>
+<h3>CreatedByUserId nullable ise kullanıcı nasıl zorunlu?</h3>
+<p>Şema alanı nullable. Yeni sipariş oluşturma servisinde kullanıcı kimliği boş olamaz ve Identity kaydının varlığı kontrol edilir. Uygulama kuralıyla veritabanı nullability’si burada farklı seviyeler.</p>
+<h3>OrderQueryService neden ayrı?</h3>
+<p>Liste ve detay projection’larını sipariş mutasyonlarından ayırarak sorumluluğu okunabilir tutuyor. Ayrı bir CQRS altyapısı, mesajlaşma veya MediatR kullanmıyorum.</p>
+<h3>Filtreleme ve sayfalama nerede?</h3>
+<p>EF sorgusunda Where, izin verilen sıralama, Skip ve Take ile veritabanında uygulanıyor. AsNoTracking ve projection, salt okunur ekran için gereksiz entity grafiğini yüklememeyi sağlıyor. Sayfa boyutu üst sınırı 100.</p>
+<h3>Veritabanı hangi kuralları koruyor?</h3>
+<p>Benzersiz SKU ve OrderNumber, siparişte ürünün tek satır olması, foreign key ilişkileri, pozitif miktar/fiyat ve tür-taraf eşleşmesi. Terminal durum, toplam hesabı ve kalemler arası stok kararı Service sorumluluğunda.</p>
+<h3>Giriş sistemi JWT mi?</h3>
+<p>Cookie tabanlı ASP.NET Core Identity. MVC ekranları için bu oturum modeli kullanılıyor. JWT veya yazma amaçlı API bulunmuyor.</p>
+<h3>Canlıya hazır mı?</h3>
+<p>Yerel geliştirme yapılandırması ve uygulama kodu mevcut. Üretim ortamı, eşzamanlılık ve işletim gereksinimlerini ayrı çalışmak gerekir. LocalDB geliştirme içindir. Bir production yayını yaptığımı söylemiyorum.</p>
+<h2>İddia ve kaynak haritası</h2>
+<table>
+<thead>
+<tr>
+<th>İddia</th>
+<th>Koddaki başlıca dayanak</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MVC, EF Core SQL Server, cookie Identity</td>
+<td>StockFlow/Program.cs, StockFlow/StockFlow.csproj</td>
+</tr>
+<tr>
+<td>Controller / Service sınırı</td>
+<td>StockFlow/Controllers/OrdersController.cs</td>
+</tr>
+<tr>
+<td>Draft stok değiştirmez, terminal durum</td>
+<td>StockFlow/Services/Orders/OrderService.cs</td>
+</tr>
+<tr>
+<td>Atomik onay ve rollback</td>
+<td>OrderService.cs, ConfirmDraftAsync ve RollbackFailureAsync</td>
+</tr>
+<tr>
+<td>Bütün stokları entity mutation öncesi hesaplama</td>
+<td>StockFlow/Services/Orders/OrderStockConfirmationPlanner.cs</td>
+</tr>
+<tr>
+<td>Fiyat snapshot ve sunucu toplamı</td>
+<td>OrderService.cs, ValidatePricesAndBuildDraft ve SynchronizeDraftItems</td>
+</tr>
+<tr>
+<td>Fiyatın giriş modelinde bulunmaması</td>
+<td>StockFlow/ViewModels/Orders/OrderItemInputModel.cs</td>
+</tr>
+<tr>
+<td>Ürün edit girişinde stok alanı bulunmaması</td>
+<td>StockFlow/ViewModels/Products/ProductUpdateInputModel.cs</td>
+</tr>
+<tr>
+<td>Rol matrisi</td>
+<td>StockFlow/Controllers/*.cs ve StockFlow/Views/Shared/_Layout.cshtml</td>
+</tr>
+<tr>
+<td>İlişkiler, indeksler, constraint ve Restrict</td>
+<td>StockFlow/Data/Configurations/*.cs</td>
+</tr>
+<tr>
+<td>Dashboard hesaplarının anlamı</td>
+<td>StockFlow/Services/Dashboard/DashboardService.cs</td>
+</tr>
+<tr>
+<td>Filtre, projection ve sayfalama</td>
+<td>ProductService.cs, OrderQueryService.cs, ListPagingPolicy.cs</td>
+</tr>
+<tr>
+<td>Demo katalog miktarları</td>
+<td>StockFlow/Data/DemoDataCatalog.cs ve DemoDataSeeder.cs</td>
+</tr>
+</tbody></table>
+<p>Kaynak belge özeti ile kodun ayrıldığı yerde kod esas alındı. Örneğin database-schema.md içinde bazı uygulama kuralları gelecek zamanla anlatılıyor; bu kuralların bugünkü karşılıkları OrderService içinde mevcut. Sunum günündeki veritabanı satır sayısı veya gerçek performans ölçümü bu paketin iddiası değildir.</p>
+<h3>İddia sınırları</h3>
+<p>“Her stok değişimi hareket kaydıdır” yerine “Sipariş onayının stok etkisi hareket kaydına bağlanır” de. Ürün başlangıç stoğu hareket üretmez. “Eşzamanlılık çözüldü” yerine mevcut transaction sınırını ve kalan concurrency ihtiyacını ayır. “Satış toplamı kâr” deme. “Onaylı sipariş iptal edilebilir” deme. “Clean Architecture veya CQRS kurdum” deme. “Canlıya aldım” ifadesini ancak gerçekten yaptığın bir yayın varsa kullan.</p>
+<p>Bu sunumda ödeme, kargo, rezervasyon, depo transferi, manuel adjustment, yazma amaçlı API veya tamamlanmış concurrency altyapısı varmış gibi bir anlatı yoktur. Gelecek alanları onaylanmış yeni kapsam olarak değerlendirme.</p>
+</html>
