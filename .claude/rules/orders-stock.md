@@ -27,9 +27,9 @@ Draft ──Cancel (stok hareketi yok)──────────────
 - Stok yeni değerleri entity mutation'dan önce bağımlılıksız `OrderStockConfirmationPlanner` ile hesaplanır; planın uygulanması ve transaction sınırı `OrderService` içinde kalır.
 - Uygulama kodunda `StockMovement` oluşturma ve Product stok mutasyonu yalnız `OrderService` confirm akışındadır (tek istisna Development demo kataloğudur: `StockFlow/Data/DemoDataCatalog.cs`, tutarlı başlangıç verisi üretir ve kullanıcı akışı değildir); `StockMovementQueryService` salt-okunurdur ve `StockMovementsController` POST action içermez.
 - `Confirmed` ve `Cancelled` terminaldir: yeniden açılmaz, düzenlenmez, fiziksel silinmez. Cancel stok hareketi üretmez. Yalnız hareket geçmişi olmayan Draft fiziksel silinir.
-- Purchase → StockIn, Sale → StockOut; Sale onayı stok yetersizse reddedilir.
-- Fiyat snapshot'ı: yeni kalem güncel Product fiyatını alır, mevcut Draft kalemi snapshot'ını korur; `UnitPrice`/`TotalAmount` istemciden kabul edilmez.
-- Sipariş tarafı: Sale yalnız Customer, Purchase yalnız Supplier; audit kullanıcısı zorunlu.
+- Purchase → StockIn, Sale → StockOut. Sale onayı herhangi bir kalemde stok yetersizse, Purchase onayı stok sayacı taşarsa reddedilir; planner ilk ihlalde durur (`StockFlow/Services/Orders/OrderStockConfirmationPlanner.cs:18`, `:42`, `:67`).
+- Fiyat snapshot'ı: yeni kalem güncel Product fiyatını alır, mevcut Draft kaleminin `UnitPrice` değerine dokunulmaz (`StockFlow/Services/Orders/OrderService.cs:330-356`); `UnitPrice`/`TotalAmount` istemciden kabul edilmez.
+- Sipariş tarafı: Sale yalnız Customer, Purchase yalnız Supplier (`OrderService.cs:363-368`, DB'de `CK_Orders_PartyMatchesType`); oluşturan kullanıcı zorunludur (`OrderService.cs:47`).
 
 ## HTTP eşlemesi
 

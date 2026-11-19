@@ -104,7 +104,7 @@ Ayrıntı ve sorumluluk tablosu: `docs/product-spec.md` › 3.2 Mimari sorumlulu
 ## Git akışı — ajanlar her zaman pull request ile teslim eder (kesin kural)
 
 1. İlk düzenlemeden önce dalı kontrol et. `main` üzerindeysen önce dal aç: `git switch -c <tür>/<kısa-konu>` (tür conventional commit türüyle aynı: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`).
-2. Yalnız o dalda, açık yollar stage ederek commit et. Mesaj Conventional Commits biçimindedir: `feat(orders): add admin draft order actions` (`git log`: son 25 commit'in 24'ü).
+2. Yalnız o dalda, açık yollar stage ederek commit et. Mesaj Conventional Commits biçimindedir: `<tür>(<kapsam>): <özet>`, ör. `feat(orders): add admin draft order actions` (`git log` geçmişindeki commit'lerin neredeyse tamamı bu biçimdedir).
 3. Push insan onayı ister. GitHub'da `main` hedefli pull request aç.
 4. Orada dur. Merge ve approve insan kararıdır.
 

@@ -2,7 +2,7 @@
 title: "StockFlow Veritabanı Şeması ve ERD"
 status: active
 authority: persistence-design
-last_reviewed: "2026-08-19"
+last_reviewed: "2026-11-19"
 review_triggers:
   - entity-change
   - persistence-change
@@ -74,7 +74,7 @@ erDiagram
         decimal_18_2 TotalAmount
         int CustomerId FK "nullable"
         int SupplierId FK "nullable"
-        nvarchar_450 CreatedByUserId "nullable; FK sonraki Identity aşamasında"
+        nvarchar_450 CreatedByUserId FK "nullable; AspNetUsers.Id"
     }
     ORDER_ITEM {
         int Id PK
@@ -123,7 +123,7 @@ erDiagram
 - `RoleNameIndex` ve `UserNameIndex` standart benzersiz Identity indeksleridir; `EmailIndex` normalize e-posta sorgularını destekler.
 - FK ve sorgu indeksleri Category/Product, Customer/Order, Supplier/Order, Order/OrderItem, Product/OrderItem, Order/StockMovement ve Product/StockMovement yollarını kapsar.
 - Sipariş sorguları için `(Type, Status, OrderDate)`; hareket geçmişi için `(ProductId, MovementDate)` birleşik indeksleri bulunur.
-- Bütün foreign key ilişkileri `Restrict/NoAction` kullanır. Draft siparişin kalemleriyle silinmesi ileride Service katmanında açıkça yönetilecektir.
+- Bütün foreign key ilişkileri `Restrict/NoAction` kullanır. Hareket geçmişi olmayan Draft sipariş, kalemleri `OrderService` içinde açıkça kaldırıldıktan sonra silinir (cascade yoktur).
 - `Orders.CreatedByUserId`, nullable `AspNetUsers.Id` foreign key'idir ve kullanıcı silme davranışı `Restrict/NoAction` olarak yapılandırılmıştır.
 
 Identity rolleri ve kullanıcıları migration verisi değildir. Güvenli yapılandırmadan çalışan uygulama başlangıç seeder'ı `Admin` ve `Employee` kayıtlarını idempotent biçimde oluşturur; parola ve e-posta değerleri kaynak kontrollü dosyalarda tutulmaz.
