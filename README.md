@@ -156,7 +156,7 @@ Tam doğrulama akışı:
 dotnet restore StockFlow.slnx
 dotnet build StockFlow.slnx --no-restore
 dotnet test StockFlow.slnx --no-restore
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-agent-context.ps1
+dotnet format StockFlow.slnx --verify-no-changes --no-restore
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-hygiene.ps1
 git diff --check
 git status --short
@@ -173,12 +173,11 @@ Veritabanına dokunan testler yalnız `(localdb)\MSSQLLocalDB` üzerinde, test b
 
 ## Dokümantasyon haritası
 
-- [Ajan bağlam merkezi](docs/ai/README.md)
-- [Mevcut teknik durum](docs/ai/current-state.md)
 - [Kanonik ürün spesifikasyonu](docs/product-spec.md)
-- [Hedef mimari](docs/ai/architecture.md)
-- [Domain kuralları](docs/ai/domain-rules.md)
-- [Geliştirme iş akışı](docs/ai/development-workflow.md)
+- [Veritabanı şeması](docs/database-schema.md)
 - [Mimari karar kayıtları](docs/adr/README.md)
+- [Ajan tasarım belgeleri](docs/designs/README.md)
 
-Yapay zekâ ajanları çalışmaya kök [AGENTS.md](AGENTS.md) dosyasından başlamalıdır.
+## Yapay zekâ destekli geliştirme
+
+Proje Claude Code ajan sistemiyle geliştirilir ([ADR-0003](docs/adr/0003-claude-code-agentic-layer.md)). Giriş noktası kök [CLAUDE.md](CLAUDE.md) dosyasıdır; yola göre yüklenen kurallar `.claude/rules/`, playbook'lar `.claude/skills/`, dar yetkili roller `.claude/agents/` altındadır. Kritik sınırlar (`main`'e push yasağı, secret okuma yasağı, katman bazlı yazma kapsamları) `.claude/hooks/agentic/` guard'ı ile zorlanır. Teslim `/deliver`, inceleme `/review-changes`, kütüphane güncellemesi `/curate-knowledge` ile başlatılır.
