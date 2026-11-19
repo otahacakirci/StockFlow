@@ -1,8 +1,8 @@
 ---
 title: "ADR-0001: Yapay Zekâ Bağlamı ve Doğruluk Kaynağı"
-status: Accepted
+status: Superseded
 authority: decision
-last_reviewed: "2026-08-18"
+last_reviewed: "2026-11-19"
 review_triggers:
   - authority-model-change
   - canonical-source-change
@@ -11,11 +11,13 @@ review_triggers:
 # ADR-0001: Yapay Zekâ Bağlamı ve Doğruluk Kaynağı
 
 - Tarih: 2026-08-18
-- Durum: Accepted
+- Durum: Superseded (2026-11-19)
 - Karar sahipleri: Proje sahibi
 - Etkilenen gereksinimler: OKUMA-01, OKUMA-02, OKUMA-03
 - Yerine geçtiği ADR: Yok
-- Yerine geçen ADR: Yok
+- Yerine geçen ADR: [ADR-0003](0003-claude-code-agentic-layer.md)
+
+> **Tarihsel kayıt.** Bu kararla kurulan `AGENTS.md`, `docs/ai/` belgeleri, `context-manifest.json` ve `scripts/validate-agent-context.ps1` 19 Kasım 2026'da kaldırılmıştır. Geçerli ajan bağlamı ve guardrail sistemi ADR-0003'tedir. Aşağıdaki metin değiştirilmeden korunur; içindeki dosya adları artık depoda yoktur. `docs/product-spec.md` kanonik ürün sözleşmesi olarak geçerliliğini sürdürür.
 
 ## Bağlam
 

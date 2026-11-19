@@ -1,0 +1,8 @@
+# >>> agent configuration and guardrails (agentic setup) >>>
+# Ajanların nasıl yönlendirildiği ve sınırlandırıldığı değişiklikler belirlenmiş bir inceleyici gerektirir (ADR-0003).
+/CLAUDE.md                @otahacakirci
+/.claude/                 @otahacakirci
+/.github/                 @otahacakirci
+/docs/adr/                @otahacakirci
+/scripts/                 @otahacakirci
+# <<< agent configuration and guardrails <<<

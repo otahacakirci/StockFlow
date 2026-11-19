@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "projectName": "StockFlow",
+  "verifyCommand": "dotnet build StockFlow.slnx --no-restore && dotnet test StockFlow.slnx --no-restore && dotnet format StockFlow.slnx --verify-no-changes --no-restore",
+  "handoffDir": "docs/designs",
+  "protectedBranches": [
+    "main"
+  ],
+  "denyCommitOnProtectedBranch": true,
+  "protectedPaths": [
+    "StockFlow/Data/Migrations/*.Designer.cs",
+    "StockFlow/Data/Migrations/ApplicationDbContextModelSnapshot.cs",
+    "StockFlow/wwwroot/lib/**",
+    "**/bin/**",
+    "**/obj/**",
+    ".env",
+    "**/secrets.json"
+  ],
+  "guardrailPaths": [
+    ".claude/hooks/**",
+    ".claude/settings.json",
+    ".github/CODEOWNERS"
+  ],
+  "approvalPaths": [
+    "docs/product-spec.md",
+    "**/*.csproj",
+    "StockFlow.slnx",
+    ".config/dotnet-tools.json",
+    "StockFlow/Program.cs",
+    "StockFlow/appsettings*.json",
+    "StockFlow/Properties/launchSettings.json",
+    "scripts/*.ps1",
+    ".gitignore",
+    ".gitattributes",
+    ".github/workflows/**"
+  ],
+  "libraryPaths": [
+    "CLAUDE.md",
+    ".claude/CLAUDE.md",
+    ".claude/rules/**",
+    ".claude/skills/**",
+    ".claude/agents/**"
+  ],
+  "shell": {
+    "deny": [
+      {
+        "pattern": "\\bdotnet\\s+nuget\\s+(push|delete)\\b|\\bnuget(\\.exe)?\\s+(push|delete)\\b",
+        "reason": "StockFlow is not published as a NuGet package; publishing or deleting packages is never done by an agent."
+      },
+      {
+        "pattern": "\\bdotnet\\s+user-secrets\\s+list\\b",
+        "reason": "Listing User Secrets prints connection strings and seed passwords into the transcript (CLAUDE.md: never print secrets)."
+      }
+    ],
+    "ask": [
+      {
+        "pattern": "\\b(dotnet\\s+ef|dotnet-ef)\\s+(database\\s+(update|drop)|migrations\\s+remove)\\b",
+        "reason": "This changes the development database or removes a migration; a human must approve it (README: migrations are applied manually)."
+      },
+      {
+        "pattern": "\\bdotnet\\s+user-secrets\\s+(set|remove|clear|init)\\b",
+        "reason": "This writes the local secret store; secret values come from the human, not the agent."
+      },
+      {
+        "pattern": "\\bdotnet\\s+((add|remove)\\b.*\\b(package|reference)\\b|package\\s+(add|remove|update)\\b)",
+        "reason": "Adding or removing packages/references is a scope and supply-chain decision (CLAUDE.md: no out-of-scope components without an explicit scope change)."
+      },
+      {
+        "pattern": "\\bdotnet\\s+(tool\\s+(install|uninstall|update)|new\\s+tool-manifest)\\b",
+        "reason": "Changing the local tool manifest needs human approval."
+      },
+      {
+        "pattern": "\\bsqllocaldb(\\.exe)?\\s+(stop|delete|share|unshare)\\b",
+        "reason": "Stopping or deleting a LocalDB instance affects the developer's databases; a human must approve it."
+      },
+      {
+        "pattern": "\\bdotnet\\s+dev-certs\\b",
+        "reason": "Development certificate changes modify the machine's certificate store; a human must approve them."
+      }
+    ],
+    "readonlyCommands": [
+      "dotnet build stockflow.slnx --no-restore",
+      "dotnet test",
+      "dotnet format stockflow.slnx --verify-no-changes",
+      "dotnet --info",
+      "dotnet --version",
+      "powershell -noprofile -executionpolicy bypass -file scripts/validate-repository-hygiene.ps1",
+      "node .claude/hooks/agentic/test-guard.mjs"
+    ]
+  },
+  "unlistedSubagents": "restricted-main",
+  "agents": {
+    "planner": {
+      "write": [
+        "docs/designs/**"
+      ],
+      "shell": "readonly",
+      "library": false
+    },
+    "web-implementer": {
+      "write": [
+        "StockFlow/Controllers/**",
+        "StockFlow/Views/**",
+        "StockFlow/ViewModels/**",
+        "StockFlow/wwwroot/js/**",
+        "StockFlow/wwwroot/css/**",
+        "StockFlow/ModelBinding/**",
+        "StockFlow/Models/**",
+        "StockFlow/Security/**",
+        "StockFlow.Tests/Controllers/**",
+        "StockFlow.Tests/Integration/**",
+        "StockFlow.Tests/ViewModels/**",
+        "StockFlow.Tests/ModelBinding/**"
+      ],
+      "shell": "full",
+      "library": false
+    },
+    "service-implementer": {
+      "write": [
+        "StockFlow/Services/**",
+        "StockFlow/ViewModels/**",
+        "StockFlow.Tests/Services/**"
+      ],
+      "shell": "full",
+      "library": false
+    },
+    "data-implementer": {
+      "write": [
+        "StockFlow/Data/**",
+        "StockFlow/Entities/**",
+        "StockFlow/Options/**",
+        "StockFlow.Tests/Data/**",
+        "StockFlow.Tests/Infrastructure/**"
+      ],
+      "shell": "full",
+      "library": false
+    },
+    "test-writer": {
+      "write": [
+        "StockFlow.Tests/**"
+      ],
+      "shell": "full",
+      "library": false
+    },
+    "reviewer": {
+      "write": [],
+      "shell": "readonly",
+      "library": false,
+      "mcp": "readonly"
+    },
+    "knowledge-curator": {
+      "write": [],
+      "shell": "readonly",
+      "library": true
+    }
+  }
+}
