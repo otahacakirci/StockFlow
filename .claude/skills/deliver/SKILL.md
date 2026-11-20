@@ -34,6 +34,8 @@ Tasarım bir Tests paketi listeliyorsa veya kapsama boşluğu kalıyorsa `test-w
 
 Done gate'i birleşik çalışma ağacında kendin çalıştır ve `git diff --stat` çıktısını tasarım kapsamıyla karşılaştır. Rapor bir iddiadır; bu kanıttır. Tasarım kapsamı dışındaki her şey insan için bir bulgudur.
 
+Tasarımdan veya ajan raporundan bir belgeye, ADR'ye ya da kurala taşınan her `path:line` atfını yazmadan önce güncel koda karşı doğrula; tasarım ve rapor atıfları iddiadır (issue #5 tasarımı `StockMovementConfiguration.cs:150-153` dedi, gerçek satırlar `:36-39`).
+
 Ardından `.claude/rules/editing-discipline.md` › Dokümantasyon tablosunu uygula: etkilenen README, `docs/database-schema.md` veya ADR güncellemesini insana göster ve onayıyla yaz; `docs/product-spec.md` yalnız kullanıcı yetkisiyle değişir. Kalıcı bir konvansiyon ortaya çıktıysa final yanıtta `/curate-knowledge` öner.
 
 ## 4. İnceleme — sonra insan için DUR

@@ -24,3 +24,4 @@ Secret ve kişisel verinin kaynak koda, belgeye veya loga sızmasını önler; S
 ## Commit öncesi
 
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-repository-hygiene.ps1` staged içeriği yasaklı yollar ve secret desenleri için tarar; eşleşen değeri terminale yazdırma.
+- Betik `.md` dahil metin dosyalarını tarar (`scripts/validate-repository-hygiene.ps1:63-66`); belgelerde (ADR dahil) anahtar, token veya parola örnek değerle yazılmaz, `<...>` yer tutucusu kullanılır — `<` ile başlayan değerler desen dışıdır (`:71-72`).
