@@ -74,6 +74,12 @@ public sealed class HomeControllerTests
         Assert.Equal([AppRoles.Admin, AppRoles.Employee], roles);
     }
 
+    [Fact]
+    public void Controller_DoesNotExposePrivacyAction()
+    {
+        Assert.Null(typeof(HomeController).GetMethod("Privacy"));
+    }
+
     private static HomeController CreateController(
         IDashboardService dashboardService,
         HttpContext? httpContext = null)

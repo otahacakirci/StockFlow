@@ -243,6 +243,17 @@ public sealed class MvcAcceptanceTests : MvcIntegrationTestBase
     }
 
     [Fact]
+    public async Task HomePrivacy_TemplateRemnant_ReturnsNotFoundForAuthenticatedAdmin()
+    {
+        using var client = CreateClient();
+        await LoginSuccessfullyAsync(client, StockFlowWebApplicationFactory.AdminEmail);
+
+        using var response = await client.GetAsync("/Home/Privacy");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task MissingProductAndStockMovement_ReturnDomainSpecificSafePages()
     {
         using var client = CreateClient();
