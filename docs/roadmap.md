@@ -2,7 +2,7 @@
 title: "StockFlow Portföy Dönüşüm Yol Haritası"
 status: active
 authority: roadmap
-last_reviewed: "2026-11-19"
+last_reviewed: "2026-11-20"
 review_triggers:
   - roadmap-phase-completed
   - product-scope-change
@@ -13,7 +13,7 @@ review_triggers:
 
 Bu belge, 20 iş günlük staj MVP'sini güçlü bir **.NET Backend / Fullstack-Lite** portföy projesine dönüştürmek için yapılan tam kod tabanı incelemesinin bulgularını, kilitlenen stratejik kararları ve 7 fazlı tek uygulama yol haritasını içerir.
 
-> **Yetki sınırı:** Hedef ürün davranışı için [product-spec.md](product-spec.md) normatif kalmaya devam eder. Bu yol haritasındaki fazların bir kısmı mevcut MVP sözleşmesinin kapsam dışı saydığı bileşenleri açar; bu nedenle her yeni kapsam **Faz 0** ile başlayarak önce ürün spesifikasyonu v2 ve ilgili ADR kayıtlarıyla resmîleştirilir, ardından koda geçirilir.
+> **Yetki sınırı:** Hedef ürün davranışı için [product-spec.md](product-spec.md) normatif kalmaya devam eder. Bu yol haritası öneridir; kapsam [product-spec.md](product-spec.md) › 10.1 Faz kapıları ile açılır ([ADR-0004](adr/0004-product-spec-v2-phase-gated-scope.md)). Bir fazın maddeleri yalnız o faz orada `Açık` iken ve gereksinimleri spesifikasyona işlendikten sonra koda geçirilir.
 
 ---
 
@@ -140,7 +140,7 @@ Her faz, önceki fazın tüm testleri yeşilken başlar. Kapsam veya mimari değ
 
 ### Ajan sistemiyle uygulama
 
-- **Yetki sırası:** Bu yol haritası normatif değildir. Bir fazın açtığı kapsam (4 proje, REST API, JWT, Docker vb.) bugün [CLAUDE.md](../CLAUDE.md) › Değişmez proje sınırları ve Asla yapma listesince yasaklıdır. Bu nedenle her kapsam önce `product-spec.md` v2 ve ADR ile, **aynı PR'da** CLAUDE.md sınırları ve ilgili `.claude/rules/*` güncellenerek açılır; ajanlar yasaklı bileşeni "roadmap'te var" diye eklemez.
+- **Yetki sırası:** Bu yol haritası normatif değildir. Bir fazın açtığı kapsam (4 proje, REST API, JWT, Docker vb.) `product-spec.md` › 10.1'de faz kapılıdır ve [CLAUDE.md](../CLAUDE.md) › Değişmez proje sınırları bu ayrımı izler. Faz yalnız insan onaylı PR ile `Açık` olur; fazın gereksinimleri ve etkilenen `.claude/rules/*` aynı değişiklik kümesinde güncellenir. Ajanlar faz kapılı bileşeni kapısı `Açık` olmadan veya yalnız "roadmap'te var" diye eklemez.
 - **Teslim:** Her faz maddesi ayrı bir iş olarak `/deliver <madde>` ile yürür: `planner` `docs/designs/` altına tasarım yazar → insan onaylar → `data-` / `service-` / `web-implementer` kendi katmanını test-first uygular → ana oturum done gate'i (build + test + format) doğrular → `reviewer` taslak inceleme hazırlar → PR, merge insanda.
 - **Kütüphane bakımı:** Bir faz yeni bir konvansiyon getirdiğinde (ör. RowVersion/409 eşlemesi, ProblemDetails) `/curate-knowledge <yol>` ile kural veya skill'e dönüştürülür. Rol kapsamlarını değiştiren yapısal fazlardan sonra `agentic-repo-setup` update mode'da yeniden çalıştırılır.
 - **Onay gerektiren adımlar:** csproj/paket, `Program.cs`, `appsettings*.json`, `.github/workflows/**`, `scripts/*.ps1` ve `product-spec.md` değişiklikleri guard tarafından insan onayına bağlıdır; `dotnet ef database update|drop` ve `dotnet add package` da onay ister.
