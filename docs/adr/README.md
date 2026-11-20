@@ -32,10 +32,11 @@ Başka durum değeri kullanılmaz.
 | ADR | Durum | Karar |
 | --- | --- | --- |
 | [0001](0001-ai-context-source-of-truth.md) | Superseded | Ajan bağlamının Markdown kanonik kaynak ve modüler belgelerle yönetilmesi (yerine 0003) |
-| [0002](0002-isolated-localdb-test-databases.md) | Accepted | Veritabanına dokunan xUnit testlerinin test başına benzersiz ve güvenlik kontrollü LocalDB veritabanı kullanması |
+| [0002](0002-isolated-localdb-test-databases.md) | Superseded | Veritabanına dokunan xUnit testlerinin test başına benzersiz ve güvenlik kontrollü LocalDB veritabanı kullanması (yerine 0009) |
 | [0003](0003-claude-code-agentic-layer.md) | Accepted | Ajan bağlamının `CLAUDE.md` ve `.claude/` kurallar, skill'ler, roller ve guardrail hook'larıyla yönetilmesi; eski `AGENTS.md`/`docs/ai/` sisteminin kaldırılması |
 | [0004](0004-product-spec-v2-phase-gated-scope.md) | Accepted | Ürün sözleşmesi v2: kapsamın `product-spec.md` § 10.1 faz kapılarıyla açılması, kalıcı kapsam dışı ve faz kapılı bileşen ayrımı |
 | [0005](0005-lean-four-project-architecture.md) | Accepted | Yalın 4 projeli modüler monolit (Domain, Application, Infrastructure, Web) hedefi; MediatR, CQRS, generic Repository/UoW, AutoMapper ve mikroservisin eklenmemesi; Faz 2 kapalı kalır |
 | [0006](0006-stock-concurrency-strategy.md) | Accepted | Sipariş onayında READ COMMITTED + sabit sırayla (Order → Products artan Id) UPDLOCK kilitleri, sipariş kümesi için Order RowVersion; çakışma BusinessRule → 409, otomatik sunucu yeniden denemesi yok; Faz 1 kapalı kalır |
 | [0007](0007-sale-purchase-order-model.md) | Accepted | Sale ve Purchase'ın tek Orders/OrderItems tablosu ve tek Order aggregate kökünde kalması; EF kalıtımı ve ayrı aggregate yok; türe özgü Faz 3 alanları ek niteliktedir; migration yok; Faz 2/3 kapalı kalır |
 | [0008](0008-hybrid-cookie-jwt-authentication.md) | Accepted | MVC için Identity cookie, /api/v1 için JWT Bearer (HS256, 15 dk) + rotasyonlu, hash'li, aile bazlı iptal edilebilir opak refresh token (7 gün, 30 gün mutlak); path tabanlı policy scheme; anahtar yalnız User Secrets/ortamda (Jwt:Key), fail-fast; Faz 4 kapalı kalır |
+| [0009](0009-testcontainers-mssql-test-databases.md) | Accepted | Veritabanına dokunan xUnit testlerinin koşu başına tek, sabit etiketli Testcontainers MSSQL konteynerinde test başına benzersiz ve güvenlik kontrollü veritabanı kullanması; Docker yoksa ortam hatası; LocalDB/InMemory geri dönüşü yok (ADR-0002'nin yerine) |

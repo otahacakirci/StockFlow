@@ -13,8 +13,8 @@ StockFlow; kategori, ürün, müşteri, tedarikçi, satış/satın alma sipariş
 ## Stack
 
 - .NET 10 / C# (`net10.0`, nullable, implicit usings), ASP.NET Core MVC + Razor + Bootstrap, cookie tabanlı ASP.NET Core Identity.
-- EF Core 10 + SQL Server; geliştirme ve testlerde SQL Server LocalDB (`(localdb)\MSSQLLocalDB`). `dotnet-ef` 10.0.11 yerel araç manifestinde (`.config/dotnet-tools.json`).
-- xUnit 2.9.3 ve `Microsoft.AspNetCore.Mvc.Testing` (`StockFlow.Tests/StockFlow.Tests.csproj`). Biçim `dotnet format` ile; `.editorconfig` yok.
+- EF Core 10 + SQL Server; uygulamanın geliştirme veritabanı SQL Server LocalDB (`(localdb)\MSSQLLocalDB`), ilişkisel testler Docker'daki Testcontainers MSSQL konteyneri ([ADR-0009](docs/adr/0009-testcontainers-mssql-test-databases.md)). `dotnet-ef` 10.0.11 yerel araç manifestinde (`.config/dotnet-tools.json`).
+- xUnit 2.9.3, `Microsoft.AspNetCore.Mvc.Testing` ve `Testcontainers.MsSql` 4.16.0 (`StockFlow.Tests/StockFlow.Tests.csproj`). Biçim `dotnet format` ile; `.editorconfig` yok.
 
 ## Komutlar (depo kökünden)
 
@@ -41,7 +41,7 @@ StockFlow; kategori, ürün, müşteri, tedarikçi, satış/satın alma sipariş
 
 ## Bilinen ortam gerçekleri
 
-- İlişkisel testler Windows ve çalışan SQL Server LocalDB ister (ADR-0002); CI ve çapraz platform test hedefi yok. LocalDB açılamazsa testleri "geçti" sayma, ortam hatası olarak raporla.
+- İlişkisel testler çalışan Docker ister (Windows'ta Docker Desktop, Linux konteyner modu): koşu başına tek `mcr.microsoft.com/mssql/server:2022-CU28-ubuntu-22.04` konteyneri, test başına izole `StockFlow_Tests_<guid>` veritabanı (ADR-0009, `.claude/rules/testing.md` › Veritabanı). İlk koşu imajı indirir. LocalDB yedek yolu yok; Docker yoksa veya konteyner başlamazsa testleri "geçti" sayma, ortam hatası olarak raporla. CI henüz yok (#10).
 - Uygulama migration'ları otomatik uygulamaz; çalışmak için migration uygulanmış veritabanı ve dört `IdentitySeed` değeri User Secrets/ortamda olmalıdır (README).
 - Build bugün 0 hata, 0 uyarı verir; `System.Security.Cryptography.Pkcs` 10.0.13 doğrudan sabitlenmiştir (NU1902/NU1903 giderildi). Yeni uyarı ekleme; `NoWarn` veya `NuGetAudit` kapatma kullanma.
 - LocalDB yalnız geliştirme/öğrenme ortamıdır, production hedefi değildir.
@@ -54,7 +54,7 @@ StockFlow; kategori, ürün, müşteri, tedarikçi, satış/satın alma sipariş
 | `StockFlow/Services` | İş kuralları, durum geçişleri, transaction sınırı, `ServiceResult` | → Data, Entities |
 | `StockFlow/Data`, `Entities`, `Options` | `ApplicationDbContext`, Fluent mapping, migration, seeder | — |
 | `StockFlow/Program.cs` | Composition root: DI kaydı, Identity/cookie, auth fallback, seeder çağrısı | hepsi |
-| `StockFlow.Tests` | xUnit; Controllers (DB'siz), Services/Data/Integration (LocalDB) | → StockFlow |
+| `StockFlow.Tests` | xUnit; Controllers (DB'siz), Services/Data/Integration (Testcontainers MSSQL) | → StockFlow |
 
 Ayrıntı ve sorumluluk tablosu: `docs/product-spec.md` › 3.2 Mimari sorumluluklar. Üretilmiş dosyalar: `StockFlow/Data/Migrations/*.Designer.cs` ve `ApplicationDbContextModelSnapshot.cs` (`dotnet ef` üretir); `StockFlow/wwwroot/lib/**` üçüncü taraf dağıtımıdır (`.gitattributes`).
 
@@ -116,7 +116,7 @@ Bu tablo bugünkü tek projeyi anlatır; hedef 4 projeli yapı `docs/product-spe
 - Secret, parola, connection string veya User Secrets değerini okumak, yazdırmak, belgeye/koda/loga koymak (`dotnet user-secrets list` engellidir).
 - `appsettings*.json` içine bağlantı dizesi veya kimlik bilgisi eklemek.
 - Migration `*.Designer.cs`, `ApplicationDbContextModelSnapshot.cs` veya `StockFlow/wwwroot/lib/**` dosyalarını elle düzenlemek.
-- Testlerde InMemory sağlayıcısına veya geliştirme veritabanına geri dönmek (ADR-0002).
+- Testlerde InMemory sağlayıcısına, LocalDB'ye veya geliştirme veritabanına geri dönmek (ADR-0009).
 - Draft siparişte stok değiştirmek; stok/StockMovement yazımını `OrderService` confirm transaction'ı dışına taşımak.
 - Kalıcı kapsam dışı bileşenleri eklemek; faz kapılı bileşenleri kapısı `Açık` olmadan veya yalnız "roadmap'te var" gerekçesiyle eklemek.
 - Açık onay olmadan dosya silmek; ilgisiz kodu yeniden biçimlendirmek veya refactor etmek; `docs/product-spec.md` dosyasını kullanıcı yetkisi olmadan değiştirmek.

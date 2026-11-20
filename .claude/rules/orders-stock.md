@@ -37,5 +37,5 @@ Draft ──Cancel (stok hareketi yok)──────────────
 
 ## Test beklentisi
 
-- Stok veya durum davranışı değişiyorsa `StockFlow.Tests/Services/OrderServiceTests.cs` içinde LocalDB üzerinde atomiklik/rollback testi ve gerekirse `OrderStockConfirmationPlannerTests.cs` içinde saf test ekle.
+- Stok veya durum davranışı değişiyorsa `StockFlow.Tests/Services/OrderServiceTests.cs` içinde gerçek SQL Server test veritabanında (Testcontainers MSSQL, `.claude/rules/testing.md` › Veritabanı) atomiklik/rollback testi ve gerekirse `OrderStockConfirmationPlannerTests.cs` içinde saf test ekle.
 - Davranış değişikliği `docs/product-spec.md` › 7 ve bu kuralın güncellenmesini gerektirir (`.claude/rules/editing-discipline.md` › Dokümantasyon) — ürün kapsamı kullanıcı yetkisi olmadan değişmez.

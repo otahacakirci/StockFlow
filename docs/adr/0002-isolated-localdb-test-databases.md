@@ -1,6 +1,6 @@
 ---
 title: "ADR-0002: İzole LocalDB Test Veritabanları"
-status: Accepted
+status: Superseded
 authority: decision
 last_reviewed: "2026-08-24"
 review_triggers:
@@ -12,11 +12,11 @@ review_triggers:
 # ADR-0002: İzole LocalDB Test Veritabanları
 
 - Tarih: 2026-08-24
-- Durum: Accepted
+- Durum: Superseded
 - Karar sahipleri: Proje sahibi
 - Etkilenen gereksinimler: NFR-TEST-01, NFR-TEST-03, AC-10
 - Yerine geçtiği ADR: Yok
-- Yerine geçen ADR: Yok
+- Yerine geçen ADR: [ADR-0009](0009-testcontainers-mssql-test-databases.md)
 
 ## Bağlam
 

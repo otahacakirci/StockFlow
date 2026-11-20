@@ -24,7 +24,7 @@ Bağlı issue ve `docs/designs/` içindeki tasarımdan: karşılanmayan kabul ö
 
 ## 3. Kontrol listesi
 
-Değişen dosyaları kategorilere ayır ve [references/checklist.md](references/checklist.md) bölümlerini uygula. Her maddeyi ✅ / ❌ / ⚠️ / N/A olarak işaretle. Done gate'i çalıştır ve sonucu raporla: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. Hiçbir şeyi düzeltme. LocalDB ortam hatası "test başarısız" değil "doğrulanamadı" olarak raporlanır.
+Değişen dosyaları kategorilere ayır ve [references/checklist.md](references/checklist.md) bölümlerini uygula. Her maddeyi ✅ / ❌ / ⚠️ / N/A olarak işaretle. Done gate'i çalıştır ve sonucu raporla: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. Hiçbir şeyi düzeltme. Docker/test konteyneri ortam hatası "test başarısız" değil "doğrulanamadı" olarak raporlanır.
 
 ## 4. Önceki thread'ler (PR'lar)
 

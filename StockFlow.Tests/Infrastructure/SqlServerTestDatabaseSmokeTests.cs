@@ -16,4 +16,20 @@ public sealed class SqlServerTestDatabaseSmokeTests : SqlServerDatabaseTestBase
         Assert.Contains("20260824065853_AddIdentitySchema", appliedMigrations);
         Assert.Empty(pendingMigrations);
     }
+
+    [Fact]
+    public async Task InitializeAsync_UsesIsolatedDatabaseOnTestContainer()
+    {
+        await using var dbContext = CreateDbContext();
+
+        var currentDatabaseName = await dbContext.Database
+            .SqlQueryRaw<string>("SELECT DB_NAME() AS [Value]")
+            .SingleAsync();
+        var isLocalDb = await dbContext.Database
+            .SqlQueryRaw<int>("SELECT CAST(ISNULL(SERVERPROPERTY('IsLocalDB'), 0) AS int) AS [Value]")
+            .SingleAsync();
+
+        Assert.Equal(DatabaseName, currentDatabaseName);
+        Assert.Equal(0, isLocalDb);
+    }
 }
