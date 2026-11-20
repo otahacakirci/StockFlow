@@ -43,7 +43,7 @@ StockFlow; kategori, ürün, müşteri, tedarikçi, satış/satın alma sipariş
 
 - İlişkisel testler Windows ve çalışan SQL Server LocalDB ister (ADR-0002); CI ve çapraz platform test hedefi yok. LocalDB açılamazsa testleri "geçti" sayma, ortam hatası olarak raporla.
 - Uygulama migration'ları otomatik uygulamaz; çalışmak için migration uygulanmış veritabanı ve dört `IdentitySeed` değeri User Secrets/ortamda olmalıdır (README).
-- Build bugün 0 hata, 4 uyarı verir: `System.Security.Cryptography.Pkcs` 9.0.11 geçişli bağımlılığı için NU1902/NU1903. Bunlar bilinen durumdur; yeni uyarı ekleme.
+- Build bugün 0 hata, 0 uyarı verir; `System.Security.Cryptography.Pkcs` 10.0.13 doğrudan sabitlenmiştir (NU1902/NU1903 giderildi). Yeni uyarı ekleme; `NoWarn` veya `NuGetAudit` kapatma kullanma.
 - LocalDB yalnız geliştirme/öğrenme ortamıdır, production hedefi değildir.
 
 ## Mimari özet
