@@ -30,4 +30,4 @@ Kütüphane (`CLAUDE.md`, `.claude/rules/`, `.claude/skills/`, `.claude/agents/`
 
 Bu akışta hiçbir rolün yetkisini genişletme: yazma kapsamları `.claude/hooks/agentic/policy.json` içindedir ve onu yalnız bir insan, incelenmiş bir PR'da değiştirir.
 
-Roadmap Faz 2 (proje ayrımı) gibi yapısal bir değişiklikten sonra kütüphaneyi bu skill ile yamamak yerine `agentic-repo-setup` skill'ini update mode'da yeniden çalıştır: roller, kapsamlar ve kural glob'ları birlikte değişir.
+Faz 2 (`docs/product-spec.md` › 10.1, proje ayrımı) gibi yapısal bir değişiklikten sonra kütüphaneyi bu skill ile yamamak yerine `agentic-repo-setup` skill'ini update mode'da yeniden çalıştır: roller, kapsamlar ve kural glob'ları birlikte değişir.

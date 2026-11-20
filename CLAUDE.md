@@ -8,7 +8,7 @@ StockFlow; kategori, ürün, müşteri, tedarikçi, satış/satın alma sipariş
 - **Bugünkü gerçek:** kod, yapılandırma, migration'lar ve testler. Belge özetlerine değil koda bak.
 - **Kalıcı karar:** kabul edilmiş ADR (`docs/adr/`); ürün sözleşmesini sessizce daraltamaz veya genişletemez.
 - **Önerilen yön:** `docs/roadmap.md` normatif değildir; maddeleri `product-spec.md` ve ADR'ye işlenmeden uygulanmaz.
-- Kullanıcı ürün sözleşmesini değiştirirse aynı değişiklik kümesinde spesifikasyonu, ilgili ADR'yi ve etkilenen kural/skill dosyalarını güncelle. Bonuslar yalnız `product-spec.md` › 2.2 öncelik kapısı sağlandığında ele alınır.
+- Kullanıcı ürün sözleşmesini değiştirirse aynı değişiklik kümesinde spesifikasyonu, ilgili ADR'yi ve etkilenen kural/skill dosyalarını güncelle. Faz kapılı kapsam yalnız `product-spec.md` › 2.2 ve › 10.1 kapıları sağlandığında (faz durumu `Açık`) ele alınır; roadmap tek başına gerekçe değildir.
 
 ## Stack
 
@@ -58,12 +58,15 @@ StockFlow; kategori, ürün, müşteri, tedarikçi, satış/satın alma sipariş
 
 Ayrıntı ve sorumluluk tablosu: `docs/product-spec.md` › 3.2 Mimari sorumluluklar. Üretilmiş dosyalar: `StockFlow/Data/Migrations/*.Designer.cs` ve `ApplicationDbContextModelSnapshot.cs` (`dotnet ef` üretir); `StockFlow/wwwroot/lib/**` üçüncü taraf dağıtımıdır (`.gitattributes`).
 
+Bu tablo bugünkü tek projeyi anlatır; hedef 4 projeli yapı `docs/product-spec.md` › 10.1 Faz 2 kapsamıdır ve proje ayrımıyla aynı değişiklik kümesinde bu tablo, roller ve `policy.json` güncellenir.
+
 ## Değişmez proje sınırları
 
-- Zorunlu MVP tek ASP.NET Core MVC uygulamasıdır: Razor/Bootstrap UI, Service iş kuralları, EF Core `ApplicationDbContext`, SQL Server ve cookie tabanlı Identity.
+- Bugünkü uygulama tek ASP.NET Core MVC projesidir: Razor/Bootstrap UI, Service iş kuralları, EF Core `ApplicationDbContext`, SQL Server ve cookie tabanlı Identity. Yalın 4 projeli modüler monolit (`Domain`, `Application`, `Infrastructure`, `Web`) yalnız Faz 2 kapısı açıkken kurulur.
 - Controller doğrudan `ApplicationDbContext` kullanmaz; Entity nesneleri kullanıcı girdisi olarak kabul edilmez.
 - Draft sipariş stok değiştirmez. Confirm stok, `StockMovement` ve sipariş durumunu tek atomik sınırda yazar. Confirmed ve Cancelled terminaldir.
-- JWT, yazma amaçlı Web API, Clean Architecture, CQRS, MediatR, generic Repository/Unit of Work, AutoMapper, FluentValidation, mikroservis ve benzerleri açık kapsam değişikliği olmadan eklenmez (`docs/product-spec.md` › 10.3).
+- Kalıcı kapsam dışı (`docs/product-spec.md` › 10.3): MediatR, CQRS, generic Repository/Unit of Work, AutoMapper, FluentValidation, Minimal API, CORS, mikroservis, mesajlaşma/Redis/caching/background service, SPA/Blazor/SignalR/gRPC/ayrı frontend, Kubernetes, ödeme/kargo ve benzerleri; açık kapsam değişikliği (spec + ADR) olmadan eklenmez.
+- Faz kapılı (`docs/product-spec.md` › 10.1): Testcontainers/CI (Faz 0), 4 proje + NetArchTest (Faz 2), Controller tabanlı yazma amaçlı REST API, JWT, OpenAPI, rate limiting (Faz 4), Docker/compose, Serilog, health check (Faz 6) yalnız fazın durumu `Açık` iken ve onaylı tasarımla eklenir.
 
 ## Önce nereye bak
 
@@ -115,7 +118,7 @@ Ayrıntı ve sorumluluk tablosu: `docs/product-spec.md` › 3.2 Mimari sorumlulu
 - Migration `*.Designer.cs`, `ApplicationDbContextModelSnapshot.cs` veya `StockFlow/wwwroot/lib/**` dosyalarını elle düzenlemek.
 - Testlerde InMemory sağlayıcısına veya geliştirme veritabanına geri dönmek (ADR-0002).
 - Draft siparişte stok değiştirmek; stok/StockMovement yazımını `OrderService` confirm transaction'ı dışına taşımak.
-- Yukarıdaki "Değişmez proje sınırları" listesindeki kapsam dışı bileşenleri açık kapsam değişikliği olmadan eklemek.
+- Kalıcı kapsam dışı bileşenleri eklemek; faz kapılı bileşenleri kapısı `Açık` olmadan veya yalnız "roadmap'te var" gerekçesiyle eklemek.
 - Açık onay olmadan dosya silmek; ilgisiz kodu yeniden biçimlendirmek veya refactor etmek; `docs/product-spec.md` dosyasını kullanıcı yetkisi olmadan değiştirmek.
 - `main`'e push, approve veya merge.
 
