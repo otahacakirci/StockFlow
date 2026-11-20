@@ -24,7 +24,7 @@ Tasarım bir kapsam değişikliği bulgusu içeriyorsa (`docs/product-spec.md` d
 
 Onaylanan tasarımdaki her paket için, tasarımdaki sırayla, sahip role delege et (`data-implementer`, `service-implementer`, `web-implementer`). Her prompt yalnız şunları içerir: tasarım yolu, paket kimliği ("yalnız Service 1–2") ve bağımlılık varsa önceki rolün final raporu. Bağımsız paketleri paralel başlat (tek mesajda birden fazla Agent çağrısı); `StockFlow/ViewModels/**` dosyası iki pakette birden geçiyorsa paralel başlatma.
 
-Kanıtla kapıla: rolün raporu red → green test kanıtını ve geçen done gate'i (`dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`) içermeden ilerleme. Raporlanan bloker, eksik bağımlılık, LocalDB ortam hatası veya başarısız gate insana gider — etrafından dolaşma.
+Kanıtla kapıla: rolün raporu red → green test kanıtını ve geçen done gate'i (`dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`) içermeden ilerleme. Raporlanan bloker, eksik bağımlılık, Docker/test konteyneri ortam hatası veya başarısız gate insana gider — etrafından dolaşma.
 
 **Onaylı değişiklikler** (`StockFlow/Program.cs` DI kaydı, csproj, appsettings): implementer'lar bunları bağımlılık olarak raporlar. Tam değişikliği insana göster, onayıyla ana oturumda uygula (guard onay sorar).
 

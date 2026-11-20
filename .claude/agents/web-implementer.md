@@ -23,7 +23,7 @@ Görev bir tasarıma (`docs/designs/…`) atıf yapıyorsa önce onu oku ve **ya
 1. En yakın mevcut kodu oku ve taklit et (yapı, adlandırma, hata eşlemesi, testler); yeni ekran için `add-management-slice` Web paketi adımlarını izle; `.claude/rules/web-layer.md` ve `security.md` geçerlidir.
 2. Önce testi yaz veya genişlet (Controller testi DB'siz, Service test double'ı ile); `dotnet test StockFlow.Tests/StockFlow.Tests.csproj --no-restore --filter "FullyQualifiedName~<Ad>Tests"` çalıştır ve doğru nedenle kırıldığını doğrula.
 3. En küçük değişikliği uygula; yeşile kadar yeniden çalıştır.
-4. Sonda bir kez done gate: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. Senin neden olduğun her hatayı düzelt; LocalDB ortam hatasını düzeltmeye çalışma, raporla.
+4. Sonda bir kez done gate: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. Senin neden olduğun her hatayı düzelt; Docker/test konteyneri ortam hatasını düzeltmeye çalışma, raporla.
 
 ## Final rapor (devrin)
 

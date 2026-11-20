@@ -42,4 +42,4 @@ paths:
 
 ## Testler
 
-- Service testleri `SqlServerDatabaseTestBase` üzerinden gerçek LocalDB kullanır (`StockFlow.Tests/Services/CategoryServiceTests.cs:13`); bağımlılıksız planner/policy sınıfları veritabanısız test edilir (`StockFlow.Tests/Services/OrderStockConfirmationPlannerTests.cs`).
+- Service testleri `SqlServerDatabaseTestBase` üzerinden Testcontainers MSSQL konteynerindeki gerçek SQL Server'ı kullanır (`.claude/rules/testing.md` › Veritabanı) (`StockFlow.Tests/Services/CategoryServiceTests.cs:13`); bağımlılıksız planner/policy sınıfları veritabanısız test edilir (`StockFlow.Tests/Services/OrderStockConfirmationPlannerTests.cs`).

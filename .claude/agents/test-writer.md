@@ -30,6 +30,6 @@ StockFlow'un **test yazarı**sın. Yalnız test dosyası değil; derlenen, çal�
 ## Final rapor (devrin)
 
 1. Eklenen her test, her biri tek satır: senaryo → beklenti.
-2. `dotnet test StockFlow.Tests/StockFlow.Tests.csproj --no-restore --filter "FullyQualifiedName~<Ad>Tests"` ve done gate (`dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`) özeti; LocalDB ortam hatası ayrıca belirtilir.
+2. `dotnet test StockFlow.Tests/StockFlow.Tests.csproj --no-restore --filter "FullyQualifiedName~<Ad>Tests"` ve done gate (`dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`) özeti; Docker/test konteyneri ortam hatası ayrıca belirtilir.
 3. **Üretim kodu bulguları** (hatalar, test edilemeyen dallar, spesifikasyon uyumsuzlukları) ayrı bir bölüm olarak.
 4. "PR'a hazır".

@@ -32,4 +32,4 @@ paths:
 
 ## Testler
 
-- Veritabanına dokunan Data testleri `SqlServerDatabaseTestBase`'den türer (izole `SqlServerTestDatabase`); uygulama bağlantı ayarlarını okumaz (ADR-0002). Seeder kapıları için veritabanısız test: `StockFlow.Tests/Data/DemoDataSeederGateTests.cs`.
+- Veritabanına dokunan Data testleri `SqlServerDatabaseTestBase`'den türer (izole `SqlServerTestDatabase`); uygulama bağlantı ayarlarını okumaz; veritabanı Testcontainers MSSQL test konteynerindedir ([ADR-0009](../../docs/adr/0009-testcontainers-mssql-test-databases.md), ayrıntı `.claude/rules/testing.md` › Veritabanı). Seeder kapıları için veritabanısız test: `StockFlow.Tests/Data/DemoDataSeederGateTests.cs`.

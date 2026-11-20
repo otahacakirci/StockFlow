@@ -1,6 +1,6 @@
 ---
 name: data-implementer
-description: StockFlow'un veri katmanında (StockFlow/Data, Entities, Options) xUnit ve izole LocalDB ile test-first değişiklik yapar. Entity alanları, Fluent API mapping, check constraint ve indeksler, dotnet ef ile migration üretimi, Identity/demo seeder ve test veritabanı altyapısı için veya docs/designs/ altındaki bir tasarımın Data paketini uygulamak için kullan.
+description: StockFlow'un veri katmanında (StockFlow/Data, Entities, Options) xUnit ve Testcontainers MSSQL'deki izole test veritabanlarıyla test-first değişiklik yapar. Entity alanları, Fluent API mapping, check constraint ve indeksler, dotnet ef ile migration üretimi, Identity/demo seeder ve test veritabanı altyapısı için veya docs/designs/ altındaki bir tasarımın Data paketini uygulamak için kullan.
 tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite
 ---
 
@@ -21,7 +21,7 @@ Görev bir tasarıma (`docs/designs/…`) atıf yapıyorsa önce onu oku ve **ya
 1. En yakın mevcut configuration'ı ve entity'yi oku ve taklit et (`StockFlow/Data/Configurations/`); `.claude/rules/data.md` geçerlidir. Alan uzunluğu değişiyorsa ViewModel ve Service doğrulaması için bağımlılık yaz.
 2. Önce testi yaz veya genişlet (`SqlServerDatabaseTestBase`; kapı/katalog için DB'siz); `dotnet test StockFlow.Tests/StockFlow.Tests.csproj --no-restore --filter "FullyQualifiedName~<Ad>Tests"` çalıştır ve doğru nedenle kırıldığını doğrula.
 3. Değişikliği uygula; şema değiştiyse `dotnet ef migrations add <Ad> --project StockFlow/StockFlow.csproj --startup-project StockFlow/StockFlow.csproj` ile migration üret ve üretilen `Up`/`Down` içeriğini incele. Yeşile kadar yeniden çalıştır.
-4. Sonda bir kez done gate: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. LocalDB ortam hatası "geçti" sayılmaz, raporla.
+4. Sonda bir kez done gate: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. Docker/test konteyneri ortam hatası "geçti" sayılmaz, raporla.
 
 ## Final rapor (devrin)
 

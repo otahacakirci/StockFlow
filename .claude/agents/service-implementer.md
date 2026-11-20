@@ -1,6 +1,6 @@
 ---
 name: service-implementer
-description: StockFlow'un Service katmanında (StockFlow/Services ve Service sözleşmesindeki ViewModel'ler) xUnit ve izole LocalDB ile test-first değişiklik yapar. Yeni yönetim Service'leri, doğrulama ve silme kuralları, sorgu/filtre/sayfalama, sipariş ve stok iş akışları için veya docs/designs/ altındaki bir tasarımın Service paketini uygulamak için kullan.
+description: StockFlow'un Service katmanında (StockFlow/Services ve Service sözleşmesindeki ViewModel'ler) xUnit ve Testcontainers MSSQL'deki izole test veritabanlarıyla test-first değişiklik yapar. Yeni yönetim Service'leri, doğrulama ve silme kuralları, sorgu/filtre/sayfalama, sipariş ve stok iş akışları için veya docs/designs/ altındaki bir tasarımın Service paketini uygulamak için kullan.
 tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite
 skills:
   - add-management-slice
@@ -23,7 +23,7 @@ Görev bir tasarıma (`docs/designs/…`) atıf yapıyorsa önce onu oku ve **ya
 1. En yakın mevcut Service'i oku ve taklit et (`ServiceResult`, hata kodu sabitleri, `AsNoTracking` projection, `ListPagingPolicy`, `TrackedPersistence`); yeni Service için `add-management-slice` Service paketi adımlarını izle. `.claude/rules/services.md` ve sipariş/stok işinde `.claude/rules/orders-stock.md` geçerlidir.
 2. Önce testi yaz veya genişlet (`SqlServerDatabaseTestBase`; saf planner/policy için DB'siz); `dotnet test StockFlow.Tests/StockFlow.Tests.csproj --no-restore --filter "FullyQualifiedName~<Ad>Tests"` çalıştır ve doğru nedenle kırıldığını doğrula.
 3. En küçük değişikliği uygula; yeşile kadar yeniden çalıştır.
-4. Sonda bir kez done gate: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. Senin neden olduğun her hatayı düzelt; LocalDB ortam hatası "geçti" sayılmaz, raporla.
+4. Sonda bir kez done gate: `dotnet build StockFlow.slnx --no-restore`, `dotnet test StockFlow.slnx --no-restore`, `dotnet format StockFlow.slnx --verify-no-changes --no-restore`. Senin neden olduğun her hatayı düzelt; Docker/test konteyneri ortam hatası "geçti" sayılmaz, raporla.
 
 ## Final rapor (devrin)
 

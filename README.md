@@ -33,8 +33,8 @@ StockFlow; küçük ve orta ölçekli işletmeler için kategori, ürün, müşt
 - ASP.NET Core MVC, Razor ve Bootstrap
 - ASP.NET Core Identity ve güvenli cookie oturumu
 - EF Core 10 ve Microsoft SQL Server provider
-- SQL Server LocalDB veya desteklenen tam SQL Server örneği
-- xUnit ve `Microsoft.AspNetCore.Mvc.Testing`
+- SQL Server LocalDB veya desteklenen tam SQL Server örneği (uygulama veritabanı)
+- xUnit, `Microsoft.AspNetCore.Mvc.Testing` ve Testcontainers (MSSQL)
 
 Uygulama tek MVC hostu içinde çalışır. Controller sınıfları doğrudan `ApplicationDbContext` kullanmaz; HTTP giriş/çıkışları ViewModel, iş ve stok kuralları Service katmanı üzerinden yürütülür.
 
@@ -44,8 +44,9 @@ Uygulama tek MVC hostu içinde çalışır. Controller sınıfları doğrudan `A
 - Windows geliştirme ortamında SQL Server LocalDB veya erişilebilir bir SQL Server örneği
 - PowerShell 5.1 ya da PowerShell 7
 - HTTPS geliştirme sertifikası
+- Testler için Docker: Windows'ta Linux konteyner modunda Docker Desktop, Linux'ta Docker Engine (`linux/amd64`; yaklaşık 2 GB boş bellek)
 
-LocalDB, yerel geliştirme ve test için önerilir. Tam SQL Server kullanılırken bağlantı hesabının mevcut `StockFlow` veritabanında migration uygulama yetkisi bulunmalıdır. LocalDB production veya çok kullanıcılı deployment hedefi değildir.
+LocalDB, uygulamanın yerel geliştirme veritabanı için önerilir; testler LocalDB kullanmaz. Tam SQL Server kullanılırken bağlantı hesabının mevcut `StockFlow` veritabanında migration uygulama yetkisi bulunmalıdır. LocalDB production veya çok kullanıcılı deployment hedefi değildir.
 
 ## İlk kurulum
 
@@ -162,7 +163,9 @@ git diff --check
 git status --short
 ```
 
-Veritabanına dokunan testler yalnız `(localdb)\MSSQLLocalDB` üzerinde, test başına benzersiz `StockFlow_Tests_<guid>` veritabanı oluşturur; migration uygular ve test sonunda yalnız bu geçici veritabanını siler. Test altyapısı uygulamanın bağlantı ayarlarını veya User Secrets değerlerini okumaz. LocalDB kullanılamıyorsa testler geliştirme veritabanına ya da EF Core InMemory sağlayıcısına geri dönmeden açıkça başarısız olur.
+Veritabanına dokunan testler, test koşusu başına bir kez başlatılan SQL Server konteynerinde (Testcontainers, `mcr.microsoft.com/mssql/server:2022-CU28-ubuntu-22.04`) çalışır. Her test benzersiz bir `StockFlow_Tests_<guid>` veritabanı oluşturur, migration uygular ve test sonunda yalnız bu geçici veritabanını siler. Konteynerin `sa` parolası her koşuda üretilir; kaynak kodda veya kaynak kontrollü yapılandırma dosyalarında durmaz. Koşu sonunda konteyneri Testcontainers kaldırır. İlk koşu imajı indirdiği için daha uzun sürer.
+
+Test altyapısı uygulamanın bağlantı ayarlarını veya User Secrets değerlerini okumaz. Docker kurulu değilse veya konteyner başlamazsa veritabanı testleri "ortam hatası" mesajıyla açıkça başarısız olur; LocalDB'ye, geliştirme veritabanına ya da EF Core InMemory sağlayıcısına geri dönülmez ve testler atlanmaz. Karar: [ADR-0009](docs/adr/0009-testcontainers-mssql-test-databases.md).
 
 ## Veri ve migration notları
 
