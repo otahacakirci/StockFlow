@@ -30,12 +30,6 @@ public sealed class HomeController(
         return View(result.Value);
     }
 
-    [HttpGet]
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     [AllowAnonymous]
     public IActionResult Error()

@@ -41,6 +41,9 @@ $forbiddenPathRules = [ordered]@{
     'CertificateOrPrivateKey' = '\.(pfx|p12|pem|key)$'
     'LocalDatabaseFile' = '\.(mdf|ldf|ndf)$'
     'GeneratedTestOrLogOutput' = '\.(trx|coverage|coveragexml|log)$'
+    'OfficeLockFile' = '(^|/)~\$'
+    'GeneratedDgmlDiagram' = '\.dgml$'
+    'PresentationBinaryBundle' = '^docs/presentation/'
 }
 
 foreach ($file in $candidateFiles) {

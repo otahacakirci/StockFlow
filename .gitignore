@@ -37,6 +37,10 @@ secrets.json
 *.ldf
 *.ndf
 
+# Office lock files and generated diagrams
+~$*
+*.dgml
+
 # OS metadata
 .DS_Store
 Thumbs.db
