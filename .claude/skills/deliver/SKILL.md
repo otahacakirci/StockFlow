@@ -11,7 +11,7 @@ Bu teslimatın **lider**isin. Koordine edersin; uzmanlar işi kendi bağlamları
 
 ## 0. Ön kontrol
 
-- `git status` ve dalı kontrol et. `main` üzerindeysen önce iş dalını aç: `git switch -c <tür>/<kısa-konu>` (`feat`, `fix`, `refactor`, `test`, `docs`, `chore`). Çalışma ağacında ilgisiz değişiklik varsa her şeyden önce insana nasıl ilerleneceğini sor.
+- `git status` ve dalı kontrol et. `main` üzerindeysen veya mevcut dal zaten birleşmişse önce `git fetch origin`, sonra iş dalını güncel uzak tabandan aç: `git switch -c <tür>/<kısa-konu> origin/main` (`feat`, `fix`, `refactor`, `test`, `docs`, `chore`). Diff ve karşılaştırmaları `origin/main` ile yap; yerel `main` birleşmiş PR'ların gerisinde olabilir. Çalışma ağacında ilgisiz değişiklik varsa her şeyden önce insana nasıl ilerleneceğini sor.
 - İnsanın izleyebilmesi için aşağıdaki aşamalarla bir görev listesi oluştur.
 
 ## 1. Tasarım — sonra onay için DUR
