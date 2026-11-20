@@ -15,6 +15,7 @@ Değişiklikleri küçük, izlenebilir ve istenen kapsamla sınırlı tutar; inc
 - Açık onay olmadan dosya silme.
 - Elle düzenlenmeyen dosyalar: `StockFlow/Data/Migrations/*.Designer.cs`, `StockFlow/Data/Migrations/ApplicationDbContextModelSnapshot.cs` (`dotnet ef` üretir) ve `StockFlow/wwwroot/lib/**` (üçüncü taraf; `.gitattributes`).
 - `docs/roadmap.md` önerilen yönü anlatır; bir roadmap maddesini yalnız `docs/product-spec.md` › 10.1'de fazı `Açık` ise ve fazın gereksinimleri spec'e işlendiyse uygula.
+- Yeni paket veya sürüm yükseltmesi önerirken en son sürüm 14 günden yeniyse önceki kararlı sürümü öner ve yayın tarihini insana göster; paket ekleme zaten insan onayı ister (`CLAUDE.md` › Ajan sistemi). Kaynak: issue #9 / PR #89 insan kararı (Testcontainers.MsSql 4.17.0 dört günlüktü, 4.16.0 seçildi — `StockFlow.Tests/StockFlow.Tests.csproj:15`).
 
 ## Dokümantasyon
 
