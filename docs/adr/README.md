@@ -2,7 +2,7 @@
 title: "StockFlow Mimari Karar Kayıtları"
 status: active
 authority: decision-process
-last_reviewed: "2026-08-18"
+last_reviewed: "2026-11-20"
 review_triggers:
   - adr-process-change
 ---
@@ -34,3 +34,4 @@ Başka durum değeri kullanılmaz.
 | [0001](0001-ai-context-source-of-truth.md) | Superseded | Ajan bağlamının Markdown kanonik kaynak ve modüler belgelerle yönetilmesi (yerine 0003) |
 | [0002](0002-isolated-localdb-test-databases.md) | Accepted | Veritabanına dokunan xUnit testlerinin test başına benzersiz ve güvenlik kontrollü LocalDB veritabanı kullanması |
 | [0003](0003-claude-code-agentic-layer.md) | Accepted | Ajan bağlamının `CLAUDE.md` ve `.claude/` kurallar, skill'ler, roller ve guardrail hook'larıyla yönetilmesi; eski `AGENTS.md`/`docs/ai/` sisteminin kaldırılması |
+| [0004](0004-product-spec-v2-phase-gated-scope.md) | Accepted | Ürün sözleşmesi v2: kapsamın `product-spec.md` § 10.1 faz kapılarıyla açılması, kalıcı kapsam dışı ve faz kapılı bileşen ayrımı |

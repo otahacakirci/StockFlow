@@ -17,7 +17,7 @@ argument-hint: "[GitHub issue numarası, URL veya kısa açıklama]"
 ## 2. Kodu ve sözleşmeyi denetle
 
 - Bugünkü davranışı koddan ve testlerden oku; kapsam/iş kuralı değişiyorsa `docs/product-spec.md` ilgili bölümünü (› 4 roller, › 5 gereksinimler, › 6 veri, › 7 sipariş/stok, › 9 kabul senaryoları), kalıcı kararlar için `docs/adr/` oku.
-- İstek `docs/product-spec.md` kapsamında mı? Değilse (ör. roadmap maddesi, JWT, yeni domain kavramı) bu bir **kapsam değişikliği bulgusudur**: tasarım önce spesifikasyon/ADR güncellemesini ve kullanıcı onayını paket olarak listeler.
+- İstek `docs/product-spec.md` kapsamında mı? Değilse (ör. fazı `Kapalı` roadmap maddesi, › 10.3 kalıcı kapsam dışı bileşen, yeni domain kavramı) bu bir **kapsam değişikliği bulgusudur**: tasarım önce spesifikasyon/ADR güncellemesini ve kullanıcı onayını paket olarak listeler. Faz kapılı istekte › 10.1 durumunu ve fazın FR/AC'lerinin spec'te olup olmadığını denetle.
 - Aynı alana dokunan Controller, Service, ViewModel, View, Entity, Configuration ve testleri bul (`StockFlow/`, `StockFlow.Tests/`).
 - Hangi kurallar geçerli: `.claude/rules/web-layer.md`, `services.md`, `orders-stock.md`, `data.md`, `testing.md`, `security.md`. Bölüm adlarını ver.
 - Şema değişikliği var mı (yeni migration)? `Program.cs`, csproj veya `appsettings*.json` değişikliği var mı? Bunlar insan onayı ister; tasarımda ayrı kalem olarak işaretle.

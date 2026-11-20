@@ -6,3 +6,7 @@
 /docs/adr/                @otahacakirci
 /scripts/                 @otahacakirci
 # <<< agent configuration and guardrails <<<
+
+# Ürün sözleşmesi ve faz kapıları (ADR-0004): kapsamı açan değişiklikler proje sahibinin incelemesini gerektirir.
+/docs/product-spec.md     @otahacakirci
+/docs/roadmap.md          @otahacakirci

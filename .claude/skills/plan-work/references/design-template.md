@@ -41,7 +41,7 @@
 
 ## Onaylı değişiklikler
 
-<`Program.cs` DI kaydı, csproj/paket, appsettings, product-spec/ADR/docs-ai güncellemeleri — insan onayıyla ana oturumda yapılır.>
+<`Program.cs` DI kaydı, csproj/paket, appsettings, product-spec/ADR/README/`docs/database-schema.md` güncellemeleri — insan onayıyla ana oturumda yapılır.>
 
 ## Test planı
 

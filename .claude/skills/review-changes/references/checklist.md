@@ -62,4 +62,4 @@ Yalnız dosyaları değişen bölümleri uygula. Her madde kaynağı olan kurala
 | Z3 | Üretilmiş, vendor veya secret dosyası elle düzenlenmemiş; onaysız silme yok; secret/bağlantı dizesi yok | `CLAUDE.md` › Asla yapma, `.claude/rules/security.md` |
 | Z4 | Build + test geçiyor; `dotnet format --verify-no-changes` temiz | `CLAUDE.md` › Komutlar |
 | Z5 | Dokümantasyon tablosu uygulanmış (README, `docs/database-schema.md`, ADR, ilgili kural) | `.claude/rules/editing-discipline.md` › Dokümantasyon |
-| Z6 | Kapsam dışı bileşen listesinden hiçbir şey eklenmemiş (paket, katman, framework) | `CLAUDE.md` › Değişmez proje sınırları |
+| Z6 | Kalıcı kapsam dışı bileşen eklenmemiş; faz kapılı bileşen yalnız fazı `Açık` ise eklenmiş (paket, katman, framework) | `CLAUDE.md` › Değişmez proje sınırları, `docs/product-spec.md` › 10.1 |

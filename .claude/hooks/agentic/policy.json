@@ -63,7 +63,7 @@
       },
       {
         "pattern": "\\bdotnet\\s+((add|remove)\\b.*\\b(package|reference)\\b|package\\s+(add|remove|update)\\b)",
-        "reason": "Adding or removing packages/references is a scope and supply-chain decision (CLAUDE.md: no out-of-scope components without an explicit scope change)."
+        "reason": "Adding or removing packages/references is a scope and supply-chain decision (CLAUDE.md, docs/product-spec.md 10.1/10.3: permanently out-of-scope components never, phase-gated components only while their phase is open)."
       },
       {
         "pattern": "\\bdotnet\\s+(tool\\s+(install|uninstall|update)|new\\s+tool-manifest)\\b",

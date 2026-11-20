@@ -14,7 +14,7 @@ Değişiklikleri küçük, izlenebilir ve istenen kapsamla sınırlı tutar; inc
 
 - Açık onay olmadan dosya silme.
 - Elle düzenlenmeyen dosyalar: `StockFlow/Data/Migrations/*.Designer.cs`, `StockFlow/Data/Migrations/ApplicationDbContextModelSnapshot.cs` (`dotnet ef` üretir) ve `StockFlow/wwwroot/lib/**` (üçüncü taraf; `.gitattributes`).
-- `docs/roadmap.md` önerilen yönü anlatır; `docs/product-spec.md` v2'ye işlenmeden roadmap maddelerini uygulama.
+- `docs/roadmap.md` önerilen yönü anlatır; bir roadmap maddesini yalnız `docs/product-spec.md` › 10.1'de fazı `Açık` ise ve fazın gereksinimleri spec'e işlendiyse uygula.
 
 ## Dokümantasyon
 

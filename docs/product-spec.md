@@ -2,7 +2,7 @@
 title: "StockFlow Proje Tanıtımı ve Özellik Spesifikasyonu"
 status: active
 authority: normative
-last_reviewed: "2026-09-03"
+last_reviewed: "2026-11-20"
 review_triggers:
   - product-scope-change
   - domain-rule-change
@@ -10,7 +10,7 @@ review_triggers:
   - target-architecture-change
 ---
 
-> **Kaynak ve yetki:** Bu Markdown dosyası yapay zekâ ajanları ve geliştiriciler için operasyonel kanonik ürün sözleşmesidir. [StockFlow_Proje_Tanitim_ve_Ozellikler.docx](./StockFlow_Proje_Tanitim_ve_Ozellikler.docx) sürüm 1.1 kaynak anlık görüntüsü olarak korunur. Ürün kapsamı değiştiğinde bu dosya güncellenir; DOCX kendiliğinden güncel kabul edilmez.
+> **Kaynak ve yetki:** Bu Markdown dosyası yapay zekâ ajanları ve geliştiriciler için operasyonel kanonik ürün sözleşmesidir. [StockFlow_Proje_Tanitim_ve_Ozellikler.docx](./StockFlow_Proje_Tanitim_ve_Ozellikler.docx) sürüm 1.1 kaynak anlık görüntüsü olarak korunur. Sürüm 2.0 ve sonrası yalnız bu Markdown dosyasındadır; DOCX v1.1 anlık görüntüsüdür ve kendiliğinden güncel kabul edilmez.
 
 > KAPSAM VE GEREKSİNİM BELGESİ
 
@@ -22,11 +22,18 @@ Belge amacı: StockFlow'un ne olduğunu, ne yapması gerektiğini ve hangi sın�
 
 Hedef okuyucu: Projeyi daha sonra geliştirecek yapay zekâ veya teknik uygulayıcı
 
-Kapsam düzeyi: Zorunlu MVP, kabul ölçütleri, bonuslar ve açık kapsam dışı maddeler
+Kapsam düzeyi: Zorunlu MVP, kabul ölçütleri, faz kapılı portföy kapsamı, bonus eşlemesi ve kalıcı kapsam dışı maddeler
 
-Sürüm: 1.1 - 18 Ağustos 2026
+Sürüm: 2.0 - 20 Kasım 2026
 
-> Belgenin sınırı: Bu belge projenin ne olduğunu tanımlar. Günlük çalışma planı, öğrenme rotası, uygulama sırası, kod, pseudocode, klasör ağacı veya dosya bazlı görev içermez.
+> Belgenin sınırı: Bu belge projenin ne olduğunu ve hangi faz kapısı açıkken neyin kapsamda olduğunu tanımlar. Faz sırası ve kapı koşulları normatiftir (§ 10.1). Günlük çalışma planı, öğrenme rotası, kod, pseudocode, klasör ağacı veya dosya bazlı görev içermez; ayrıntılı uygulama önerileri [roadmap.md](roadmap.md) içindedir ve normatif değildir.
+
+_Sürüm geçmişi ve yetki kaydı_
+
+| Sürüm | Tarih | Değişiklik özeti | Yetkilendiren |
+| --- | --- | --- | --- |
+| 1.1 | 18 Ağustos 2026 | Zorunlu MVP sözleşmesi, kabul senaryoları ve bonus backlog | Proje sahibi |
+| 2.0 | 20 Kasım 2026 | Faz kapılı portföy kapsamı (§ 10.1), OKUMA-04, SCOPE-03/04, faz kapılı teknolojiler (§ 3.1), kalıcı kapsam dışı liste (§ 10.3); § 4–9 MVP davranış maddeleri değişmedi ([ADR-0004](adr/0004-product-spec-v2-phase-gated-scope.md)) | Proje sahibi ([issue #2](https://github.com/otahacakirci/StockFlow/issues/2)) |
 
 Temel değer önerisi
 
@@ -43,7 +50,7 @@ StockFlow'un değeri ekran sayısından değil; sipariş onayı sırasında stok
 7. [Sipariş ve Stok Sözleşmeleri](#7-sipariş-ve-stok-sözleşmeleri)
 8. [Kalite ve İşletim Gereksinimleri](#8-kalite-ve-işletim-gereksinimleri)
 9. [Kabul Senaryoları](#9-kabul-senaryoları)
-10. [Bonus Kapsam ve Açık Sınırlar](#10-bonus-kapsam-ve-açık-sınırlar)
+10. [Portföy Fazları, Bonus Eşlemesi ve Açık Sınırlar](#10-portföy-fazları-bonus-eşlemesi-ve-açık-sınırlar)
 11. [Terimler ve Nihai Kabul Listesi](#11-terimler-ve-nihai-kabul-listesi)
 
 ### Belgenin normatif dili
@@ -54,6 +61,8 @@ OKUMA-02 [BONUS] Yalnızca zorunlu MVP temiz biçimde doğrulandıktan sonra aç
 
 OKUMA-03 [KAPSAM DIŞI] Belirtilen teknoloji veya özellik, ayrıca kapsam değişikliği yapılmadıkça projeye eklenmemelidir.
 
+OKUMA-04 [FAZ n] Yalnızca § 10.1 Faz kapıları tablosunda durumu `Açık` olan faz içinde uygulanabilen kapsamı ifade eder. Durumu `Kapalı` olan fazın kapsamı, ilgili kapı açılana kadar [KAPSAM DIŞI] gibi değerlendirilir.
+
 > Yorumlama kuralı: Belge içinde çelişki oluşursa kritik iş kuralları ve kabul senaryoları, genel tanıtım cümlelerinden daha bağlayıcıdır.
 
 ## 1. Yönetici Özeti
@@ -61,6 +70,8 @@ OKUMA-03 [KAPSAM DIŞI] Belirtilen teknoloji veya özellik, ayrıca kapsam deği
 StockFlow; küçük veya orta ölçekli bir işletmenin kategori, ürün, tedarikçi, müşteri, satın alma siparişi, satış siparişi ve stok hareketlerini yöneten web tabanlı bir mini ERP uygulamasıdır. Sistem; yönetim ekranlarını, kimlik doğrulamayı ve raporlamayı tek bir ASP.NET Core MVC uygulamasında birleştirir.
 
 Uygulamanın merkezi davranışı sipariş yaşam döngüsüdür. Sipariş önce Draft olarak oluşturulur; Draft aşamasında stok değişmez. Geçerli bir onay işlemi Sale için stoğu azaltır, Purchase için artırır ve her değişikliği StockMovement geçmişine yazar. Onay başarısız olursa hiçbir kısmi değişiklik kalmaz.
+
+Sürüm 2.0 ile zorunlu MVP sözleşmesi (§ 4–9) olduğu gibi bağlayıcı kalır; MVP'nin ötesindeki portföy kapsamı (veri bütünlüğü ve eşzamanlılık, proje ayrımı, envanter domain derinliği, REST API, hibrit arayüz, üretim kalitesi) yalnız § 10.1'deki faz kapıları sırayla açıldıkça kapsama girer.
 
 > Başarı tanımı: Kimlik ve rol ayrımı, ilişkisel veri bütünlüğü, güvenli sipariş geçişleri, atomik stok etkisi, sorgulanabilir hareket geçmişi, anlamlı dashboard ve kritik xUnit kanıtları birlikte çalışıyorsa MVP başarılıdır.
 
@@ -88,9 +99,13 @@ Temiz kurulum, migration, örnek yapılandırma ve tekrarlanabilir demo/kabul da
 
 ### 2.2 Öncelik kapısı
 
-SCOPE-01 [ZORUNLU] Sipariş onayı ve stok hareketi doğru çalışmıyorsa API, Swagger/OpenAPI, Docker veya deployment kapsamı açılmamalıdır.
+SCOPE-01 [ZORUNLU] Sipariş onayı ve stok hareketi doğru çalışmıyorsa API, Swagger/OpenAPI, uygulama konteynerleştirme (Docker) veya deployment kapsamı açılmamalıdır. Test altyapısında Docker kullanımı (Testcontainers) bu maddeye girmez; Faz 0 kapsamıdır.
 
 SCOPE-02 [ZORUNLU] Bonus geliştirmeler zorunlu MVP'nin davranışını veya MVC akışını bozmamalıdır.
+
+SCOPE-03 [ZORUNLU] Faz n ancak (a) Faz n-1'in § 10.1'deki çıkış kanıtı yeşilse, (b) faza bağlı ADR'ler `Accepted` durumundaysa ve (c) fazın durumunu `Açık` yapan değişiklik insan onaylı bir pull request ile birleşmişse açılır.
+
+SCOPE-04 [ZORUNLU] [roadmap.md](roadmap.md) tek başına kapsam gerekçesi değildir; bir roadmap maddesi yalnız fazı § 10.1'de `Açık` ise ve gereksinimleri bu belgeye işlendiyse uygulanır.
 
 ## 3. Teknoloji ve Mimari
 
@@ -111,11 +126,27 @@ _Tablo 1. Zorunlu teknoloji seti_
 | xUnit | Test | Sipariş ve stok kurallarının otomatik kanıtı |
 | Git + GitHub | Sürüm kontrolü | Okunabilir ve izlenebilir değişiklik geçmişi |
 
+_Tablo 1a. Faz kapılı teknolojiler (yalnız ilgili faz § 10.1'de `Açık` iken eklenir)_
+
+| Teknoloji | Faz | Bu projedeki işlev |
+| --- | --- | --- |
+| Testcontainers (MSSQL) | Faz 0 | İlişkisel testlerin Linux/CI üzerinde gerçek SQL Server ile çalışması |
+| GitHub Actions | Faz 0 | Build, test, format, guard ve depo hijyeni CI kontrolü |
+| NetArchTest | Faz 2 | 4 projeli yapıda bağımlılık yönünün testle zorlanması |
+| JWT Bearer + Refresh Token | Faz 4 | `/api/v1` için kimlik doğrulama (MVC ekranları cookie ile kalır) |
+| OpenAPI + Scalar/Swagger UI | Faz 4 | API sözleşme keşfi ve deneme |
+| ASP.NET Core rate limiting | Faz 4 | API uçlarının kötüye kullanıma karşı korunması |
+| Chart.js veya ApexCharts | Faz 5 | Etkileşimli dashboard grafikleri |
+| Docker / docker compose | Faz 6 | Uygulama ve SQL Server ortamının tek komutla tekrarı |
+| Serilog ve health checks | Faz 6 | Yapılandırılmış JSON log ve canlılık/hazırlık uçları |
+
 
 
 > Mimari ilke: Teknoloji seçimi, projenin mevcut problemini çözmelidir. MVP kapsamı, sırf popüler olduğu için yeni katman veya altyapı bileşeni eklenerek genişletilmez.
 
 ### 3.2 Mimari sorumluluklar
+
+Bu bölüm bugünkü tek ASP.NET Core MVC projesini tarif eder. Hedef yalın 4 projeli modüler monolit (`StockFlow.Domain`, `StockFlow.Application`, `StockFlow.Infrastructure`, `StockFlow.Web`) § 10.1 Faz 2 kapsamıdır; bu tablo, ARCH-01/02 ifadesi ve Şekil 1 Faz 2 kapısını açan değişiklikte yeniden yazılır.
 
 _Tablo 2. Bileşen sorumlulukları_
 
@@ -545,25 +576,45 @@ Olay: Belgelenmiş yapılandırma, migration, build, test ve run akışı uygula
 
 Beklenen: Uygulama açılır, seed işlemi kopya üretmez ve kritik xUnit paketi production verisine dokunmadan geçer.
 
-## 10. Bonus Kapsam ve Açık Sınırlar
+## 10. Portföy Fazları, Bonus Eşlemesi ve Açık Sınırlar
 
-### 10.1 Bonus backlog
+### 10.1 Faz kapıları
 
-_Tablo 9. MVP sonrası bonuslar_
+_Tablo 9. Faz kapıları_
 
-| Bonus | Başlama koşulu | Çözdüğü problem |
-| --- | --- | --- |
-| Salt-okunur ürün API | MVP regresyonu temiz | MVC View ile JSON response farkı |
-| Swagger/OpenAPI | API endpoint'leri hazır | Sözleşme keşfi ve deneme |
-| Optimistic concurrency | Temel confirm testleri temiz | Aynı stoğu onaylayan eşzamanlı istekler |
-| Manuel stock adjustment | StockMovement audit'i stabil | Admin düzeltmesi ve Adjustment türü |
-| Docker | Kurulum tanımı doğrulanmış | Uygulama ve SQL Server ortamının tekrarı |
-| Deployment | Docker veya yerel yayın paketi hazır | Secret, migration ve ortam kontrolleri |
-| Geniş integration testleri | Kritik service testleri stabil | SQL Server davranışının daha gerçekçi kanıtı |
+| Faz | Durum | Açılan kapsam ve bileşenler | Bağlı ADR'ler | Değiştireceği mevcut gereksinimler | Çıkış kanıtı |
+| --- | --- | --- | --- | --- | --- |
+| Faz 0 — Zemin, sözleşme v2, depo hijyeni, CI | Açık | Ürün sözleşmesi v2 ve ajan kütüphanesinin uyarlanması; Testcontainers (MSSQL) ve GitHub Actions CI; `main` branch protection; depo hijyeni; `System.Security.Cryptography.Pkcs` NU1902/NU1903 uyarılarının giderilmesi; 4 mühendislik ADR'si (4 projeli mimari, stok eşzamanlılık stratejisi, Sale/Purchase model kararı, hibrit Cookie + JWT) | ADR-0004; ADR-0002'nin yerine geçecek test altyapısı ADR'si | ADR-0002 (yerine geçen ADR ile) | Ubuntu CI'da 0 hata, 0 uyarı ve tüm testler yeşil; format, guard testleri ve depo hijyeni temiz; `main` branch protection etkin |
+| Faz 1 — Veri bütünlüğü, eşzamanlılık, stok defteri | Kapalı | `RowVersion`/optimistic concurrency ve çakışmada güvenli 409; SQL unique/FK ihlallerinin tipli sonuca eşlenmesi; opsiyonel `StockMovement.OrderId`; genişletilmiş `StockMovementType` ve `OpeningBalance`; tüm yetersiz stok kalemlerinin raporlanması; insan-okunur sıralı sipariş numarası; tutarlı UTC `DateTimeOffset` | Stok eşzamanlılık stratejisi ADR'si | FR-PROD-07, FR-STOCK-05/06, § 6 Tablo 4 (StockMovement), § 6.1, § 10.3 "optimistic concurrency" | Paralel eşzamanlı onay testleri (overselling ve çift onay imkânsız) ve "hareket net toplamı = mevcut stok" defter mutabakat testi |
+| Faz 2 — Proje ayrımı, zengin domain, DRY | Kapalı | Yalın 4 projeli modüler monolit (`Domain`, `Application`, `Infrastructure`, `Web`) ve NetArchTest; Service katmanından ViewModel bağımlılığının kaldırılması; zengin domain davranışları; DRY temizliği; ajan sistemi rol/kapsam güncellemesi | 4 projeli mimari ADR'si | § 3.2 Tablo 2, ARCH-01/02 ifadesi, Şekil 1 | NetArchTest kuralları yeşil; mevcut davranışta sıfır regresyon; ajan kurulum doğrulayıcısı ve guard testleri yeşil |
+| Faz 3 — Envanter domain derinliği | Kapalı | Alış maliyeti / ağırlıklı ortalama maliyet (`UnitCost`, `SalePrice`) ve stok değerlemesi; çoklu depo ve atomik transfer; audit kayıtlı sayım/düzeltme; onaylı sipariş iadesi (ters kayıt) ve düşük stoktan satın alma taslağı | Sale/Purchase model kararı ADR'si | FR-PROD-02/04, FR-PROD-07, FR-ORD-05, § 6.2, BR-STATE-03, § 10.3 "depo transferi, reversal, Manual Adjustment" | Saf domain unit testleri; çoklu depo, maliyet ve ters kayıt için SQL Server atomiklik/defter mutabakat testleri |
+| Faz 3.5 — Opsiyonel: rezervasyon ve raf | Kapalı | Stok rezervasyonu (`OnHand`/`Reserved`/`Available`) ve depo içi lokasyon/raf takibi; Faz 3 tamamlanmadan açılmaz ve sonraki fazları bloklamaz | Faz açılırken belirlenir | § 10.3 "rezervasyon" | Faz açılırken belirlenir |
+| Faz 4 — REST API (`/api/v1`) | Kapalı | Controller tabanlı yazma amaçlı `/api/v1` REST uçları; ProblemDetails; hibrit Cookie + JWT Bearer/Refresh Token; `Idempotency-Key`; `ETag`/`If-Match`; OpenAPI + Scalar/Swagger UI; rate limiting | Hibrit Cookie + JWT ADR'si | § 10.2, BONUS-API-01/02, § 10.3 "JWT/API Identity, yazma amaçlı Web API, rate limiting" | Gerçek HTTP API entegrasyon testleri (JWT 401/403, ProblemDetails, idempotency, `If-Match` çakışması) |
+| Faz 5 — Razor + API hibrit arayüz | Kapalı | Sidebar/breadcrumb/hızlı arama; Admin kullanıcı yönetimi; etkileşimli dashboard ve grafikler; API destekli sipariş formu; kullanıcı dostu stok defteri ve CSV dışa aktarım; gerçekçi sentetik demo kataloğu | Faz açılırken belirlenir | § 4 Tablo 3 (kullanıcı yönetimi satırı), § 5.7 FR-DASH | Güncel ekran görüntüleri README'de; sınırsız `<select>` yüklemesi kalmamış |
+| Faz 6 — Üretim kalitesi ve vitrin | Kapalı | Multi-stage Dockerfile + docker compose; Serilog yapılandırılmış log, `CorrelationId`, health check uçları; README portföy vitrini | Faz açılırken belirlenir | § 10.3 "zorunlu Docker/deployment" | Temiz makinede tek komutla açılış; CI yeşil; health check'ler sağlıklı |
 
+Kapı kuralları:
 
+- Faz durumu (`Kapalı` / `Açık` / `Tamamlandı`) yalnız insan onaylı bir pull request ile değişir ve SCOPE-03 koşullarına bağlıdır. Bu sütun, bir kapsamın açık olup olmadığının tek normatif sinyalidir.
+- Bir fazın ayrıntılı fonksiyonel gereksinim ve kabul senaryoları ile "Değiştireceği mevcut gereksinimler" sütunundaki maddelerin yeni metni, fazı `Açık` yapan PR'da veya faz içindeki ilk PR'da bu belgeye işlenir. O ana kadar § 4–9'daki mevcut maddeler bağlayıcıdır.
+- Faz içeriğinin ayrıntılı önerisi [roadmap.md](roadmap.md) › 6'dadır; tablo ile roadmap çelişirse bu tablo geçerlidir.
+
+#### Bonus eşlemesi
+
+_Tablo 9a. Sürüm 1.1 bonuslarının fazlara eşlenmesi_
+
+| Önceki bonus | Eşlendiği faz |
+| --- | --- |
+| Salt-okunur ürün API ve Swagger/OpenAPI | Faz 4 (Faz 4 açılana kadar § 10.2 yalnız referans olarak korunur, uygulanmaz) |
+| Optimistic concurrency | Faz 1 |
+| Manuel stock adjustment | Faz 3 |
+| Docker | Faz 6 |
+| Geniş integration testleri | Faz 0 (Testcontainers) ve Faz 2 |
+| Deployment | Hiçbir faza eşlenmez; bonus olarak kalır ve ancak insan kararıyla, ayrı bir kapsam değişikliğiyle ele alınır |
 
 ### 10.2 İsteğe bağlı salt-okunur API sözleşmesi
+
+Bu bölüm sürüm 1.1 bonus sözleşmesinin referans kaydıdır ve Faz 4'e eşlenmiştir; Faz 4 § 10.1'de `Açık` olana kadar uygulanmaz. Faz 4 kapısını açan değişiklik bu bölümü ve BONUS-API-01/02'yi yeniden yazar.
 
 GET /api/products - Ürün listesini güvenli response modelleriyle döndürür.
 
@@ -575,21 +626,27 @@ BONUS-API-01 [BONUS] API Entity nesnelerini doğrudan dışarı açmamalı; ayr�
 
 BONUS-API-02 [BONUS] API yalnızca salt-okunur olmalı; create/update/delete ve JWT bu kapsamda yer almamalıdır.
 
-### 10.3 Zorunlu MVP dışında kalanlar
+### 10.3 Kapsam dışı
 
-Clean Architecture, CQRS, MediatR, generic Repository/Unit of Work, AutoMapper ve FluentValidation.
+**Kalıcı kapsam dışı.** Aşağıdakiler hiçbir faz kapısıyla açılmaz; ancak bu belgeye ve ADR'ye işlenen ayrı bir kapsam değişikliğiyle eklenebilir:
 
-Mikroservisler, mesajlaşma, Redis, caching, background service ve rate limiting.
+CQRS, MediatR, generic Repository/Unit of Work, AutoMapper ve FluentValidation.
 
-SPA frontend, Blazor, SignalR, gRPC, CORS tasarımı ve ayrı frontend uygulaması.
+Mikroservisler, mesajlaşma, Redis, caching ve background service.
 
-JWT/API Identity, yazma amaçlı Web API endpoint'leri ve Minimal API yaklaşımı.
+SPA frontend, Blazor, SignalR, gRPC, CORS tasarımı, ayrı frontend uygulaması ve Minimal API yaklaşımı.
 
-Kubernetes, zorunlu Docker/deployment ve MVP öncesi altyapı genişletmesi.
+Kubernetes, ödeme ve kargo.
 
-Ödeme, kargo, rezervasyon, depo transferi ve onaylanmış sipariş için reversal davranışı.
+**Faz kapılı (kapı açılana kadar kapsam dışı).** Aşağıdakiler bugün kapsam dışıdır ve yalnız § 10.1'deki ilgili faz `Açık` olduğunda eklenir:
 
-Manual Adjustment ve optimistic concurrency; bunlar yalnızca ilgili bonus kapıları açılırsa eklenir.
+Optimistic concurrency (Faz 1).
+
+Depo transferi, onaylanmış sipariş için reversal davranışı ve Manual Adjustment (Faz 3); rezervasyon (Faz 3.5).
+
+JWT/API Identity, yazma amaçlı Web API endpoint'leri ve rate limiting (Faz 4).
+
+Zorunlu Docker/deployment altyapısı (Faz 6; deployment için § 10.1 Bonus eşlemesine bakılır).
 
 ## 11. Terimler ve Nihai Kabul Listesi
 
@@ -639,6 +696,6 @@ Merkezi hata yönetimi güvenli mesaj ve yapılandırılmış log üretiyor.
 
 Kritik xUnit testleri temiz çalışıyor ve production verisine dokunmuyor.
 
-Bonuslar zorunlu MVP'den ayrı tutuluyor; kapsam dışı mimari ve altyapı bileşenleri eklenmiyor.
+Bonuslar zorunlu MVP'den ayrı tutuluyor; kalıcı kapsam dışı bileşenler eklenmiyor, faz kapılı bileşenler yalnız ilgili kapı açıkken ekleniyor.
 
-> Son yorumlama kuralı: Bir yapay zekâ bu belgeyi uygulamaya dönüştürürken özellik eklememeli, zorunlu kuralları gevşetmemeli ve bonusları MVP ile karıştırmamalıdır.
+> Son yorumlama kuralı: Bir yapay zekâ bu belgeyi uygulamaya dönüştürürken özellik eklememeli, zorunlu kuralları gevşetmemeli, bonusları MVP ile karıştırmamalı ve § 10.1'de `Kapalı` olan bir fazın kapsamını uygulamamalıdır.
