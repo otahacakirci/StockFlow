@@ -56,6 +56,17 @@ if (existsSync(policyFile)) {
     }
     if (p.shell === 'readonly') {
       check(`project: ${name} cannot post PR comments`, run({ tool_name: 'Bash', ...sub, tool_input: { command: 'gh pr comment 1 --body x' } }), 'deny');
+      
+      // Issue'da belirtilen yeni salt-okunur (readonly) kuralların testleri
+      check(`project: ${name} can run sed -n`, run({ tool_name: 'Bash', ...sub, tool_input: { command: "sed -n '1,5p' file.txt" } }), 'pass');
+      check(`project: ${name} cannot run sed -i`, run({ tool_name: 'Bash', ...sub, tool_input: { command: "sed -i 's/x/y/g' file.txt" } }), 'deny');
+      
+      check(`project: ${name} can run docker ps`, run({ tool_name: 'Bash', ...sub, tool_input: { command: "docker ps -a" } }), 'pass');
+      check(`project: ${name} can run docker version`, run({ tool_name: 'Bash', ...sub, tool_input: { command: "docker version" } }), 'pass');
+      check(`project: ${name} cannot run docker rm`, run({ tool_name: 'Bash', ...sub, tool_input: { command: "docker rm my-container" } }), 'deny');
+      check(`project: ${name} cannot run docker run`, run({ tool_name: 'Bash', ...sub, tool_input: { command: "docker run hello-world" } }), 'deny');
+      
+      check(`project: ${name} can run strings`, run({ tool_name: 'Bash', ...sub, tool_input: { command: "strings app.dll" } }), 'pass');
     }
   }
 }
