@@ -1,5 +1,7 @@
 # StockFlow
 
+[![CI](https://github.com/otahacakirci/StockFlow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/otahacakirci/StockFlow/actions/workflows/ci.yml)
+
 StockFlow; küçük ve orta ölçekli işletmeler için kategori, ürün, müşteri, tedarikçi, satış/satın alma siparişi ve stok hareketlerini tek ASP.NET Core MVC uygulamasında yöneten örnek bir mini ERP projesidir. Uygulamanın temel değeri, Draft siparişlerin stoğu etkilememesi ve Confirm işleminin sipariş durumu, ürün stokları ile hareket geçmişini tek SQL transaction içinde tutarlı biçimde değiştirmesidir.
 
 ## Temel özellikler
@@ -167,12 +169,20 @@ Veritabanına dokunan testler, test koşusu başına bir kez başlatılan SQL Se
 
 Test altyapısı uygulamanın bağlantı ayarlarını veya User Secrets değerlerini okumaz. Docker kurulu değilse veya konteyner başlamazsa veritabanı testleri "ortam hatası" mesajıyla açıkça başarısız olur; LocalDB'ye, geliştirme veritabanına ya da EF Core InMemory sağlayıcısına geri dönülmez ve testler atlanmaz. Karar: [ADR-0009](docs/adr/0009-testcontainers-mssql-test-databases.md).
 
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) aynı kontrolleri her push ve `main` hedefli pull request'te Ubuntu'da koşar; `dotnet` işi restore, build, test ve format, `repo-guards` işi guard testleri ile repo hijyenini içerir. Farklar: build `-p:TreatWarningsAsErrors=true` ile koşar (uyarı = hata), hijyen betiği Linux'ta `pwsh -NoProfile -File scripts/validate-repository-hygiene.ps1` ile çalışır ve ilk koşu SQL Server imajını indirdiği için uzun sürer.
+
 ## Veri ve migration notları
 
 - `InitialDomainSchema` migration'ı yedi domain tablosunu oluşturur.
 - `AddIdentitySchema` migration'ı Identity tablolarını ve `Orders.CreatedByUserId` ilişkisini ekler.
 - Demo veri eklenmesi şemayı değiştirmez ve yeni migration gerektirmez.
 - Confirmed ve Cancelled siparişler terminaldir; yeniden açılmaz, düzenlenmez veya fiziksel olarak silinmez.
+
+## Katkı akışı ve dal koruması
+
+- `main` korumalıdır: doğrudan push yoktur; her değişiklik `<tür>/<kısa-konu>` dalından, Conventional Commits mesajlı bir pull request ile gelir ([CLAUDE.md](CLAUDE.md) › Git akışı).
+- Birleştirmek için `dotnet` ve `repo-guards` CI kontrolleri yeşil olmalıdır; korumalı yollar (`.github/`, `.claude/`, `scripts/`, `docs/product-spec.md`, `docs/adr/`, `*.csproj`, `Program.cs` ve diğerleri) code owner incelemesi ister ([.github/CODEOWNERS](.github/CODEOWNERS)).
+- Ajanlar pull request açar; approve ve merge insandadır. Tek sahipli depoda sahip, kendi pull request'inde yönetici atlamasını yalnız PR sayfasından kullanır; doğrudan push kimseye açık değildir.
 
 ## Dokümantasyon haritası
 
