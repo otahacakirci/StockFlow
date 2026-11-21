@@ -10,3 +10,13 @@
 # Ürün sözleşmesi ve faz kapıları (ADR-0004): kapsamı açan değişiklikler proje sahibinin incelemesini gerektirir.
 /docs/product-spec.md     @otahacakirci
 /docs/roadmap.md          @otahacakirci
+
+# Derleme, başlangıç ve yapılandırma sınırı: insan onayı isteyen yollar (CLAUDE.md › Ajan sistemi, policy.json approvalPaths).
+*.csproj                                   @otahacakirci
+/StockFlow/Program.cs                      @otahacakirci
+/StockFlow.slnx                            @otahacakirci
+/.config/dotnet-tools.json                 @otahacakirci
+/StockFlow/appsettings*.json               @otahacakirci
+/StockFlow/Properties/launchSettings.json  @otahacakirci
+/.gitignore                                @otahacakirci
+/.gitattributes                            @otahacakirci
