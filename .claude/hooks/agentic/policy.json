@@ -85,7 +85,12 @@
       "dotnet --info",
       "dotnet --version",
       "powershell -noprofile -executionpolicy bypass -file scripts/validate-repository-hygiene.ps1",
-      "node .claude/hooks/agentic/test-guard.mjs"
+      "node .claude/hooks/agentic/test-guard.mjs",
+      "sed -n",
+      "docker version",
+      "docker info",
+      "docker ps",
+      "strings"
     ]
   },
   "unlistedSubagents": "restricted-main",
